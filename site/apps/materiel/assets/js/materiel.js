@@ -104,6 +104,24 @@
     location.hash = hash;
   }
 
+  function bindNav(container) {
+    (container || root).querySelectorAll('[data-nav]').forEach((el) => {
+      el.addEventListener('click', () => nav(el.getAttribute('data-nav')));
+    });
+  }
+
+  function renderEmptyState(title, hint, ctaId, ctaLabel) {
+    const cta = ctaId
+      ? `<button type="button" class="sm-btn sm-btn--primary" id="${ctaId}">${esc(ctaLabel)}</button>`
+      : '';
+    return `<div class="sm-empty">
+      <div class="sm-empty__icon" aria-hidden="true">📦</div>
+      <p class="sm-empty__title">${esc(title)}</p>
+      ${hint ? `<p class="sm-empty__hint">${hint}</p>` : ''}
+      ${cta}
+    </div>`;
+  }
+
   function renderStructureFilter(extraClass) {
     const active = state.structures.filter((s) => s.active);
     if (!active.length) return '';
@@ -113,7 +131,7 @@
       return `<button type="button" class="sm-chip${on ? ' sm-chip--on' : ''}" data-structure-id="${s.id}">${esc(s.label)}</button>`;
     }).join('');
     return `<div class="sm-structure-filter ${extraClass || ''}">
-      <div class="sm-structure-filter__title">Structures ${allSelected ? '(toutes)' : ''}</div>
+      <p class="sm-structure-filter__title">Structures ${allSelected ? '(toutes)' : ''}</p>
       <div class="sm-structure-filter__chips">${chips}</div>
     </div>`;
   }
@@ -159,11 +177,66 @@
     });
   }
 
-  function renderTopbar(title, backHref) {
-    const back = backHref != null
-      ? `<a href="${backHref}" class="sm-back" aria-label="Retour">←</a>`
-      : `<a href="../../index.html" class="sm-back" aria-label="Portail">←</a>`;
-    return `<header class="sm-topbar">${back}<h1 class="sm-title">${esc(title)}</h1></header>`;
+  function renderTopbar(title, backHash) {
+    const back = backHash != null
+      ? `<button type="button" class="sm-back" data-nav="${esc(backHash)}" aria-label="Retour">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+         </button>`
+      : `<a href="../../index.html" class="sm-back" aria-label="Portail">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+         </a>`;
+    return `<header class="sm-topbar">
+      ${back}
+      <div class="sm-topbar__brand">
+        <p class="sm-eyebrow">Portail Club</p>
+        <h1 class="sm-title">${esc(title)}</h1>
+      </div>
+    </header>`;
+  }
+
+  function renderFilterPanel() {
+    const typeOpts = (state.catalog?.types || []).map((t) =>
+      `<option value="${t.id}"${String(state.filters.type_id) === String(t.id) ? ' selected' : ''}>${esc(t.label)}</option>`
+    ).join('');
+    return `<section class="sm-filter-panel" aria-label="Filtres">
+      <h2 class="sm-section-title">Filtres</h2>
+      <div class="sm-filter-grid">
+        <div class="sm-field sm-field--inline sm-field--search">
+          <label class="sm-label" for="sm-search">Recherche</label>
+          <input id="sm-search" class="sm-input" type="search" placeholder="ID, marque, modèle…" value="${esc(state.filters.q)}">
+        </div>
+        <div class="sm-field sm-field--inline sm-field--state">
+          <label class="sm-label" for="sm-filter-state">État</label>
+          <select id="sm-filter-state" class="sm-select">
+            <option value="">Tous</option>
+            ${Object.entries(STATE_LABELS).map(([k, v]) =>
+              `<option value="${k}"${state.filters.state === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="sm-field sm-field--inline sm-field--type">
+          <label class="sm-label" for="sm-filter-type">Type</label>
+          <select id="sm-filter-type" class="sm-select">
+            <option value="">Tous</option>${typeOpts}
+          </select>
+        </div>
+      </div>
+      ${renderStructureFilter()}
+    </section>`;
+  }
+
+  function renderEquipmentItem(e) {
+    const initials = (e.public_id || '?').slice(0, 2).toUpperCase();
+    return `<article class="sm-equip-item" data-item-id="${e.id}">
+      <button type="button" class="sm-equip-item__link">
+        <span class="sm-equip-item__badge">${esc(initials)}</span>
+        <span class="sm-equip-item__body">
+          <span class="sm-equip-item__title">${esc(e.public_id)}${e.nfc_linked ? ' <span class="sm-nfc-icon" title="Badge NFC">📶</span>' : ''}</span>
+          <span class="sm-equip-item__meta">${esc(e.type_label)} · ${esc(e.structure_label)} · ${esc(e.brand || '—')}</span>
+        </span>
+        <span class="sm-badge sm-badge--${e.state} sm-equip-item__status">${esc(e.state_label)}</span>
+        <span class="sm-equip-item__chev" aria-hidden="true">›</span>
+      </button>
+    </article>`;
   }
 
   function nfcFabVisible() {
@@ -204,20 +277,12 @@
   }
 
   function renderParc() {
-    const list = state.equipment.map((e) => `
-      <article class="sm-card sm-card--clickable" data-item-id="${e.id}">
-        <div class="sm-card__row">
-          <div style="flex:1;min-width:0">
-            <div class="sm-card__id">${esc(e.public_id)} ${e.nfc_linked ? '<span class="sm-nfc-icon" title="Badge NFC">📶</span>' : ''}</div>
-            <div class="sm-card__meta">${esc(e.type_label)} · ${esc(e.structure_label)} · ${esc(e.brand || '—')}</div>
-          </div>
-          <span class="sm-badge sm-badge--${e.state}">${esc(e.state_label)}</span>
-        </div>
-      </article>`).join('') || '<p class="sm-empty">Aucun matériel.</p>';
-
-    const typeOpts = (state.catalog?.types || []).map((t) =>
-      `<option value="${t.id}"${String(state.filters.type_id) === String(t.id) ? ' selected' : ''}>${esc(t.label)}</option>`
-    ).join('');
+    const hasFilters = state.filters.q || state.filters.state || state.filters.type_id || state.structureFilter.length;
+    const list = state.equipment.length
+      ? state.equipment.map(renderEquipmentItem).join('')
+      : (hasFilters
+        ? renderEmptyState('Aucun résultat', 'Modifiez les filtres ou la recherche pour élargir la liste.')
+        : renderEmptyState('Aucun matériel', 'Commencez par enregistrer votre premier équipement du club.', 'sm-empty-new', '+ Nouveau matériel'));
 
     const fab = nfcFabVisible()
       ? '<button type="button" class="sm-fab" id="sm-fab-scan" aria-label="Scanner NFC">📶</button>'
@@ -225,23 +290,20 @@
 
     root.innerHTML = `
       ${renderTopbar('Suivi Matériel')}
-      <div class="sm-field"><label for="sm-user">Votre prénom</label>
-        <input id="sm-user" type="text" value="${esc(getUser())}" placeholder="Prénom"></div>
-      ${renderStructureFilter()}
-      <div class="sm-filters">
-        <input id="sm-search" type="search" placeholder="Rechercher ID, marque…" value="${esc(state.filters.q)}">
-        <select id="sm-filter-state"><option value="">Tous états</option>
-          ${Object.entries(STATE_LABELS).map(([k, v]) => `<option value="${k}"${state.filters.state === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
-        </select>
-        <select id="sm-filter-type"><option value="">Tous types</option>${typeOpts}</select>
+      <div class="sm-user-bar">
+        <label class="sm-user-bar__label" for="sm-user">Utilisateur</label>
+        <input id="sm-user" class="sm-input sm-input--compact" type="text" value="${esc(getUser())}" placeholder="Votre prénom" autocomplete="name">
       </div>
+      ${renderFilterPanel()}
       <div class="sm-actions">
-        <button type="button" class="sm-btn" id="sm-btn-new">+ Nouveau matériel</button>
+        <button type="button" class="sm-btn sm-btn--primary" id="sm-btn-new">+ Nouveau matériel</button>
       </div>
+      <h2 class="sm-section-title">Parc <span class="sm-count">${state.equipment.length}</span></h2>
       ${list}
       ${renderTabs('parc')}
       ${fab}`;
 
+    bindNav(root);
     bindStructureFilter(root);
     bindTabs(root);
     root.querySelector('#sm-user').addEventListener('change', (e) => setUser(e.target.value));
@@ -249,8 +311,10 @@
     root.querySelector('#sm-filter-state').addEventListener('change', (e) => { state.filters.state = e.target.value; loadEquipmentList().then(renderParc); });
     root.querySelector('#sm-filter-type').addEventListener('change', (e) => { state.filters.type_id = e.target.value; loadEquipmentList().then(renderParc); });
     root.querySelector('#sm-btn-new').addEventListener('click', () => nav('#/new'));
-    root.querySelectorAll('[data-item-id]').forEach((el) => {
-      el.addEventListener('click', () => nav('#/item/' + el.dataset.itemId));
+    const emptyNew = root.querySelector('#sm-empty-new');
+    if (emptyNew) emptyNew.addEventListener('click', () => nav('#/new'));
+    root.querySelectorAll('.sm-equip-item').forEach((el) => {
+      el.querySelector('.sm-equip-item__link').addEventListener('click', () => nav('#/item/' + el.dataset.itemId));
     });
     const scanBtn = root.querySelector('#sm-fab-scan');
     if (scanBtn) scanBtn.addEventListener('click', handleNfcScan);
@@ -282,12 +346,12 @@
         ${e.nfc_linked
           ? `<button type="button" class="sm-btn sm-btn--ghost" id="sm-regrave">Regraver badge</button>
              <button type="button" class="sm-btn sm-btn--ghost" id="sm-unlink">Dissocier NFC</button>`
-          : `<button type="button" class="sm-btn" id="sm-link">Associer badge NFC</button>`}
+          : `<button type="button" class="sm-btn sm-btn--primary" id="sm-link">Associer badge NFC</button>`}
       </div>` : '';
 
     const interventions = (e.interventions || []).map((i) => `
       <div class="sm-log-item"><strong>${i.subtype === 'revision' ? 'Révision' : 'Réparation'}</strong> — ${esc(i.done_on)}
-        <br>${esc(i.person_name || i.responsible_free || '—')}${i.summary ? '<br>' + esc(i.summary) : ''}</div>`).join('') || '<p class="sm-empty">Aucune intervention.</p>';
+        <br>${esc(i.person_name || i.responsible_free || '—')}${i.summary ? '<br>' + esc(i.summary) : ''}</div>`).join('') || '<p class="sm-empty sm-empty--inline">Aucune intervention.</p>';
 
     const stateLog = (e.state_log || []).slice(0, 5).map((l) => `
       <div class="sm-log-item">${esc(l.logged_at)} : ${esc(l.old_state_label || '—')} → ${esc(l.new_state_label)}
@@ -298,30 +362,33 @@
       <div class="sm-card">
         <p><span class="sm-badge sm-badge--${e.state}">${esc(e.state_label)}</span>
         ${e.nfc_linked ? ' <span title="NFC">📶</span>' : ''}</p>
-        <p><strong>Type :</strong> ${esc(e.type_label)}</p>
-        <p><strong>Structure :</strong> ${esc(e.structure_label)}</p>
-        <p><strong>Marque :</strong> ${esc(e.brand || '—')} · <strong>Année :</strong> ${e.purchase_year || '—'}</p>
-        <p><strong>Modèle / Série :</strong> ${esc(e.model || '—')} / ${esc(e.serial || '—')}</p>
-        ${e.notes ? `<p><strong>Notes :</strong> ${esc(e.notes)}</p>` : ''}
+        <div class="sm-detail-grid">
+          <div class="sm-detail-row"><strong>Type</strong> ${esc(e.type_label)}</div>
+          <div class="sm-detail-row"><strong>Structure</strong> ${esc(e.structure_label)}</div>
+          <div class="sm-detail-row"><strong>Marque</strong> ${esc(e.brand || '—')} · <strong>Année</strong> ${e.purchase_year || '—'}</div>
+          <div class="sm-detail-row"><strong>Modèle / Série</strong> ${esc(e.model || '—')} / ${esc(e.serial || '—')}</div>
+          ${e.notes ? `<div class="sm-detail-row"><strong>Notes</strong> ${esc(e.notes)}</div>` : ''}
+        </div>
       </div>
       ${nfcBlock}
       <h2 class="sm-section-title">Changer l'état</h2>
       <form id="sm-state-form">
-        <div class="sm-field"><label>État</label>
-          <select name="state">${Object.entries(STATE_LABELS).map(([k, v]) =>
+        <div class="sm-field"><label class="sm-label">État</label>
+          <select class="sm-select" name="state">${Object.entries(STATE_LABELS).map(([k, v]) =>
             `<option value="${k}"${e.state === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
           </select></div>
-        <div class="sm-field"><label>Personne</label>
-          <select name="person_id"><option value="">— Saisie libre —</option>
+        <div class="sm-field"><label class="sm-label">Personne</label>
+          <select class="sm-select" name="person_id"><option value="">— Saisie libre —</option>
             ${state.persons.map((p) => `<option value="${p.id}">${esc(p.display_name)}</option>`).join('')}
           </select></div>
-        <div class="sm-field"><label>Ou saisie libre</label><input name="responsible_free" placeholder="Nom libre"></div>
-        <button type="submit" class="sm-btn sm-btn--block">Enregistrer</button>
+        <div class="sm-field"><label class="sm-label">Ou saisie libre</label><input class="sm-input" name="responsible_free" placeholder="Nom libre"></div>
+        <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>
-      <div class="sm-actions"><button type="button" class="sm-btn" id="sm-new-intervention">+ Intervention</button></div>
+      <div class="sm-actions"><button type="button" class="sm-btn sm-btn--primary" id="sm-new-intervention">+ Intervention</button></div>
       <h2 class="sm-section-title">Interventions</h2>${interventions}
-      <h2 class="sm-section-title">Historique états</h2>${stateLog || '<p class="sm-empty">—</p>'}`;
+      <h2 class="sm-section-title">Historique états</h2>${stateLog || '<p class="sm-empty sm-empty--inline">—</p>'}`;
 
+    bindNav(root);
     root.querySelector('#sm-new-intervention').addEventListener('click', () => nav('#/intervention/' + id));
     root.querySelector('#sm-state-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -383,21 +450,22 @@
     root.innerHTML = `
       ${renderTopbar('Nouveau matériel', '#/parc')}
       <form id="sm-new-form">
-        <div class="sm-field"><label>Identifiant public *</label>
-          <input name="public_id" required value="${esc(suggest.public_id)}"></div>
-        <div class="sm-field"><label>Structure *</label>
-          <select name="structure_id" required>${structOpts}</select></div>
-        <div class="sm-field"><label>Type *</label>
-          <select name="type_id" required>${typeOpts}</select></div>
-        <div class="sm-field"><label>Marque</label><input name="brand"></div>
-        <div class="sm-field"><label>Année achat</label><input name="purchase_year" type="number" min="1980" max="2100"></div>
-        <div class="sm-field"><label>Modèle</label><input name="model"></div>
-        <div class="sm-field"><label>N° série</label><input name="serial"></div>
-        <div class="sm-field"><label>Notes</label><textarea name="notes"></textarea></div>
+        <div class="sm-field"><label class="sm-label">Identifiant public *</label>
+          <input class="sm-input" name="public_id" required value="${esc(suggest.public_id)}"></div>
+        <div class="sm-field"><label class="sm-label">Structure *</label>
+          <select class="sm-select" name="structure_id" required>${structOpts}</select></div>
+        <div class="sm-field"><label class="sm-label">Type *</label>
+          <select class="sm-select" name="type_id" required>${typeOpts}</select></div>
+        <div class="sm-field"><label class="sm-label">Marque</label><input class="sm-input" name="brand"></div>
+        <div class="sm-field"><label class="sm-label">Année achat</label><input class="sm-input" name="purchase_year" type="number" min="1980" max="2100"></div>
+        <div class="sm-field"><label class="sm-label">Modèle</label><input class="sm-input" name="model"></div>
+        <div class="sm-field"><label class="sm-label">N° série</label><input class="sm-input" name="serial"></div>
+        <div class="sm-field"><label class="sm-label">Notes</label><textarea class="sm-textarea" name="notes"></textarea></div>
         ${nfcOpt}
-        <button type="submit" class="sm-btn sm-btn--block">Créer</button>
+        <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Créer</button>
       </form>`;
 
+    bindNav(root);
     root.querySelector('#sm-new-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
@@ -428,22 +496,23 @@
     root.innerHTML = `
       ${renderTopbar('Intervention', '#/item/' + equipmentId)}
       <form id="sm-int-form">
-        <div class="sm-field"><label>Type</label>
-          <select name="subtype"><option value="revision">Révision (grille)</option>
+        <div class="sm-field"><label class="sm-label">Type</label>
+          <select class="sm-select" name="subtype"><option value="revision">Révision (grille)</option>
             <option value="repair">Réparation</option></select></div>
-        <div class="sm-field"><label>Date</label>
-          <input name="done_on" type="date" required value="${new Date().toISOString().slice(0, 10)}"></div>
-        <div class="sm-field"><label>Personne</label>
-          <select name="person_id"><option value="">— Saisie libre —</option>
+        <div class="sm-field"><label class="sm-label">Date</label>
+          <input class="sm-input" name="done_on" type="date" required value="${new Date().toISOString().slice(0, 10)}"></div>
+        <div class="sm-field"><label class="sm-label">Personne</label>
+          <select class="sm-select" name="person_id"><option value="">— Saisie libre —</option>
             ${persons.map((p) => `<option value="${p.id}">${esc(p.display_name)}</option>`).join('')}
           </select></div>
-        <div class="sm-field"><label>Ou saisie libre</label><input name="responsible_free" value="${esc(getUser())}"></div>
+        <div class="sm-field"><label class="sm-label">Ou saisie libre</label><input class="sm-input" name="responsible_free" value="${esc(getUser())}"></div>
         <div id="sm-check-fields" class="sm-check-grid"></div>
-        <div class="sm-field" id="sm-summary-field" hidden><label>Résumé réparation *</label>
-          <textarea name="summary"></textarea></div>
-        <button type="submit" class="sm-btn sm-btn--block">Enregistrer</button>
+        <div class="sm-field" id="sm-summary-field" hidden><label class="sm-label">Résumé réparation *</label>
+          <textarea class="sm-textarea" name="summary"></textarea></div>
+        <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>`;
 
+    bindNav(root);
     const subtypeEl = root.querySelector('[name=subtype]');
     const checkWrap = root.querySelector('#sm-check-fields');
     const summaryField = root.querySelector('#sm-summary-field');
@@ -454,12 +523,12 @@
       if (sub === 'revision' && type && type.checks.length) {
         checkWrap.innerHTML = type.checks.map((c) => `
           <div class="sm-check-row"><span>${esc(c.label)}</span>
-            <select name="check_${esc(c.field_key)}" required>
+            <select class="sm-select" name="check_${esc(c.field_key)}" required>
               <option value="">—</option><option value="OK">OK</option><option value="KO">KO</option>
             </select></div>`).join('');
         checkWrap.hidden = false;
       } else {
-        checkWrap.innerHTML = sub === 'revision' ? '<p class="sm-empty">Pas de grille pour ce type.</p>' : '';
+        checkWrap.innerHTML = sub === 'revision' ? '<p class="sm-empty sm-empty--inline">Pas de grille pour ce type.</p>' : '';
       }
     }
     subtypeEl.addEventListener('change', updateSubtypeUI);
@@ -499,17 +568,20 @@
 
     root.innerHTML = `
       ${renderTopbar('Statistiques')}
-      ${renderStructureFilter()}
+      <section class="sm-filter-panel" aria-label="Filtre structures">
+        ${renderStructureFilter('sm-structure-filter--solo')}
+      </section>
       <div class="sm-actions">
         <a class="sm-btn sm-btn--ghost" href="${API}/export.php?${structureQueryParam().replace(/^&/, '')}" download>Export CSV</a>
       </div>
-      <p><strong>Total :</strong> ${s.total} item(s)</p>
+      <p class="sm-stats-summary"><strong>${s.total}</strong> équipement(s) au total</p>
       <div class="sm-chart-wrap"><canvas id="chart-state" height="180"></canvas></div>
       <div class="sm-chart-wrap"><canvas id="chart-type" height="200"></canvas></div>
       <div class="sm-chart-wrap"><canvas id="chart-age" height="180"></canvas></div>
       ${alerts ? '<h2 class="sm-section-title">Alertes stock</h2>' + alerts : ''}
       ${renderTabs('stats')}`;
 
+    bindNav(root);
     bindStructureFilter(root);
     bindTabs(root);
 
@@ -549,12 +621,12 @@
     if (section === 'settings') {
       body = `<form id="sm-settings-form">
         <label class="sm-toggle"><input type="checkbox" name="nfc_enabled" ${state.settings.nfc_enabled ? 'checked' : ''}> Activer NFC</label>
-        <div class="sm-field"><label>Préfixe ID auto</label><input name="id_prefix" value="${esc(state.settings.id_prefix)}"></div>
-        <div class="sm-field"><label>Structure par défaut</label>
-          <select name="default_structure_id"><option value="">— Aucune —</option>
+        <div class="sm-field"><label class="sm-label">Préfixe ID auto</label><input class="sm-input" name="id_prefix" value="${esc(state.settings.id_prefix)}"></div>
+        <div class="sm-field"><label class="sm-label">Structure par défaut</label>
+          <select class="sm-select" name="default_structure_id"><option value="">— Aucune —</option>
             ${state.structures.map((s) => `<option value="${s.id}"${state.settings.default_structure_id === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
           </select></div>
-        <button type="submit" class="sm-btn sm-btn--block">Enregistrer</button>
+        <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>`;
     } else if (section === 'structures') {
       body = state.structures.map((s) => `
@@ -562,24 +634,24 @@
           <strong>${esc(s.label)}</strong> (${esc(s.slug)}) ${s.active ? '' : '— inactif'}
         </div>`).join('') +
         `<form id="sm-struct-form" class="sm-card">
-          <div class="sm-field"><label>Libellé</label><input name="label" required></div>
-          <button type="submit" class="sm-btn sm-btn--block">Ajouter structure</button>
+          <div class="sm-field"><label class="sm-label">Libellé</label><input class="sm-input" name="label" required></div>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter structure</button>
         </form>`;
     } else if (section === 'roles') {
       body = state.roles.map((r) => `<div class="sm-card"><strong>${esc(r.label)}</strong><br><small>${esc(r.slug)}</small></div>`).join('') +
         `<form id="sm-role-form" class="sm-card">
-          <div class="sm-field"><label>Libellé</label><input name="label" required></div>
-          <button type="submit" class="sm-btn sm-btn--block">Ajouter rôle</button>
+          <div class="sm-field"><label class="sm-label">Libellé</label><input class="sm-input" name="label" required></div>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter rôle</button>
         </form>`;
     } else if (section === 'persons') {
       body = state.persons.map((p) => `<div class="sm-card"><strong>${esc(p.display_name)}</strong>
         ${p.active ? '' : ' (inactif)'}</div>`).join('') +
         `<form id="sm-person-form" class="sm-card">
-          <div class="sm-field"><label>Nom</label><input name="display_name" required></div>
-          <div class="sm-field"><label>Rôles</label>
+          <div class="sm-field"><label class="sm-label">Nom</label><input class="sm-input" name="display_name" required></div>
+          <div class="sm-field"><label class="sm-label">Rôles</label>
             ${state.roles.map((r) => `<label class="sm-toggle"><input type="checkbox" name="role_${r.id}"> ${esc(r.label)}</label>`).join('')}
           </div>
-          <button type="submit" class="sm-btn sm-btn--block">Ajouter personne</button>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter personne</button>
         </form>`;
     } else if (section === 'types') {
       body = (state.catalog?.types || []).map((t) => `
@@ -593,6 +665,7 @@
       ${body}
       ${renderTabs('param')}`;
 
+    bindNav(root);
     bindTabs(root);
     root.querySelectorAll('[data-param]').forEach((btn) => {
       btn.addEventListener('click', () => nav('#/param/' + btn.dataset.param));
@@ -686,6 +759,7 @@
       }
     } catch (e) {
       root.innerHTML = renderTopbar('Erreur') + `<p class="sm-empty">${esc(e.message)}</p>`;
+      bindNav(root);
     } finally {
       state.loading = false;
     }
@@ -693,12 +767,13 @@
 
   async function init() {
     loadStructureFilter();
-    root.innerHTML = '<p class="sm-empty">Chargement…</p>';
+    root.innerHTML = renderTopbar('Suivi Matériel') + '<p class="sm-loading">Chargement…</p>';
     try {
       await loadBootstrap();
       await refreshCurrentView();
     } catch (e) {
       root.innerHTML = renderTopbar('Erreur') + `<p class="sm-empty">${esc(e.message)}</p>`;
+      bindNav(root);
     }
   }
 
