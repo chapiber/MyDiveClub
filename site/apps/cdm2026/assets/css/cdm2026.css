@@ -121,6 +121,19 @@
   font-weight: 700;
 }
 
+.wc-section-title--day {
+  margin-top: 1.5rem;
+  padding-top: 0.25rem;
+  color: var(--wc-usa-blue);
+}
+
+.wc-day-empty {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--wc-muted);
+  text-align: center;
+}
+
 .wc-empty {
   padding: 2rem 1rem;
   text-align: center;

@@ -178,7 +178,26 @@
 
   function getTodayMatches() {
     const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-    return state.data.matches.filter((m) => formatKickoff(m.kickoffParis).dateKey === todayKey);
+    return getMatchesForDateKey(todayKey);
+  }
+
+  function getMatchesForDateKey(dateKey) {
+    return state.data.matches.filter((m) => formatKickoff(m.kickoffParis).dateKey === dateKey);
+  }
+
+  function addDaysToParisDateKey(dateKey, days) {
+    const parts = dateKey.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2] + days, 12, 0, 0);
+    return d.toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+  }
+
+  function formatDaySectionTitle(dateKey, dayOffset) {
+    const parts = dateKey.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+    const label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const formatted = label.charAt(0).toUpperCase() + label.slice(1);
+    if (dayOffset === 1) return 'Demain · ' + formatted;
+    return formatted;
   }
 
   function getTeamMatches(code) {
@@ -226,13 +245,32 @@
   }
 
   function renderToday() {
-    const matches = getTodayMatches();
-    let body;
-    if (!matches.length) {
-      body = '<div class="wc-empty">Aucun match prévu aujourd\'hui.<br>Consultez le calendrier par équipe ou les poules.</div>';
+    const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    const todayMatches = getMatchesForDateKey(todayKey);
+    let body = '<h2 class="wc-section-title">Matchs du jour</h2>';
+
+    if (todayMatches.length) {
+      body += todayMatches.map((m) => renderMatchCard(m)).join('');
     } else {
-      body = '<h2 class="wc-section-title">Matchs du jour</h2>' + matches.map((m) => renderMatchCard(m)).join('');
+      body += '<p class="wc-day-empty">Aucun match prévu aujourd\'hui.</p>';
     }
+
+    for (let offset = 1; offset <= 5; offset += 1) {
+      const dayKey = addDaysToParisDateKey(todayKey, offset);
+      const dayMatches = getMatchesForDateKey(dayKey);
+      if (!dayMatches.length) continue;
+      body +=
+        '<h2 class="wc-section-title wc-section-title--day">' +
+        esc(formatDaySectionTitle(dayKey, offset)) +
+        '</h2>';
+      body += dayMatches.map((m) => renderMatchCard(m)).join('');
+    }
+
+    if (!todayMatches.length && body.indexOf('wc-match') < 0) {
+      body +=
+        '<div class="wc-empty">Aucun match à venir sur les 5 prochains jours.<br>Consultez le calendrier par équipe ou les poules.</div>';
+    }
+
     return body;
   }
 
