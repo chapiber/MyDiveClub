@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-06-13T18:36:32.996Z",
+    "updatedAt": "2026-06-13T18:40:37.256Z",
     "updatedBy": "cloud",
     "sources": [
       "franceinfo",
@@ -8,7 +8,8 @@
       "matchcalendar.football",
       "fwctimes.com",
       "equipe-france.fr",
-      "ouest-france.fr"
+      "ouest-france.fr",
+      "footmercato.net"
     ],
     "tournament": {
       "start": "2026-06-11",
@@ -592,7 +593,7 @@
           "pts": 0
         },
         {
-          "team": "TUN",
+          "team": "SWE",
           "played": 0,
           "won": 0,
           "drawn": 0,
@@ -602,7 +603,7 @@
           "pts": 0
         },
         {
-          "team": "SWE",
+          "team": "TUN",
           "played": 0,
           "won": 0,
           "drawn": 0,
