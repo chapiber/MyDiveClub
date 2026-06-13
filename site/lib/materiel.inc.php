@@ -35,11 +35,30 @@ function portailClubMaterielParseStructureIds(mixed $raw): array
             continue;
         }
         $n = (int)$v;
-        if ($n > 0) {
+        if ($n >= 0) {
             $ids[$n] = $n;
         }
     }
     return array_values($ids);
+}
+
+/** @return array{0: string, 1: list<int>} */
+function portailClubMaterielStructureFilterParts(array $structureIds, string $col = 'e.structure_id'): array
+{
+    if ($structureIds === []) {
+        return ['', []];
+    }
+    $includeNone = in_array(0, $structureIds, true);
+    $ids = array_values(array_filter($structureIds, static fn (int $id): bool => $id > 0));
+    if ($includeNone && $ids === []) {
+        return [" AND {$col} IS NULL", []];
+    }
+    if ($includeNone) {
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        return [" AND ({$col} IS NULL OR {$col} IN ({$ph}))", $ids];
+    }
+    $ph = implode(',', array_fill(0, count($ids), '?'));
+    return [" AND {$col} IN ({$ph})", $ids];
 }
 
 function portailClubMaterielValidateStructureId(PDO $pdo, int $structureId): void
@@ -170,8 +189,9 @@ function portailClubMaterielPatchSettings(PDO $pdo, array $body): array
 
 function portailClubMaterielListStructures(PDO $pdo, bool $activeOnly = false): array
 {
-    $sql = 'SELECT id, slug, label, id_prefix, active, sort_order
-            FROM PORTAIL_CLUB_materiel_structures';
+    $sql = 'SELECT s.id, s.slug, s.label, s.id_prefix, s.active, s.sort_order,
+            (SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment e WHERE e.structure_id = s.id) AS equipment_count
+            FROM PORTAIL_CLUB_materiel_structures s';
     if ($activeOnly) {
         $sql .= ' WHERE active = 1';
     }
@@ -184,6 +204,7 @@ function portailClubMaterielListStructures(PDO $pdo, bool $activeOnly = false): 
             'id_prefix' => $r['id_prefix'] !== null && $r['id_prefix'] !== '' ? (string)$r['id_prefix'] : null,
             'active' => (bool)$r['active'],
             'sort_order' => (int)$r['sort_order'],
+            'equipment_count' => (int)($r['equipment_count'] ?? 0),
         ];
     }, $pdo->query($sql)->fetchAll());
 }
@@ -262,6 +283,33 @@ function portailClubMaterielPatchStructure(PDO $pdo, int $id, array $body): arra
             ->execute($params);
     }
     return portailClubMaterielGetStructure($pdo, $id);
+}
+
+function portailClubMaterielDeleteStructure(PDO $pdo, int $id): array
+{
+    portailClubMaterielGetStructure($pdo, $id);
+    $st = $pdo->prepare('SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment WHERE structure_id = ?');
+    $st->execute([$id]);
+    $equipCount = (int)$st->fetchColumn();
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('UPDATE PORTAIL_CLUB_materiel_equipment SET structure_id = NULL WHERE structure_id = ?')
+            ->execute([$id]);
+        $pdo->prepare('UPDATE PORTAIL_CLUB_materiel_persons SET structure_id = NULL WHERE structure_id = ?')
+            ->execute([$id]);
+        $settings = portailClubMaterielGetSettings($pdo);
+        if ((int)($settings['default_structure_id'] ?? 0) === $id) {
+            portailClubMaterielPatchSettings($pdo, ['default_structure_id' => null]);
+        }
+        $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_structures WHERE id = ?')->execute([$id]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+
+    return ['deleted' => true, 'equipment_unassigned' => $equipCount];
 }
 
 function portailClubMaterielListRoles(PDO $pdo): array
@@ -730,7 +778,7 @@ function portailClubMaterielFormatEquipmentRow(array $r): array
     return [
         'id' => (int)$r['id'],
         'public_id' => $r['public_id'],
-        'structure_id' => (int)$r['structure_id'],
+        'structure_id' => $r['structure_id'] !== null ? (int)$r['structure_id'] : null,
         'structure_label' => $r['structure_label'] ?? null,
         'type_id' => (int)$r['type_id'],
         'type_slug' => $r['type_slug'] ?? null,
@@ -753,7 +801,7 @@ function portailClubMaterielEquipmentSelectSql(): string
 {
     return 'SELECT e.*, s.label AS structure_label, t.slug AS type_slug, t.label AS type_label
             FROM PORTAIL_CLUB_materiel_equipment e
-            JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
+            LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
             JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id';
 }
 
@@ -763,11 +811,9 @@ function portailClubMaterielListEquipment(PDO $pdo, array $filters = []): array
     $params = [];
 
     $structureIds = portailClubMaterielParseStructureIds($filters['structure_ids'] ?? null);
-    if ($structureIds !== []) {
-        $ph = implode(',', array_fill(0, count($structureIds), '?'));
-        $sql .= " AND e.structure_id IN ({$ph})";
-        $params = array_merge($params, $structureIds);
-    }
+    [$structSql, $structParams] = portailClubMaterielStructureFilterParts($structureIds);
+    $sql .= $structSql;
+    $params = array_merge($params, $structParams);
 
     $state = trim((string)($filters['state'] ?? ''));
     if ($state !== '') {
@@ -864,8 +910,11 @@ function portailClubMaterielCreateEquipment(PDO $pdo, array $body): array
     if (!portailClubMaterielCheckPublicIdAvailable($pdo, $publicId)) {
         portailClubJsonFail('Identifiant public déjà utilisé.');
     }
-    $structureId = portailClubIntParam($body['structure_id'] ?? null, 'structure_id');
-    portailClubMaterielValidateStructureId($pdo, $structureId);
+    $structureId = null;
+    if (isset($body['structure_id']) && $body['structure_id'] !== '' && $body['structure_id'] !== null) {
+        $structureId = portailClubIntParam($body['structure_id'], 'structure_id');
+        portailClubMaterielValidateStructureId($pdo, $structureId);
+    }
     $typeId = portailClubIntParam($body['type_id'] ?? null, 'type_id');
     portailClubMaterielGetEquipmentType($pdo, $typeId);
 
@@ -905,10 +954,14 @@ function portailClubMaterielPatchEquipment(PDO $pdo, int $id, array $body): arra
         $params[] = $pid;
     }
     if (array_key_exists('structure_id', $body)) {
-        $sid = portailClubIntParam($body['structure_id'], 'structure_id');
-        portailClubMaterielValidateStructureId($pdo, $sid);
-        $sets[] = 'structure_id = ?';
-        $params[] = $sid;
+        if ($body['structure_id'] === null || $body['structure_id'] === '') {
+            $sets[] = 'structure_id = NULL';
+        } else {
+            $sid = portailClubIntParam($body['structure_id'], 'structure_id');
+            portailClubMaterielValidateStructureId($pdo, $sid);
+            $sets[] = 'structure_id = ?';
+            $params[] = $sid;
+        }
     }
     if (array_key_exists('type_id', $body)) {
         $tid = portailClubIntParam($body['type_id'], 'type_id');
@@ -1120,13 +1173,9 @@ function portailClubMaterielCreateIntervention(PDO $pdo, array $body): array
 
 function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
 {
-    $where = '';
-    $params = [];
-    if ($structureIds !== []) {
-        $ph = implode(',', array_fill(0, count($structureIds), '?'));
-        $where = " WHERE e.structure_id IN ({$ph})";
-        $params = $structureIds;
-    }
+    [$structSql, $structParams] = portailClubMaterielStructureFilterParts($structureIds);
+    $where = $structSql !== '' ? ' WHERE 1=1' . $structSql : '';
+    $params = $structParams;
 
     $byState = [];
     $st = $pdo->prepare(
@@ -1155,14 +1204,19 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
 
     $byStructure = [];
     $st = $pdo->prepare(
-        'SELECT s.label, s.id, COUNT(*) AS cnt
+        'SELECT COALESCE(s.id, 0) AS id, COALESCE(s.label, \'Sans structure\') AS label,
+                COALESCE(s.sort_order, 9999) AS sort_order, COUNT(*) AS cnt
          FROM PORTAIL_CLUB_materiel_equipment e
-         JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id' . $where .
-        ' GROUP BY s.id ORDER BY s.sort_order'
+         LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id' . $where .
+        ' GROUP BY s.id, s.label, s.sort_order ORDER BY sort_order, label'
     );
     $st->execute($params);
     foreach ($st->fetchAll() as $r) {
-        $byStructure[] = ['structure_id' => (int)$r['id'], 'label' => $r['label'], 'count' => (int)$r['cnt']];
+        $byStructure[] = [
+            'structure_id' => (int)$r['id'],
+            'label' => $r['label'],
+            'count' => (int)$r['cnt'],
+        ];
     }
 
     $currentYear = (int)date('Y');
@@ -1201,11 +1255,9 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
         $sql = 'SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment e
                 WHERE e.type_id = ? AND e.state = \'operational\'';
         $p = [$type['id']];
-        if ($structureIds !== []) {
-            $ph = implode(',', array_fill(0, count($structureIds), '?'));
-            $sql .= " AND e.structure_id IN ({$ph})";
-            $p = array_merge($p, $structureIds);
-        }
+        [$stockStructSql, $stockStructParams] = portailClubMaterielStructureFilterParts($structureIds);
+        $sql .= $stockStructSql;
+        $p = array_merge($p, $stockStructParams);
         $stCnt = $pdo->prepare($sql);
         $stCnt->execute($p);
         $cnt = (int)$stCnt->fetchColumn();
@@ -1242,7 +1294,7 @@ function portailClubMaterielExportCsv(PDO $pdo, array $structureIds = []): strin
     foreach ($items as $item) {
         $lines[] = implode(';', [
             $item['public_id'],
-            str_replace(';', ',', (string)$item['structure_label']),
+            str_replace(';', ',', (string)($item['structure_label'] ?? 'Sans structure')),
             str_replace(';', ',', (string)$item['type_label']),
             str_replace(';', ',', $item['brand']),
             $item['purchase_year'] ?? '',

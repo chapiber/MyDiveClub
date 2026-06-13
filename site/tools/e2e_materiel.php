@@ -50,6 +50,14 @@ try {
     ]);
     assertTrue($created['public_id'] === $publicId, 'create equipment');
 
+    $publicIdNone = 'E2E-N-' . date('YmdHis');
+    $createdNone = portailClubMaterielCreateEquipment($pdo, [
+        'public_id' => $publicIdNone,
+        'type_id' => $typeId,
+        'brand' => 'Orphelin',
+    ]);
+    assertTrue($createdNone['structure_id'] === null, 'create equipment sans structure');
+
     $person = portailClubMaterielCreatePerson($pdo, [
         'display_name' => 'E2E Testeur',
         'role_ids' => [$roles[0]['id']],
@@ -74,6 +82,7 @@ try {
     assertTrue(str_contains($csv, $publicId), 'export csv');
 
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$created['id']]);
+    $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdNone['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_persons WHERE id = ?')->execute([(int)$person['id']]);
 
     echo $failures === 0 ? "Smoke test materiel : SUCCES\n" : "Smoke test materiel : ECHECS ({$failures})\n";

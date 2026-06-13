@@ -4,6 +4,8 @@
   const API = '../../api/materiel';
   const USER_KEY = 'portailClub_materiel_user';
   const STRUCT_FILTER_KEY = 'portailClub_materiel_structure_filter';
+  const STRUCT_NONE = 0;
+  const STRUCT_NONE_LABEL = 'Sans structure';
 
   const STATE_LABELS = {
     operational: 'Opérationnel',
@@ -145,17 +147,27 @@
     </div>`;
   }
 
+  function structureDisplayLabel(label) {
+    return label || STRUCT_NONE_LABEL;
+  }
+
+  function selectableStructureIds() {
+    return state.structures.filter((s) => s.active).map((s) => s.id).concat([STRUCT_NONE]);
+  }
+
   function renderStructureFilter(extraClass) {
     const active = state.structures.filter((s) => s.active);
-    if (!active.length) return '';
     const allSelected = !state.structureFilter.length;
     const chips = active.map((s) => {
       const on = allSelected || state.structureFilter.includes(s.id);
       return `<button type="button" class="sm-chip${on ? ' sm-chip--on' : ''}" data-structure-id="${s.id}">${esc(s.label)}</button>`;
     }).join('');
+    const noneOn = allSelected || state.structureFilter.includes(STRUCT_NONE);
     return `<div class="sm-structure-filter ${extraClass || ''}">
       <p class="sm-structure-filter__title">Structures ${allSelected ? '(toutes)' : ''}</p>
-      <div class="sm-structure-filter__chips">${chips}</div>
+      <div class="sm-structure-filter__chips">${chips}
+        <button type="button" class="sm-chip sm-chip--none${noneOn ? ' sm-chip--on' : ''}" data-structure-id="${STRUCT_NONE}">${STRUCT_NONE_LABEL}</button>
+      </div>
     </div>`;
   }
 
@@ -163,15 +175,15 @@
     container.querySelectorAll('[data-structure-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.structureId, 10);
+        const allIds = selectableStructureIds();
         if (!state.structureFilter.length) {
-          state.structureFilter = state.structures.filter((s) => s.active && s.id !== id).map((s) => s.id);
+          state.structureFilter = allIds.filter((x) => x !== id);
         } else if (state.structureFilter.includes(id)) {
           state.structureFilter = state.structureFilter.filter((x) => x !== id);
         } else {
           state.structureFilter.push(id);
         }
-        const activeIds = state.structures.filter((s) => s.active).map((s) => s.id);
-        if (state.structureFilter.length >= activeIds.length) {
+        if (state.structureFilter.length >= allIds.length) {
           state.structureFilter = [];
         }
         saveStructureFilter();
@@ -332,7 +344,7 @@
         <span class="sm-equip-item__badge">${esc(initials)}</span>
         <span class="sm-equip-item__body">
           <span class="sm-equip-item__title">${esc(e.public_id)}${e.nfc_linked ? ' <span class="sm-nfc-icon" title="Badge NFC">📶</span>' : ''}</span>
-          <span class="sm-equip-item__meta">${esc(e.type_label)} · ${esc(e.structure_label)} · ${esc(e.brand || '—')}</span>
+          <span class="sm-equip-item__meta">${esc(e.type_label)} · ${esc(structureDisplayLabel(e.structure_label))} · ${esc(e.brand || '—')}</span>
         </span>
         <span class="sm-badge sm-badge--${e.state} sm-equip-item__status">${esc(e.state_label)}</span>
         <span class="sm-equip-item__chev" aria-hidden="true">›</span>
@@ -465,12 +477,22 @@
         ${e.nfc_linked ? ' <span title="NFC">📶</span>' : ''}</p>
         <div class="sm-detail-grid">
           <div class="sm-detail-row"><strong>Type</strong> ${esc(e.type_label)}</div>
-          <div class="sm-detail-row"><strong>Structure</strong> ${esc(e.structure_label)}</div>
           <div class="sm-detail-row"><strong>Marque</strong> ${esc(e.brand || '—')} · <strong>Année</strong> ${e.purchase_year || '—'}</div>
           <div class="sm-detail-row"><strong>Modèle / Série</strong> ${esc(e.model || '—')} / ${esc(e.serial || '—')}</div>
           ${e.notes ? `<div class="sm-detail-row"><strong>Notes</strong> ${esc(e.notes)}</div>` : ''}
         </div>
       </div>
+      <form id="sm-struct-assign" class="sm-inline-form">
+        <label class="sm-label" for="sm-item-structure">Structure</label>
+        <div class="sm-inline-form__row">
+          <select id="sm-item-structure" class="sm-select" name="structure_id">
+            <option value=""${e.structure_id == null ? ' selected' : ''}>— ${STRUCT_NONE_LABEL} —</option>
+            ${state.structures.filter((s) => s.active).map((s) =>
+              `<option value="${s.id}"${e.structure_id === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
+          </select>
+          <button type="submit" class="sm-btn sm-btn--ghost sm-btn--compact">Mettre à jour</button>
+        </div>
+      </form>
       ${nfcBlock}
       <h2 class="sm-section-title">Changer l'état</h2>
       <form id="sm-state-form">
@@ -491,6 +513,19 @@
       ${renderNavFab('parc')}`;
     bindNav(root);
     bindNavFab(root);
+    root.querySelector('#sm-struct-assign').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const structureId = fd.get('structure_id');
+      try {
+        await api('/equipment.php?id=' + id, {
+          method: 'PATCH',
+          body: JSON.stringify({ structure_id: structureId || null }),
+        });
+        showToast('Structure mise à jour');
+        renderItem(id);
+      } catch (err) { showToast(err.message); }
+    });
     root.querySelector('#sm-new-intervention').addEventListener('click', () => nav('#/intervention/' + id));
     root.querySelector('#sm-state-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -554,8 +589,9 @@
     root.innerHTML = `
       ${renderTopbar('Nouveau matériel', '#/parc')}
       <form id="sm-new-form">
-        <div class="sm-field"><label class="sm-label">Structure *</label>
-          <select class="sm-select" name="structure_id" required>${structOpts}</select></div>
+        <div class="sm-field"><label class="sm-label">Structure</label>
+          <select class="sm-select" name="structure_id">
+            <option value="">— ${STRUCT_NONE_LABEL} —</option>${structOpts}</select></div>
         <div class="sm-field"><label class="sm-label">Identifiant public *</label>
           <input class="sm-input" name="public_id" required value="${esc(suggest.public_id)}"></div>
         <div class="sm-field"><label class="sm-label">Type *</label>
@@ -576,7 +612,8 @@
     const publicIdInput = root.querySelector('[name=public_id]');
     structSelect.addEventListener('change', async () => {
       try {
-        const res = await api('/equipment.php?suggest_id=1&structure_id=' + structSelect.value);
+        const sid = structSelect.value;
+        const res = await api('/equipment.php?suggest_id=1' + (sid ? '&structure_id=' + sid : ''));
         publicIdInput.value = res.public_id;
       } catch (err) { showToast(err.message); }
     });
@@ -584,6 +621,7 @@
       ev.preventDefault();
       const fd = new FormData(ev.target);
       const body = Object.fromEntries(fd.entries());
+      if (!body.structure_id) body.structure_id = null;
       if (body.purchase_year === '') delete body.purchase_year;
       try {
         const res = await api('/equipment.php', { method: 'POST', body: JSON.stringify(body) });
@@ -734,6 +772,137 @@
     return label;
   }
 
+  const ICON_SAVE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>';
+  const ICON_UNDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
+  const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+  function renderStructList(structures) {
+    const rows = structures.filter((s) => s.active).map((s) =>
+      `<div class="sm-struct-row" data-struct-id="${s.id}" data-equipment-count="${s.equipment_count || 0}"
+           data-original-label="${esc(s.label)}" data-original-prefix="${esc(s.id_prefix || '')}">
+        <input class="sm-input sm-struct-row__label" name="label" value="${esc(s.label)}" required autocomplete="off" aria-label="Libellé">
+        <input class="sm-input sm-struct-row__prefix" name="id_prefix" value="${esc(s.id_prefix || '')}" placeholder="${esc(state.settings.id_prefix)}" aria-label="Préfixe ID">
+        <span class="sm-struct-row__slug" title="Identifiant interne">${esc(s.slug)}</span>
+        <div class="sm-struct-row__actions">
+          <button type="button" class="sm-icon-btn sm-icon-btn--save" hidden aria-label="Enregistrer">${ICON_SAVE}</button>
+          <button type="button" class="sm-icon-btn sm-icon-btn--undo" hidden aria-label="Annuler">${ICON_UNDO}</button>
+          <button type="button" class="sm-icon-btn sm-icon-btn--delete" aria-label="Supprimer">${ICON_DELETE}</button>
+        </div>
+      </div>`
+    ).join('');
+    return `<div class="sm-struct-list" aria-label="Structures">
+      ${rows || '<p class="sm-empty sm-empty--inline">Aucune structure.</p>'}
+      <form id="sm-struct-add" class="sm-struct-row sm-struct-row--add">
+        <input class="sm-input sm-struct-row__label" name="label" placeholder="Nouvelle structure" required autocomplete="off" aria-label="Libellé">
+        <input class="sm-input sm-struct-row__prefix" name="id_prefix" placeholder="Préfixe" aria-label="Préfixe ID">
+        <span class="sm-struct-row__slug sm-struct-row__slug--hint">—</span>
+        <div class="sm-struct-row__actions">
+          <button type="submit" class="sm-icon-btn sm-icon-btn--add" aria-label="Ajouter">+</button>
+        </div>
+      </form>
+    </div>`;
+  }
+
+  function bindStructRows(container) {
+    container.querySelectorAll('.sm-struct-row:not(.sm-struct-row--add)').forEach((row) => {
+      const labelInput = row.querySelector('[name=label]');
+      const prefixInput = row.querySelector('[name=id_prefix]');
+      const saveBtn = row.querySelector('.sm-icon-btn--save');
+      const undoBtn = row.querySelector('.sm-icon-btn--undo');
+      const deleteBtn = row.querySelector('.sm-icon-btn--delete');
+
+      function originals() {
+        return {
+          label: row.dataset.originalLabel || '',
+          prefix: row.dataset.originalPrefix || '',
+        };
+      }
+
+      function isDirty() {
+        const o = originals();
+        return labelInput.value.trim() !== o.label || prefixInput.value.trim() !== o.prefix;
+      }
+
+      function syncActions() {
+        const dirty = isDirty();
+        saveBtn.hidden = !dirty;
+        undoBtn.hidden = !dirty;
+      }
+
+      labelInput.addEventListener('input', syncActions);
+      prefixInput.addEventListener('input', syncActions);
+
+      undoBtn.addEventListener('click', () => {
+        const o = originals();
+        labelInput.value = o.label;
+        prefixInput.value = o.prefix;
+        syncActions();
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        const id = parseInt(row.dataset.structId, 10);
+        try {
+          const label = trimStructureLabel(labelInput.value);
+          const idPrefix = prefixInput.value.trim() || null;
+          await api('/structures.php?id=' + id, {
+            method: 'PATCH',
+            body: JSON.stringify({ label, id_prefix: idPrefix }),
+          });
+          row.dataset.originalLabel = label;
+          row.dataset.originalPrefix = idPrefix || '';
+          syncActions();
+          state.structures = (await api('/structures.php?active=1')).structures;
+          showToast('Structure enregistrée');
+        } catch (err) { showToast(err.message); }
+      });
+
+      deleteBtn.addEventListener('click', async () => {
+        const id = parseInt(row.dataset.structId, 10);
+        const count = parseInt(row.dataset.equipmentCount, 10) || 0;
+        const name = labelInput.value.trim() || 'cette structure';
+        const msg = count > 0
+          ? `Supprimer « ${name} » ? ${count} équipement(s) seront laissés sans structure.`
+          : `Supprimer « ${name} » ?`;
+        if (!confirm(msg)) return;
+        try {
+          const res = await api('/structures.php?id=' + id, { method: 'DELETE' });
+          state.structures = (await api('/structures.php?active=1')).structures;
+          if (state.structureFilter.includes(id)) {
+            state.structureFilter = state.structureFilter.filter((x) => x !== id);
+            saveStructureFilter();
+          }
+          if (state.settings.default_structure_id === id) {
+            state.settings.default_structure_id = null;
+          }
+          const unassigned = res.equipment_unassigned || 0;
+          showToast(unassigned > 0
+            ? `Structure supprimée (${unassigned} sans structure)`
+            : 'Structure supprimée');
+          await renderParam('structures');
+        } catch (err) { showToast(err.message); }
+      });
+    });
+
+    const addForm = container.querySelector('#sm-struct-add');
+    if (addForm) {
+      addForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(addForm);
+        try {
+          const label = trimStructureLabel(fd.get('label'));
+          const idPrefix = String(fd.get('id_prefix') || '').trim() || null;
+          await api('/structures.php', {
+            method: 'POST',
+            body: JSON.stringify({ label, id_prefix: idPrefix }),
+          });
+          state.structures = (await api('/structures.php?active=1')).structures;
+          showToast('Structure ajoutée');
+          await renderParam('structures');
+        } catch (err) { showToast(err.message); }
+      });
+    }
+  }
+
   async function loadParamStructures() {
     const res = await api('/structures.php');
     return res.structures;
@@ -762,21 +931,7 @@
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>`;
     } else if (section === 'structures') {
-      body = paramStructures.map((s) => `
-        <form class="sm-card sm-struct-card" data-struct-id="${s.id}">
-          <div class="sm-field"><label class="sm-label">Libellé</label>
-            <input class="sm-input" name="label" value="${esc(s.label)}" required autocomplete="off"></div>
-          <div class="sm-field"><label class="sm-label">Préfixe ID</label>
-            <input class="sm-input" name="id_prefix" value="${esc(s.id_prefix || '')}" placeholder="${esc(state.settings.id_prefix)}"></div>
-          <p class="sm-card__meta">Identifiant : ${esc(s.slug)}${s.active ? '' : ' · inactif'}</p>
-          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
-        </form>`).join('') +
-        `<form id="sm-struct-form" class="sm-card">
-          <h2 class="sm-section-title">Nouvelle structure</h2>
-          <div class="sm-field"><label class="sm-label">Libellé</label><input class="sm-input" name="label" required></div>
-          <div class="sm-field"><label class="sm-label">Préfixe ID</label><input class="sm-input" name="id_prefix" placeholder="Ex. AQ-"></div>
-          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter structure</button>
-        </form>`;
+      body = renderStructList(paramStructures);
     } else if (section === 'roles') {
       body = state.roles.map((r) => `<div class="sm-card"><strong>${esc(r.label)}</strong><br><small>${esc(r.slug)}</small></div>`).join('') +
         `<form id="sm-role-form" class="sm-card">
@@ -817,6 +972,9 @@
     bindNav(root);
     bindNavFab(root);
     bindParamSegments(root);
+    if (section === 'structures') {
+      bindStructRows(root);
+    }
 
     root.querySelectorAll('.sm-type-card').forEach((el) => {
       el.addEventListener('click', () => nav('#/param/types/' + el.dataset.typeId));
@@ -838,44 +996,6 @@
           });
           state.settings = res.settings;
           showToast('Réglages enregistrés');
-        } catch (err) { showToast(err.message); }
-      });
-    }
-
-    root.querySelectorAll('.sm-struct-card').forEach((form) => {
-      form.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const fd = new FormData(form);
-        const id = parseInt(form.dataset.structId, 10);
-        try {
-          const label = trimStructureLabel(fd.get('label'));
-          const idPrefix = String(fd.get('id_prefix') || '').trim() || null;
-          await api('/structures.php?id=' + id, {
-            method: 'PATCH',
-            body: JSON.stringify({ label, id_prefix: idPrefix }),
-          });
-          state.structures = (await api('/structures.php?active=1')).structures;
-          showToast('Structure enregistrée');
-          await renderParam('structures');
-        } catch (err) { showToast(err.message); }
-      });
-    });
-
-    const structForm = root.querySelector('#sm-struct-form');
-    if (structForm) {
-      structForm.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const fd = new FormData(ev.target);
-        try {
-          const label = trimStructureLabel(fd.get('label'));
-          const idPrefix = String(fd.get('id_prefix') || '').trim() || null;
-          await api('/structures.php', {
-            method: 'POST',
-            body: JSON.stringify({ label, id_prefix: idPrefix }),
-          });
-          state.structures = (await api('/structures.php?active=1')).structures;
-          showToast('Structure ajoutée');
-          await renderParam('structures');
         } catch (err) { showToast(err.message); }
       });
     }

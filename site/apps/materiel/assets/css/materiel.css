@@ -893,3 +893,137 @@
   font-weight: 600;
   font-size: 0.82rem;
 }
+
+/* — Liste structures compacte — */
+.sm-struct-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.sm-struct-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.85fr) minmax(0, 0.75fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.55rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 12px;
+  background: var(--pc-surface);
+}
+
+.sm-struct-row--add {
+  border-style: dashed;
+  background: var(--pc-bg);
+}
+
+.sm-struct-row__label,
+.sm-struct-row__prefix {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.sm-struct-row__slug {
+  font-size: 0.72rem;
+  color: var(--pc-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sm-struct-row__slug--hint {
+  text-align: center;
+}
+
+.sm-struct-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.sm-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 10px;
+  background: var(--pc-surface);
+  color: var(--pc-accent);
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sm-icon-btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.sm-icon-btn--save {
+  border-color: var(--pc-accent);
+  background: var(--pc-accent-soft);
+}
+
+.sm-icon-btn--delete {
+  color: #922b21;
+  border-color: #fadbd8;
+  background: #fff5f5;
+}
+
+.sm-icon-btn--add {
+  border-color: var(--pc-accent);
+  background: var(--pc-accent);
+  color: #fff;
+}
+
+.sm-icon-btn:active {
+  transform: scale(0.96);
+}
+
+.sm-chip--none.sm-chip--on {
+  border-style: dashed;
+}
+
+.sm-inline-form {
+  margin: 0 0 1rem;
+}
+
+.sm-inline-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sm-inline-form__row .sm-select {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.sm-btn--compact {
+  min-height: 2.75rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 420px) {
+  .sm-struct-row {
+    grid-template-columns: 1fr 1fr auto;
+    grid-template-areas:
+      "label label actions"
+      "prefix slug actions";
+  }
+
+  .sm-struct-row__label { grid-area: label; }
+  .sm-struct-row__prefix { grid-area: prefix; }
+  .sm-struct-row__slug { grid-area: slug; }
+  .sm-struct-row__actions { grid-area: actions; align-self: center; }
+}

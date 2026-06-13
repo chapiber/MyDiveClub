@@ -26,6 +26,11 @@ try {
         portailClubJsonOk(['structure' => portailClubMaterielPatchStructure($pdo, $id, $body)]);
     }
 
+    if ($method === 'DELETE') {
+        $id = portailClubIntParam($_GET['id'] ?? null, 'id');
+        portailClubJsonOk(portailClubMaterielDeleteStructure($pdo, $id));
+    }
+
     portailClubJsonFail('Méthode non autorisée.', 405);
 } catch (Throwable $e) {
     portailClubJsonFail($e->getMessage(), 500);
