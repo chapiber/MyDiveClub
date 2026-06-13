@@ -954,6 +954,236 @@
 }
 
 /* — Fiche détail — */
+.sm-item-hero {
+  margin-bottom: 0.85rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--pc-accent-soft) 85%, var(--pc-surface)) 0%,
+    var(--pc-surface) 70%
+  );
+  border: 2px solid var(--pc-border);
+  box-shadow: var(--pc-shadow);
+}
+
+.sm-item-hero__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sm-item-hero__id {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+}
+
+.sm-item-hero__nfc {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sm-item-hero__meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--pc-muted);
+}
+
+.sm-panel {
+  margin-bottom: 0.85rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--pc-surface);
+  border: 2px solid var(--pc-border);
+  box-shadow: var(--pc-shadow);
+}
+
+.sm-panel--timeline {
+  padding-bottom: 0.65rem;
+}
+
+.sm-panel__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pc-accent);
+}
+
+.sm-panel__footer {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--pc-border);
+}
+
+.sm-panel__footer--nfc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sm-panel .sm-field--inline {
+  margin-bottom: 0;
+}
+
+.sm-panel .sm-field--inline + .sm-field--inline {
+  margin-top: 0.75rem;
+}
+
+.sm-panel__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--pc-border);
+}
+
+.sm-panel__actions .sm-btn {
+  width: 100%;
+}
+
+.sm-field--technician .sm-input--technician {
+  margin-top: 0.45rem;
+}
+
+.sm-field--technician-muted .sm-input--technician {
+  opacity: 0.45;
+}
+
+.sm-spec-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+
+.sm-spec-list__item {
+  margin: 0;
+}
+
+.sm-spec-list__item--full {
+  grid-column: 1 / -1;
+}
+
+.sm-spec-list__term {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pc-muted);
+}
+
+.sm-spec-list__value {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.sm-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sm-timeline-item {
+  position: relative;
+  padding: 0.65rem 0 0.65rem 0.85rem;
+  border-left: 2px solid var(--pc-accent-soft);
+}
+
+.sm-timeline-item:not(:last-child) {
+  margin-bottom: 0.15rem;
+}
+
+.sm-timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 0.95rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pc-accent);
+  border: 2px solid var(--pc-surface);
+}
+
+.sm-timeline-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.sm-timeline-item__type {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--pc-accent-soft);
+  color: var(--pc-accent);
+}
+
+.sm-timeline-item__type--repair {
+  background: color-mix(in srgb, #e67e22 18%, var(--pc-surface));
+  color: #c0651a;
+}
+
+.sm-timeline-item__date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pc-muted);
+  white-space: nowrap;
+}
+
+.sm-timeline-item__who {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--pc-text);
+}
+
+.sm-timeline-item__summary {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--pc-muted);
+}
+
+.sm-timeline-item--state {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.sm-timeline-item__transition {
+  margin: 0.15rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.sm-timeline-item__arrow {
+  margin: 0 0.2rem;
+  color: var(--pc-accent);
+  font-weight: 700;
+}
+
+.sm-timeline-item__by {
+  color: var(--pc-muted);
+  font-weight: 500;
+}
+
 .sm-detail-grid {
   display: grid;
   gap: 0.45rem;
@@ -971,6 +1201,16 @@
   color: var(--pc-muted);
   font-weight: 600;
   font-size: 0.82rem;
+}
+
+@media (max-width: 360px) {
+  .sm-panel__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .sm-spec-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* — Liste structures compacte — */

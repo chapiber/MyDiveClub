@@ -562,84 +562,188 @@
     debounceT = setTimeout(() => loadEquipmentList().then(renderParc), 300);
   }
 
+  function formatLogDate(iso) {
+    if (!iso) return '—';
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    return esc(iso);
+  }
+
+  function formatLogDateTime(iso) {
+    if (!iso) return '—';
+    const s = String(iso);
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}`;
+    return esc(s);
+  }
+
+  function renderSpecItem(label, value, full) {
+    return `<div class="sm-spec-list__item${full ? ' sm-spec-list__item--full' : ''}">
+      <dt class="sm-spec-list__term">${esc(label)}</dt>
+      <dd class="sm-spec-list__value">${value}</dd>
+    </div>`;
+  }
+
+  function renderTimelineInterventions(interventions) {
+    if (!interventions.length) {
+      return '<p class="sm-empty sm-empty--inline">Aucune intervention enregistrée.</p>';
+    }
+    return `<ul class="sm-timeline">${interventions.map((i) => {
+      const typeLabel = i.subtype === 'revision' ? 'Révision' : 'Réparation';
+      const who = esc(i.person_name || i.responsible_free || '—');
+      const summary = i.summary ? `<p class="sm-timeline-item__summary">${esc(i.summary)}</p>` : '';
+      return `<li class="sm-timeline-item">
+        <div class="sm-timeline-item__head">
+          <span class="sm-timeline-item__type sm-timeline-item__type--${esc(i.subtype)}">${typeLabel}</span>
+          <time class="sm-timeline-item__date" datetime="${esc(i.done_on)}">${formatLogDate(i.done_on)}</time>
+        </div>
+        <p class="sm-timeline-item__who">${who}</p>
+        ${summary}
+      </li>`;
+    }).join('')}</ul>`;
+  }
+
+  function renderTimelineStateLog(stateLog) {
+    if (!stateLog.length) {
+      return '<p class="sm-empty sm-empty--inline">Aucun changement d\'état.</p>';
+    }
+    return `<ul class="sm-timeline sm-timeline--compact">${stateLog.map((l) => {
+      const who = esc(l.person_name || l.responsible_free || '—');
+      return `<li class="sm-timeline-item sm-timeline-item--state">
+        <time class="sm-timeline-item__date" datetime="${esc(l.logged_at)}">${formatLogDateTime(l.logged_at)}</time>
+        <p class="sm-timeline-item__transition">
+          <span>${esc(l.old_state_label || '—')}</span>
+          <span class="sm-timeline-item__arrow" aria-hidden="true">→</span>
+          <strong>${esc(l.new_state_label)}</strong>
+          <span class="sm-timeline-item__by">· ${who}</span>
+        </p>
+      </li>`;
+    }).join('')}</ul>`;
+  }
+
+  function bindResponsibleField(form) {
+    const personSelect = form.querySelector('[name=person_id]');
+    const freeInput = form.querySelector('[name=responsible_free]');
+    if (!personSelect || !freeInput) return;
+    const sync = () => {
+      const useList = !!personSelect.value;
+      freeInput.disabled = useList;
+      freeInput.closest('.sm-field--technician')?.classList.toggle('sm-field--technician-muted', useList);
+    };
+    personSelect.addEventListener('change', sync);
+    sync();
+  }
+
   async function renderItem(id) {
     const data = await api('/equipment.php?id=' + id);
     state.item = data.equipment;
     const e = state.item;
-    const nfcBlock = state.settings.nfc_enabled ? `
-      <div class="sm-actions">
-        ${e.nfc_linked
-          ? `<button type="button" class="sm-btn sm-btn--ghost" id="sm-regrave">Regraver badge</button>
-             <button type="button" class="sm-btn sm-btn--ghost" id="sm-unlink">Dissocier NFC</button>`
-          : `<button type="button" class="sm-btn sm-btn--primary" id="sm-link">Associer badge NFC</button>`}
-      </div>` : '';
+    const userName = getUser();
 
-    const interventions = (e.interventions || []).map((i) => `
-      <div class="sm-log-item"><strong>${i.subtype === 'revision' ? 'Révision' : 'Réparation'}</strong> — ${esc(i.done_on)}
-        <br>${esc(i.person_name || i.responsible_free || '—')}${i.summary ? '<br>' + esc(i.summary) : ''}</div>`).join('') || '<p class="sm-empty sm-empty--inline">Aucune intervention.</p>';
-
-    const stateLog = (e.state_log || []).slice(0, 5).map((l) => `
-      <div class="sm-log-item">${esc(l.logged_at)} : ${esc(l.old_state_label || '—')} → ${esc(l.new_state_label)}
-        (${esc(l.person_name || l.responsible_free || '—')})</div>`).join('');
+    const nfcFooter = state.settings.nfc_enabled ? (
+      e.nfc_linked
+        ? `<div class="sm-panel__footer sm-panel__footer--nfc">
+            <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-regrave">Regraver badge</button>
+            <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-unlink">Dissocier NFC</button>
+          </div>`
+        : `<div class="sm-panel__footer sm-panel__footer--nfc">
+            <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-link">📶 Associer badge NFC</button>
+          </div>`
+    ) : '';
 
     root.innerHTML = `
-      ${renderTopbar(e.public_id, '#/parc')}
-      <div class="sm-card">
-        <p><span class="sm-badge sm-badge--${e.state}">${esc(e.state_label)}</span>
-        ${e.nfc_linked ? ' <span title="NFC">📶</span>' : ''}</p>
-        <div class="sm-detail-grid">
-          <div class="sm-detail-row"><strong>Type</strong> ${esc(e.type_label)}</div>
-          <div class="sm-detail-row"><strong>Marque</strong> ${esc(e.brand || '—')} · <strong>Année</strong> ${e.purchase_year || '—'}</div>
-          <div class="sm-detail-row"><strong>Modèle / Série</strong> ${esc(e.model || '—')} / ${esc(e.serial || '—')}</div>
-          ${e.notes ? `<div class="sm-detail-row"><strong>Notes</strong> ${esc(e.notes)}</div>` : ''}
+      ${renderTopbar('Fiche matériel', '#/parc', { subtitle: e.type_label })}
+      <header class="sm-item-hero">
+        <div class="sm-item-hero__head">
+          <h1 class="sm-item-hero__id">${esc(e.public_id)}</h1>
+          <span class="sm-badge sm-badge--${e.state}">${esc(e.state_label)}</span>
+          ${e.nfc_linked ? '<span class="sm-item-hero__nfc" title="Badge NFC associé" aria-label="Badge NFC">📶</span>' : ''}
         </div>
-      </div>
-      <form id="sm-struct-assign" class="sm-inline-form">
-        <label class="sm-label" for="sm-item-structure">Structure</label>
-        <div class="sm-inline-form__row">
-          <select id="sm-item-structure" class="sm-select" name="structure_id">
-            <option value=""${e.structure_id == null ? ' selected' : ''}>— ${STRUCT_NONE_LABEL} —</option>
-            ${state.structures.filter((s) => s.active).map((s) =>
-              `<option value="${s.id}"${e.structure_id === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
-          </select>
-          <button type="submit" class="sm-btn sm-btn--ghost sm-btn--compact">Mettre à jour</button>
-        </div>
-      </form>
-      ${nfcBlock}
-      <h2 class="sm-section-title">Changer l'état</h2>
-      <form id="sm-state-form">
-        <div class="sm-field"><label class="sm-label">État</label>
-          <select class="sm-select" name="state">${Object.entries(STATE_LABELS).map(([k, v]) =>
-            `<option value="${k}"${e.state === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
-          </select></div>
-        <div class="sm-field"><label class="sm-label">Personne</label>
-          <select class="sm-select" name="person_id"><option value="">— Saisie libre —</option>
-            ${state.persons.map((p) => `<option value="${p.id}">${esc(p.display_name)}</option>`).join('')}
-          </select></div>
-        <div class="sm-field"><label class="sm-label">Ou saisie libre</label><input class="sm-input" name="responsible_free" placeholder="Nom libre"></div>
-        <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
-      </form>
-      <div class="sm-actions"><button type="button" class="sm-btn sm-btn--primary" id="sm-new-intervention">+ Intervention</button></div>
-      <h2 class="sm-section-title">Interventions</h2>${interventions}
-      <h2 class="sm-section-title">Historique états</h2>${stateLog || '<p class="sm-empty sm-empty--inline">—</p>'}
+        <p class="sm-item-hero__meta">${esc(e.type_label)} · ${esc(structureDisplayLabel(e.structure_label))}${e.brand ? ' · ' + esc(e.brand) : ''}</p>
+      </header>
+
+      <section class="sm-panel" aria-labelledby="sm-panel-specs">
+        <h2 id="sm-panel-specs" class="sm-panel__title">Fiche technique</h2>
+        <dl class="sm-spec-list">
+          ${renderSpecItem('Marque', esc(e.brand || '—'))}
+          ${renderSpecItem('Année', esc(e.purchase_year || '—'))}
+          ${renderSpecItem('Modèle', esc(e.model || '—'))}
+          ${renderSpecItem('N° série', esc(e.serial || '—'))}
+          ${e.notes ? renderSpecItem('Notes', esc(e.notes), true) : ''}
+        </dl>
+      </section>
+
+      <section class="sm-panel" aria-labelledby="sm-panel-org">
+        <h2 id="sm-panel-org" class="sm-panel__title">Organisation</h2>
+        <form id="sm-struct-assign">
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-item-structure">Structure</label>
+            <select id="sm-item-structure" class="sm-select" name="structure_id">
+              <option value=""${e.structure_id == null ? ' selected' : ''}>— ${STRUCT_NONE_LABEL} —</option>
+              ${state.structures.filter((s) => s.active).map((s) =>
+                `<option value="${s.id}"${e.structure_id === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
+            </select>
+          </div>
+        </form>
+        ${nfcFooter}
+      </section>
+
+      <section class="sm-panel" aria-labelledby="sm-panel-state">
+        <h2 id="sm-panel-state" class="sm-panel__title">Changer l'état</h2>
+        <form id="sm-state-form">
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-item-state">État</label>
+            <select id="sm-item-state" class="sm-select" name="state">${Object.entries(STATE_LABELS).map(([k, v]) =>
+              `<option value="${k}"${e.state === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="sm-field sm-field--inline sm-field--technician">
+            <label class="sm-label" for="sm-item-person">Technicien</label>
+            <select id="sm-item-person" class="sm-select" name="person_id">
+              <option value="">Saisie libre</option>
+              ${state.persons.map((p) => `<option value="${p.id}">${esc(p.display_name)}</option>`).join('')}
+            </select>
+            <input id="sm-item-free" class="sm-input sm-input--technician" name="responsible_free"
+              value="${esc(userName)}" placeholder="Votre prénom" autocomplete="name">
+          </div>
+          <div class="sm-panel__actions">
+            <button type="submit" class="sm-btn sm-btn--primary">Enregistrer</button>
+            <button type="button" class="sm-btn sm-btn--ghost" id="sm-new-intervention">+ Intervention</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="sm-panel sm-panel--timeline" aria-labelledby="sm-panel-int">
+        <h2 id="sm-panel-int" class="sm-panel__title">Interventions</h2>
+        ${renderTimelineInterventions(e.interventions || [])}
+      </section>
+
+      <section class="sm-panel sm-panel--timeline" aria-labelledby="sm-panel-log">
+        <h2 id="sm-panel-log" class="sm-panel__title">Historique états</h2>
+        ${renderTimelineStateLog((e.state_log || []).slice(0, 8))}
+      </section>
+
       ${renderNavFab('parc')}`;
+
     bindNav(root);
     bindNavFab(root);
-    root.querySelector('#sm-struct-assign').addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-      const structureId = fd.get('structure_id');
+
+    const structSelect = root.querySelector('#sm-item-structure');
+    structSelect.addEventListener('change', async () => {
       try {
         await api('/equipment.php?id=' + id, {
           method: 'PATCH',
-          body: JSON.stringify({ structure_id: structureId || null }),
+          body: JSON.stringify({ structure_id: structSelect.value || null }),
         });
         showToast('Structure mise à jour');
         renderItem(id);
-      } catch (err) { showToast(err.message); }
+      } catch (err) { showToast(err.message); structSelect.value = e.structure_id != null ? String(e.structure_id) : ''; }
     });
+
+    const stateForm = root.querySelector('#sm-state-form');
+    bindResponsibleField(stateForm);
     root.querySelector('#sm-new-intervention').addEventListener('click', () => nav('#/intervention/' + id));
-    root.querySelector('#sm-state-form').addEventListener('submit', async (ev) => {
+    stateForm.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
       try {
@@ -650,7 +754,7 @@
             equipment_id: id,
             state: fd.get('state'),
             person_id: fd.get('person_id') || null,
-            responsible_free: fd.get('responsible_free'),
+            responsible_free: fd.get('person_id') ? null : fd.get('responsible_free'),
           }),
         });
         showToast('État mis à jour');
