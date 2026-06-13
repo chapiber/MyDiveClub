@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-06-13T18:24:39.895Z",
+    "updatedAt": "2026-06-13T18:25:04.699Z",
     "updatedBy": "cloud",
     "sources": [
       "franceinfo",
@@ -591,7 +591,7 @@
           "pts": 0
         },
         {
-          "team": "SWE",
+          "team": "TUN",
           "played": 0,
           "won": 0,
           "drawn": 0,
@@ -601,7 +601,7 @@
           "pts": 0
         },
         {
-          "team": "TUN",
+          "team": "SWE",
           "played": 0,
           "won": 0,
           "drawn": 0,
@@ -1124,9 +1124,10 @@
       "city": "Houston",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1145,9 +1146,10 @@
       "city": "Dallas",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1187,9 +1189,10 @@
       "city": "Miami",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1208,9 +1211,10 @@
       "city": "Atlanta",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1250,9 +1254,10 @@
       "city": "Seattle",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1400,9 +1405,10 @@
       "city": "Houston",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1442,9 +1448,10 @@
       "city": "Atlanta",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1485,10 +1492,9 @@
       "city": "Vancouver",
       "tv": {
         "channels": [
-          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": true
+        "freeToAir": false
       },
       "score": {
         "home": null,
@@ -1528,10 +1534,9 @@
       "city": "Philadelphia",
       "tv": {
         "channels": [
-          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": true
+        "freeToAir": false
       },
       "score": {
         "home": null,
@@ -1550,9 +1555,10 @@
       "city": "Boston",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1657,9 +1663,10 @@
       "city": "Houston",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1742,9 +1749,10 @@
       "city": "Los Angeles",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1827,9 +1835,10 @@
       "city": "Dallas",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1912,9 +1921,10 @@
       "city": "Houston",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1954,9 +1964,10 @@
       "city": "Miami",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -1975,9 +1986,10 @@
       "city": "Atlanta",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -2145,9 +2157,10 @@
       "city": "Kansas City",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -2358,9 +2371,10 @@
       "city": "Philadelphia",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -2421,9 +2435,10 @@
       "city": "Miami",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -2442,9 +2457,10 @@
       "city": "Atlanta",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
@@ -2461,9 +2477,10 @@
       "city": "Los Angeles",
       "tv": {
         "channels": [
+          "M6",
           "beIN Sports 1"
         ],
-        "freeToAir": false
+        "freeToAir": true
       },
       "score": {
         "home": null,
