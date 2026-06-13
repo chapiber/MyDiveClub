@@ -1,11 +1,13 @@
 {
   "meta": {
-    "updatedAt": "2026-06-13T14:42:43.393Z",
-    "updatedBy": "local",
+    "updatedAt": "2026-06-13T18:23:45.301Z",
+    "updatedBy": "cloud",
     "sources": [
+      "franceinfo",
+      "lequipe",
       "matchcalendar.football",
       "fwctimes.com",
-      "franceinfo"
+      "fifa.com"
     ],
     "tournament": {
       "start": "2026-06-11",
