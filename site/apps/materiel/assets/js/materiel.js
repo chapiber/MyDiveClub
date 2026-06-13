@@ -12,6 +12,22 @@
     for_sale: 'À vendre',
   };
 
+  const PARAM_SECTIONS = [
+    ['settings', 'Réglages'],
+    ['structures', 'Structures'],
+    ['roles', 'Rôles'],
+    ['persons', 'Personnes'],
+    ['types', 'Types EPI'],
+  ];
+
+  const CHECK_INPUT_TYPES = [
+    ['select_ok_ko', 'OK / KO'],
+    ['select_ok_ko_na', 'OK / KO / N/A'],
+    ['text', 'Texte libre'],
+  ];
+
+  const CHECK_INPUT_LABELS = Object.fromEntries(CHECK_INPUT_TYPES);
+
   const root = document.getElementById('sm-root');
   const toastEl = document.getElementById('sm-toast');
 
@@ -30,6 +46,7 @@
     filters: { q: '', state: '', type_id: '' },
     loading: false,
     paramDraft: {},
+    paramMenuOpen: false,
   };
 
   function showToast(msg) {
@@ -94,6 +111,13 @@
     if (parts[0] === 'new') return { view: 'new' };
     if (parts[0] === 'intervention' && parts[1]) {
       return { view: 'intervention', equipmentId: parseInt(parts[1], 10) };
+    }
+    if (parts[0] === 'param') {
+      if (parts[1] === 'types' && parts[2]) {
+        return { view: 'param_type', typeId: parseInt(parts[2], 10) };
+      }
+      const paramSection = PARAM_SECTIONS.some(([id]) => id === parts[1]) ? parts[1] : 'settings';
+      return { view: 'tab', tab: 'param', paramSection };
     }
     const tab = ['parc', 'stats', 'param'].includes(parts[0]) ? parts[0] : 'parc';
     const paramSection = parts[1] || 'settings';
@@ -177,7 +201,8 @@
     });
   }
 
-  function renderTopbar(title, backHash) {
+  function renderTopbar(title, backHash, opts) {
+    opts = opts || {};
     const back = backHash != null
       ? `<button type="button" class="sm-back" data-nav="${esc(backHash)}" aria-label="Retour">
            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -185,13 +210,87 @@
       : `<a href="../../index.html" class="sm-back" aria-label="Portail">
            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
          </a>`;
+    const menuBtn = opts.menuBtn
+      ? `<button type="button" class="sm-menu-btn" id="sm-param-menu-btn" aria-label="Menu paramétrage" aria-expanded="${state.paramMenuOpen ? 'true' : 'false'}">
+           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+             <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
+           </svg>
+         </button>`
+      : '';
+    const subtitle = opts.subtitle
+      ? `<p class="sm-topbar__subtitle">${esc(opts.subtitle)}</p>`
+      : '';
     return `<header class="sm-topbar">
       ${back}
       <div class="sm-topbar__brand">
-        <p class="sm-eyebrow">Portail Club</p>
+        <p class="sm-eyebrow">${esc(opts.eyebrow || 'Portail Club')}</p>
         <h1 class="sm-title">${esc(title)}</h1>
+        ${subtitle}
       </div>
+      ${menuBtn}
     </header>`;
+  }
+
+  function paramSectionLabel(section) {
+    const found = PARAM_SECTIONS.find(([id]) => id === section);
+    return found ? found[1] : 'Paramétrage';
+  }
+
+  function renderRoleChips(person) {
+    const labels = person.role_labels && person.role_labels.length
+      ? person.role_labels
+      : (person.role_ids || []).map((rid) => {
+          const role = state.roles.find((r) => r.id === rid);
+          return role ? role.label : null;
+        }).filter(Boolean);
+    if (!labels.length) return '';
+    return `<div class="sm-role-chips">${labels.map((l) =>
+      `<span class="sm-role-chip">${esc(l)}</span>`).join('')}</div>`;
+  }
+
+  function renderParamMenu(section) {
+    const items = PARAM_SECTIONS.map(([id, label]) =>
+      `<button type="button" class="sm-param-menu__item${id === section ? ' sm-param-menu__item--active' : ''}" data-param="${id}">${esc(label)}</button>`
+    ).join('');
+    return `<div class="sm-param-menu${state.paramMenuOpen ? ' sm-param-menu--open' : ''}" id="sm-param-menu" hidden>
+      <button type="button" class="sm-param-menu__backdrop" id="sm-param-menu-backdrop" aria-label="Fermer le menu"></button>
+      <nav class="sm-param-menu__panel" aria-label="Sections paramétrage">${items}</nav>
+    </div>`;
+  }
+
+  function bindParamMenu(container, section) {
+    const menu = container.querySelector('#sm-param-menu');
+    const btn = container.querySelector('#sm-param-menu-btn');
+    const backdrop = container.querySelector('#sm-param-menu-backdrop');
+    function closeMenu() {
+      state.paramMenuOpen = false;
+      if (menu) {
+        menu.classList.remove('sm-param-menu--open');
+        menu.hidden = true;
+      }
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    function openMenu() {
+      state.paramMenuOpen = true;
+      if (menu) {
+        menu.hidden = false;
+        requestAnimationFrame(() => menu.classList.add('sm-param-menu--open'));
+      }
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    }
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (state.paramMenuOpen) closeMenu();
+        else openMenu();
+      });
+    }
+    if (backdrop) backdrop.addEventListener('click', closeMenu);
+    container.querySelectorAll('[data-param]').forEach((el) => {
+      el.addEventListener('click', () => {
+        closeMenu();
+        nav('#/param/' + el.dataset.param);
+      });
+    });
   }
 
   function renderFilterPanel() {
@@ -439,8 +538,10 @@
   }
 
   async function renderNew() {
-    const suggest = await api('/equipment.php?suggest_id=1');
-    const structOpts = state.structures.filter((s) => s.active).map((s) =>
+    const activeStructs = state.structures.filter((s) => s.active);
+    const defaultStructId = activeStructs[0]?.id || '';
+    const suggest = await api('/equipment.php?suggest_id=1' + (defaultStructId ? '&structure_id=' + defaultStructId : ''));
+    const structOpts = activeStructs.map((s) =>
       `<option value="${s.id}">${esc(s.label)}</option>`).join('');
     const typeOpts = (state.catalog?.types || []).filter((t) => t.trackable).map((t) =>
       `<option value="${t.id}">${esc(t.label)}</option>`).join('');
@@ -450,10 +551,10 @@
     root.innerHTML = `
       ${renderTopbar('Nouveau matériel', '#/parc')}
       <form id="sm-new-form">
-        <div class="sm-field"><label class="sm-label">Identifiant public *</label>
-          <input class="sm-input" name="public_id" required value="${esc(suggest.public_id)}"></div>
         <div class="sm-field"><label class="sm-label">Structure *</label>
           <select class="sm-select" name="structure_id" required>${structOpts}</select></div>
+        <div class="sm-field"><label class="sm-label">Identifiant public *</label>
+          <input class="sm-input" name="public_id" required value="${esc(suggest.public_id)}"></div>
         <div class="sm-field"><label class="sm-label">Type *</label>
           <select class="sm-select" name="type_id" required>${typeOpts}</select></div>
         <div class="sm-field"><label class="sm-label">Marque</label><input class="sm-input" name="brand"></div>
@@ -466,6 +567,14 @@
       </form>`;
 
     bindNav(root);
+    const structSelect = root.querySelector('[name=structure_id]');
+    const publicIdInput = root.querySelector('[name=public_id]');
+    structSelect.addEventListener('change', async () => {
+      try {
+        const res = await api('/equipment.php?suggest_id=1&structure_id=' + structSelect.value);
+        publicIdInput.value = res.public_id;
+      } catch (err) { showToast(err.message); }
+    });
     root.querySelector('#sm-new-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
@@ -517,15 +626,23 @@
     const checkWrap = root.querySelector('#sm-check-fields');
     const summaryField = root.querySelector('#sm-summary-field');
 
+    function renderCheckField(c) {
+      if (c.input_type === 'text') {
+        return `<div class="sm-check-row"><span>${esc(c.label)}</span>
+          <input class="sm-input" name="check_${esc(c.field_key)}" required></div>`;
+      }
+      const opts = c.input_type === 'select_ok_ko_na'
+        ? '<option value="">—</option><option value="OK">OK</option><option value="KO">KO</option><option value="N/A">N/A</option>'
+        : '<option value="">—</option><option value="OK">OK</option><option value="KO">KO</option>';
+      return `<div class="sm-check-row"><span>${esc(c.label)}</span>
+        <select class="sm-select" name="check_${esc(c.field_key)}" required>${opts}</select></div>`;
+    }
+
     function updateSubtypeUI() {
       const sub = subtypeEl.value;
       summaryField.hidden = sub !== 'repair';
       if (sub === 'revision' && type && type.checks.length) {
-        checkWrap.innerHTML = type.checks.map((c) => `
-          <div class="sm-check-row"><span>${esc(c.label)}</span>
-            <select class="sm-select" name="check_${esc(c.field_key)}" required>
-              <option value="">—</option><option value="OK">OK</option><option value="KO">KO</option>
-            </select></div>`).join('');
+        checkWrap.innerHTML = type.checks.map(renderCheckField).join('');
         checkWrap.hidden = false;
       } else {
         checkWrap.innerHTML = sub === 'revision' ? '<p class="sm-empty sm-empty--inline">Pas de grille pour ce type.</p>' : '';
@@ -606,35 +723,36 @@
 
   function renderParam(section) {
     state.paramSection = section;
-    const sections = [
-      ['settings', 'Réglages'],
-      ['structures', 'Structures'],
-      ['roles', 'Rôles'],
-      ['persons', 'Personnes'],
-      ['types', 'Types EPI'],
-    ];
-    const subtabs = sections.map(([id, label]) =>
-      `<button type="button" class="sm-subtab${id === section ? ' sm-subtab--active' : ''}" data-param="${id}">${esc(label)}</button>`
-    ).join('');
-
+    state.paramMenuOpen = false;
     let body = '';
+
     if (section === 'settings') {
       body = `<form id="sm-settings-form">
         <label class="sm-toggle"><input type="checkbox" name="nfc_enabled" ${state.settings.nfc_enabled ? 'checked' : ''}> Activer NFC</label>
-        <div class="sm-field"><label class="sm-label">Préfixe ID auto</label><input class="sm-input" name="id_prefix" value="${esc(state.settings.id_prefix)}"></div>
+        <div class="sm-field"><label class="sm-label">Préfixe ID par défaut</label>
+          <input class="sm-input" name="id_prefix" value="${esc(state.settings.id_prefix)}" placeholder="EQ-">
+          <p class="sm-hint">Utilisé si une structure n'a pas de préfixe propre.</p></div>
         <div class="sm-field"><label class="sm-label">Structure par défaut</label>
           <select class="sm-select" name="default_structure_id"><option value="">— Aucune —</option>
-            ${state.structures.map((s) => `<option value="${s.id}"${state.settings.default_structure_id === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
+            ${state.structures.filter((s) => s.active).map((s) =>
+              `<option value="${s.id}"${state.settings.default_structure_id === s.id ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}
           </select></div>
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>`;
     } else if (section === 'structures') {
       body = state.structures.map((s) => `
-        <div class="sm-card" data-edit-struct="${s.id}">
-          <strong>${esc(s.label)}</strong> (${esc(s.slug)}) ${s.active ? '' : '— inactif'}
-        </div>`).join('') +
+        <form class="sm-card sm-struct-card" data-struct-id="${s.id}">
+          <div class="sm-field"><label class="sm-label">Libellé</label>
+            <input class="sm-input" name="label" value="${esc(s.label)}" required></div>
+          <div class="sm-field"><label class="sm-label">Préfixe ID</label>
+            <input class="sm-input" name="id_prefix" value="${esc(s.id_prefix || '')}" placeholder="${esc(state.settings.id_prefix)}"></div>
+          <p class="sm-card__meta">${esc(s.slug)}${s.active ? '' : ' · inactif'}</p>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
+        </form>`).join('') +
         `<form id="sm-struct-form" class="sm-card">
+          <h2 class="sm-section-title">Nouvelle structure</h2>
           <div class="sm-field"><label class="sm-label">Libellé</label><input class="sm-input" name="label" required></div>
+          <div class="sm-field"><label class="sm-label">Préfixe ID</label><input class="sm-input" name="id_prefix" placeholder="Ex. AQ-"></div>
           <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter structure</button>
         </form>`;
     } else if (section === 'roles') {
@@ -644,8 +762,10 @@
           <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter rôle</button>
         </form>`;
     } else if (section === 'persons') {
-      body = state.persons.map((p) => `<div class="sm-card"><strong>${esc(p.display_name)}</strong>
-        ${p.active ? '' : ' (inactif)'}</div>`).join('') +
+      body = state.persons.map((p) => `<div class="sm-card">
+          <strong>${esc(p.display_name)}</strong>${p.active ? '' : ' <span class="sm-card__meta">(inactif)</span>'}
+          ${renderRoleChips(p)}
+        </div>`).join('') +
         `<form id="sm-person-form" class="sm-card">
           <div class="sm-field"><label class="sm-label">Nom</label><input class="sm-input" name="display_name" required></div>
           <div class="sm-field"><label class="sm-label">Rôles</label>
@@ -655,20 +775,29 @@
         </form>`;
     } else if (section === 'types') {
       body = (state.catalog?.types || []).map((t) => `
-        <div class="sm-card"><strong>${esc(t.label)}</strong> — ${t.checks.length} critère(s)
-          ${t.trackable ? '' : ' (non suivi)'}</div>`).join('');
+        <button type="button" class="sm-card sm-card--clickable sm-type-card" data-type-id="${t.id}">
+          <div class="sm-card__row">
+            <div>
+              <strong>${esc(t.label)}</strong>
+              <p class="sm-card__meta">${t.checks.length} critère(s) de révision${t.trackable ? '' : ' · non suivi'}</p>
+            </div>
+            <span class="sm-equip-item__chev" aria-hidden="true">›</span>
+          </div>
+        </button>`).join('');
     }
 
     root.innerHTML = `
-      ${renderTopbar('Paramétrage')}
-      <div class="sm-subtabs">${subtabs}</div>
+      ${renderTopbar(paramSectionLabel(section), null, { eyebrow: 'Paramétrage', menuBtn: true })}
+      ${renderParamMenu(section)}
       ${body}
       ${renderTabs('param')}`;
 
     bindNav(root);
     bindTabs(root);
-    root.querySelectorAll('[data-param]').forEach((btn) => {
-      btn.addEventListener('click', () => nav('#/param/' + btn.dataset.param));
+    bindParamMenu(root, section);
+
+    root.querySelectorAll('.sm-type-card').forEach((el) => {
+      el.addEventListener('click', () => nav('#/param/types/' + el.dataset.typeId));
     });
 
     const settingsForm = root.querySelector('#sm-settings-form');
@@ -691,13 +820,39 @@
       });
     }
 
+    root.querySelectorAll('.sm-struct-card').forEach((form) => {
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(form);
+        const id = parseInt(form.dataset.structId, 10);
+        try {
+          await api('/structures.php?id=' + id, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              label: fd.get('label'),
+              id_prefix: fd.get('id_prefix') || null,
+            }),
+          });
+          state.structures = (await api('/structures.php')).structures;
+          showToast('Structure enregistrée');
+          renderParam('structures');
+        } catch (err) { showToast(err.message); }
+      });
+    });
+
     const structForm = root.querySelector('#sm-struct-form');
     if (structForm) {
       structForm.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         const fd = new FormData(ev.target);
         try {
-          await api('/structures.php', { method: 'POST', body: JSON.stringify({ label: fd.get('label') }) });
+          await api('/structures.php', {
+            method: 'POST',
+            body: JSON.stringify({
+              label: fd.get('label'),
+              id_prefix: fd.get('id_prefix') || null,
+            }),
+          });
           state.structures = (await api('/structures.php')).structures;
           showToast('Structure ajoutée');
           renderParam('structures');
@@ -738,6 +893,103 @@
     }
   }
 
+  async function renderParamTypeDetail(typeId) {
+    const data = await api('/catalog.php?type_id=' + typeId);
+    const type = data.type;
+    state.paramMenuOpen = false;
+
+    const checkRows = (type.checks || []).map((c) => `
+      <form class="sm-card sm-check-card" data-check-id="${c.id}">
+        <div class="sm-field"><label class="sm-label">Libellé</label>
+          <input class="sm-input" name="label" value="${esc(c.label)}" required></div>
+        <div class="sm-field"><label class="sm-label">Clé technique</label>
+          <input class="sm-input" name="field_key" value="${esc(c.field_key)}" required></div>
+        <div class="sm-field"><label class="sm-label">Type de champ</label>
+          <select class="sm-select" name="input_type">
+            ${CHECK_INPUT_TYPES.map(([val, lbl]) =>
+              `<option value="${val}"${c.input_type === val ? ' selected' : ''}>${esc(lbl)}</option>`).join('')}
+          </select></div>
+        <div class="sm-field"><label class="sm-label">Ordre</label>
+          <input class="sm-input" name="sort_order" type="number" min="1" value="${c.sort_order}"></div>
+        <div class="sm-actions">
+          <button type="submit" class="sm-btn sm-btn--primary">Enregistrer</button>
+          <button type="button" class="sm-btn sm-btn--danger sm-btn-delete-check">Supprimer</button>
+        </div>
+      </form>`).join('') || '<p class="sm-empty sm-empty--inline">Aucun critère — ajoutez le premier ci-dessous.</p>';
+
+    const inputTypeOpts = CHECK_INPUT_TYPES.map(([val, lbl]) =>
+      `<option value="${val}">${esc(lbl)}</option>`).join('');
+
+    root.innerHTML = `
+      ${renderTopbar(type.label, '#/param/types', { eyebrow: 'Types EPI · Grille révision' })}
+      <p class="sm-stats-summary">${type.checks.length} critère(s) · ${type.trackable ? 'Suivi actif' : 'Non suivi'}</p>
+      ${checkRows}
+      <form id="sm-check-add-form" class="sm-card">
+        <h2 class="sm-section-title">Ajouter un critère</h2>
+        <div class="sm-field"><label class="sm-label">Libellé</label><input class="sm-input" name="label" required></div>
+        <div class="sm-field"><label class="sm-label">Clé technique</label>
+          <input class="sm-input" name="field_key" placeholder="auto si vide"></div>
+        <div class="sm-field"><label class="sm-label">Type de champ</label>
+          <select class="sm-select" name="input_type">${inputTypeOpts}</select></div>
+        <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter</button>
+      </form>
+      ${renderTabs('param')}`;
+
+    bindNav(root);
+    bindTabs(root);
+
+    root.querySelectorAll('.sm-check-card').forEach((form) => {
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(form);
+        const checkId = parseInt(form.dataset.checkId, 10);
+        try {
+          await api('/catalog.php?check_id=' + checkId, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              label: fd.get('label'),
+              field_key: fd.get('field_key'),
+              input_type: fd.get('input_type'),
+              sort_order: parseInt(fd.get('sort_order'), 10) || 1,
+            }),
+          });
+          state.catalog = await api('/catalog.php');
+          showToast('Critère enregistré');
+          renderParamTypeDetail(typeId);
+        } catch (err) { showToast(err.message); }
+      });
+      form.querySelector('.sm-btn-delete-check').addEventListener('click', async () => {
+        if (!confirm('Supprimer ce critère ?')) return;
+        try {
+          await api('/catalog.php?check_id=' + form.dataset.checkId, { method: 'DELETE' });
+          state.catalog = await api('/catalog.php');
+          showToast('Critère supprimé');
+          renderParamTypeDetail(typeId);
+        } catch (err) { showToast(err.message); }
+      });
+    });
+
+    root.querySelector('#sm-check-add-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      try {
+        await api('/catalog.php', {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'check',
+            type_id: typeId,
+            label: fd.get('label'),
+            field_key: fd.get('field_key') || undefined,
+            input_type: fd.get('input_type'),
+          }),
+        });
+        state.catalog = await api('/catalog.php');
+        showToast('Critère ajouté');
+        renderParamTypeDetail(typeId);
+      } catch (err) { showToast(err.message); }
+    });
+  }
+
   async function refreshCurrentView() {
     const route = parseRoute();
     state.loading = true;
@@ -748,6 +1000,8 @@
         await renderNew();
       } else if (route.view === 'intervention') {
         await renderIntervention(route.equipmentId);
+      } else if (route.view === 'param_type') {
+        await renderParamTypeDetail(route.typeId);
       } else if (route.tab === 'stats') {
         await loadStats();
         renderStats();

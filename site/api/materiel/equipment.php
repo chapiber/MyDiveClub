@@ -19,7 +19,13 @@ try {
             ]);
         }
         if (isset($_GET['suggest_id']) && (string)$_GET['suggest_id'] === '1') {
-            portailClubJsonOk(['public_id' => portailClubMaterielSuggestNextPublicId($pdo)]);
+            $structureId = isset($_GET['structure_id']) ? (int)$_GET['structure_id'] : null;
+            portailClubJsonOk([
+                'public_id' => portailClubMaterielSuggestNextPublicId(
+                    $pdo,
+                    $structureId !== null && $structureId > 0 ? $structureId : null
+                ),
+            ]);
         }
         $publicId = trim((string)($_GET['public_id'] ?? ''));
         if ($publicId !== '') {

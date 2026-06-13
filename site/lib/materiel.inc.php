@@ -5,6 +5,7 @@ require_once __DIR__ . '/api.inc.php';
 
 const PORTAIL_CLUB_MATERIEL_STATES = ['operational', 'in_repair', 'scrapped', 'for_sale'];
 const PORTAIL_CLUB_MATERIEL_INTERVENTION_SUBTYPES = ['revision', 'repair'];
+const PORTAIL_CLUB_MATERIEL_CHECK_INPUT_TYPES = ['text', 'select_ok_ko', 'select_ok_ko_na'];
 
 function portailClubMaterielStateLabel(string $state): string
 {
@@ -70,6 +71,32 @@ function portailClubMaterielNormalizeState(mixed $value): string
         portailClubJsonFail('État invalide.');
     }
     return $v;
+}
+
+function portailClubMaterielNormalizeIdPrefix(mixed $value): string
+{
+    $s = strtoupper(trim((string)$value));
+    if ($s === '' || strlen($s) > 16) {
+        portailClubJsonFail('Préfixe ID requis (max 16 car.).');
+    }
+    if (!preg_match('/^[A-Z0-9\-_]+$/', $s)) {
+        portailClubJsonFail('Préfixe ID : lettres, chiffres, tirets uniquement.');
+    }
+    return $s;
+}
+
+function portailClubMaterielResolveStructureIdPrefix(PDO $pdo, int $structureId): string
+{
+    $st = $pdo->prepare(
+        'SELECT id_prefix FROM PORTAIL_CLUB_materiel_structures WHERE id = ? AND active = 1 LIMIT 1'
+    );
+    $st->execute([$structureId]);
+    $prefix = $st->fetchColumn();
+    if (is_string($prefix) && trim($prefix) !== '') {
+        return strtoupper(trim($prefix));
+    }
+    $settings = portailClubMaterielGetSettings($pdo);
+    return (string)$settings['id_prefix'];
 }
 
 function portailClubMaterielNormalizePublicId(mixed $value): string
@@ -143,7 +170,7 @@ function portailClubMaterielPatchSettings(PDO $pdo, array $body): array
 
 function portailClubMaterielListStructures(PDO $pdo, bool $activeOnly = false): array
 {
-    $sql = 'SELECT id, slug, label, active, sort_order
+    $sql = 'SELECT id, slug, label, id_prefix, active, sort_order
             FROM PORTAIL_CLUB_materiel_structures';
     if ($activeOnly) {
         $sql .= ' WHERE active = 1';
@@ -154,6 +181,7 @@ function portailClubMaterielListStructures(PDO $pdo, bool $activeOnly = false): 
             'id' => (int)$r['id'],
             'slug' => $r['slug'],
             'label' => $r['label'],
+            'id_prefix' => $r['id_prefix'] !== null && $r['id_prefix'] !== '' ? (string)$r['id_prefix'] : null,
             'active' => (bool)$r['active'],
             'sort_order' => (int)$r['sort_order'],
         ];
@@ -168,17 +196,21 @@ function portailClubMaterielCreateStructure(PDO $pdo, array $body): array
         $slug = preg_replace('/[^a-z0-9]+/', '_', strtolower($label)) ?? 'structure';
     }
     $st = $pdo->prepare(
-        'INSERT INTO PORTAIL_CLUB_materiel_structures (slug, label, sort_order)
-         VALUES (?, ?, ?)'
+        'INSERT INTO PORTAIL_CLUB_materiel_structures (slug, label, id_prefix, sort_order)
+         VALUES (?, ?, ?, ?)'
     );
-    $st->execute([$slug, $label, (int)($body['sort_order'] ?? 0)]);
+    $idPrefix = null;
+    if (isset($body['id_prefix']) && trim((string)$body['id_prefix']) !== '') {
+        $idPrefix = portailClubMaterielNormalizeIdPrefix($body['id_prefix']);
+    }
+    $st->execute([$slug, $label, $idPrefix, (int)($body['sort_order'] ?? 0)]);
     return portailClubMaterielGetStructure($pdo, (int)$pdo->lastInsertId());
 }
 
 function portailClubMaterielGetStructure(PDO $pdo, int $id): array
 {
     $st = $pdo->prepare(
-        'SELECT id, slug, label, active, sort_order FROM PORTAIL_CLUB_materiel_structures WHERE id = ?'
+        'SELECT id, slug, label, id_prefix, active, sort_order FROM PORTAIL_CLUB_materiel_structures WHERE id = ?'
     );
     $st->execute([$id]);
     $r = $st->fetch();
@@ -189,6 +221,7 @@ function portailClubMaterielGetStructure(PDO $pdo, int $id): array
         'id' => (int)$r['id'],
         'slug' => $r['slug'],
         'label' => $r['label'],
+        'id_prefix' => $r['id_prefix'] !== null && $r['id_prefix'] !== '' ? (string)$r['id_prefix'] : null,
         'active' => (bool)$r['active'],
         'sort_order' => (int)$r['sort_order'],
     ];
@@ -202,6 +235,14 @@ function portailClubMaterielPatchStructure(PDO $pdo, int $id, array $body): arra
     if (array_key_exists('label', $body)) {
         $sets[] = 'label = ?';
         $params[] = portailClubTrimName($body['label'], 'Libellé structure');
+    }
+    if (array_key_exists('id_prefix', $body)) {
+        if ($body['id_prefix'] === null || trim((string)$body['id_prefix']) === '') {
+            $sets[] = 'id_prefix = NULL';
+        } else {
+            $sets[] = 'id_prefix = ?';
+            $params[] = portailClubMaterielNormalizeIdPrefix($body['id_prefix']);
+        }
     }
     if (array_key_exists('slug', $body)) {
         $sets[] = 'slug = ?';
@@ -336,15 +377,25 @@ function portailClubMaterielSyncPersonRoles(PDO $pdo, int $personId, array $role
     }
 }
 
-function portailClubMaterielFormatPerson(PDO $pdo, array $r): array
+function portailClubMaterielFormatPerson(PDO $pdo, array $r, ?array $rolesById = null): array
 {
     $pid = (int)$r['id'];
+    $roleIds = portailClubMaterielFetchPersonRoleIds($pdo, $pid);
+    $roleLabels = [];
+    if ($rolesById !== null) {
+        foreach ($roleIds as $rid) {
+            if (isset($rolesById[$rid])) {
+                $roleLabels[] = $rolesById[$rid];
+            }
+        }
+    }
     return [
         'id' => $pid,
         'display_name' => $r['display_name'],
         'structure_id' => $r['structure_id'] !== null ? (int)$r['structure_id'] : null,
         'active' => (bool)$r['active'],
-        'role_ids' => portailClubMaterielFetchPersonRoleIds($pdo, $pid),
+        'role_ids' => $roleIds,
+        'role_labels' => $roleLabels,
     ];
 }
 
@@ -356,7 +407,11 @@ function portailClubMaterielListPersons(PDO $pdo, bool $activeOnly = false): arr
     }
     $sql .= ' ORDER BY display_name';
     $rows = $pdo->query($sql)->fetchAll();
-    return array_map(fn(array $r) => portailClubMaterielFormatPerson($pdo, $r), $rows);
+    $rolesById = [];
+    foreach (portailClubMaterielListRoles($pdo) as $role) {
+        $rolesById[$role['id']] = $role['label'];
+    }
+    return array_map(fn(array $r) => portailClubMaterielFormatPerson($pdo, $r, $rolesById), $rows);
 }
 
 function portailClubMaterielCreatePerson(PDO $pdo, array $body): array
@@ -388,7 +443,11 @@ function portailClubMaterielGetPerson(PDO $pdo, int $id): array
     if (!$r) {
         portailClubJsonFail('Personne introuvable.', 404);
     }
-    return portailClubMaterielFormatPerson($pdo, $r);
+    $rolesById = [];
+    foreach (portailClubMaterielListRoles($pdo) as $role) {
+        $rolesById[$role['id']] = $role['label'];
+    }
+    return portailClubMaterielFormatPerson($pdo, $r, $rolesById);
 }
 
 function portailClubMaterielPatchPerson(PDO $pdo, int $id, array $body): array
@@ -567,6 +626,105 @@ function portailClubMaterielPatchEquipmentType(PDO $pdo, int $id, array $body): 
     return portailClubMaterielGetEquipmentType($pdo, $id);
 }
 
+function portailClubMaterielNormalizeCheckInputType(mixed $value): string
+{
+    $v = strtolower(trim((string)$value));
+    if (!in_array($v, PORTAIL_CLUB_MATERIEL_CHECK_INPUT_TYPES, true)) {
+        portailClubJsonFail('Type de champ invalide.');
+    }
+    return $v;
+}
+
+function portailClubMaterielFormatTypeCheck(array $r): array
+{
+    return [
+        'id' => (int)$r['id'],
+        'type_id' => (int)$r['type_id'],
+        'field_key' => $r['field_key'],
+        'label' => $r['label'],
+        'input_type' => $r['input_type'],
+        'sort_order' => (int)$r['sort_order'],
+    ];
+}
+
+function portailClubMaterielGetTypeCheck(PDO $pdo, int $checkId): array
+{
+    $st = $pdo->prepare(
+        'SELECT id, type_id, field_key, label, input_type, sort_order
+         FROM PORTAIL_CLUB_materiel_equipment_type_checks WHERE id = ?'
+    );
+    $st->execute([$checkId]);
+    $r = $st->fetch();
+    if (!$r) {
+        portailClubJsonFail('Critère introuvable.', 404);
+    }
+    return portailClubMaterielFormatTypeCheck($r);
+}
+
+function portailClubMaterielCreateTypeCheck(PDO $pdo, array $body): array
+{
+    $typeId = portailClubIntParam($body['type_id'] ?? null, 'type_id');
+    portailClubMaterielGetEquipmentType($pdo, $typeId);
+    $fieldKey = strtolower(trim((string)($body['field_key'] ?? '')));
+    if ($fieldKey === '') {
+        $label = portailClubTrimName($body['label'] ?? '', 'Libellé critère');
+        $fieldKey = preg_replace('/[^a-z0-9]+/', '_', strtolower($label)) ?? 'critere';
+    }
+    $label = portailClubTrimName($body['label'] ?? $fieldKey, 'Libellé critère');
+    $inputType = portailClubMaterielNormalizeCheckInputType($body['input_type'] ?? 'select_ok_ko');
+    $sortOrder = (int)($body['sort_order'] ?? 0);
+    if ($sortOrder <= 0) {
+        $stMax = $pdo->prepare(
+            'SELECT COALESCE(MAX(sort_order), 0) FROM PORTAIL_CLUB_materiel_equipment_type_checks WHERE type_id = ?'
+        );
+        $stMax->execute([$typeId]);
+        $sortOrder = (int)$stMax->fetchColumn() + 1;
+    }
+    $st = $pdo->prepare(
+        'INSERT INTO PORTAIL_CLUB_materiel_equipment_type_checks
+         (type_id, field_key, label, input_type, sort_order) VALUES (?, ?, ?, ?, ?)'
+    );
+    $st->execute([$typeId, $fieldKey, $label, $inputType, $sortOrder]);
+    return portailClubMaterielGetTypeCheck($pdo, (int)$pdo->lastInsertId());
+}
+
+function portailClubMaterielPatchTypeCheck(PDO $pdo, int $checkId, array $body): array
+{
+    $check = portailClubMaterielGetTypeCheck($pdo, $checkId);
+    $sets = [];
+    $params = [];
+    if (array_key_exists('label', $body)) {
+        $sets[] = 'label = ?';
+        $params[] = portailClubTrimName($body['label'], 'Libellé critère');
+    }
+    if (array_key_exists('field_key', $body)) {
+        $sets[] = 'field_key = ?';
+        $params[] = strtolower(trim((string)$body['field_key']));
+    }
+    if (array_key_exists('input_type', $body)) {
+        $sets[] = 'input_type = ?';
+        $params[] = portailClubMaterielNormalizeCheckInputType($body['input_type']);
+    }
+    if (array_key_exists('sort_order', $body)) {
+        $sets[] = 'sort_order = ?';
+        $params[] = (int)$body['sort_order'];
+    }
+    if ($sets !== []) {
+        $params[] = $checkId;
+        $pdo->prepare(
+            'UPDATE PORTAIL_CLUB_materiel_equipment_type_checks SET ' . implode(', ', $sets) . ' WHERE id = ?'
+        )->execute($params);
+    }
+    return portailClubMaterielGetTypeCheck($pdo, $checkId);
+}
+
+function portailClubMaterielDeleteTypeCheck(PDO $pdo, int $checkId): void
+{
+    portailClubMaterielGetTypeCheck($pdo, $checkId);
+    $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment_type_checks WHERE id = ?')
+        ->execute([$checkId]);
+}
+
 function portailClubMaterielFormatEquipmentRow(array $r): array
 {
     return [
@@ -674,15 +832,24 @@ function portailClubMaterielCheckPublicIdAvailable(PDO $pdo, string $publicId, ?
     return !$st->fetchColumn();
 }
 
-function portailClubMaterielSuggestNextPublicId(PDO $pdo): string
+function portailClubMaterielSuggestNextPublicId(PDO $pdo, ?int $structureId = null): string
 {
-    $settings = portailClubMaterielGetSettings($pdo);
-    $prefix = (string)$settings['id_prefix'];
-    $st = $pdo->prepare(
-        'SELECT public_id FROM PORTAIL_CLUB_materiel_equipment
-         WHERE public_id LIKE ? ORDER BY id DESC LIMIT 1'
-    );
-    $st->execute([$prefix . '%']);
+    if ($structureId !== null && $structureId > 0) {
+        portailClubMaterielValidateStructureId($pdo, $structureId);
+        $prefix = portailClubMaterielResolveStructureIdPrefix($pdo, $structureId);
+    } else {
+        $settings = portailClubMaterielGetSettings($pdo);
+        $prefix = (string)$settings['id_prefix'];
+    }
+    $sql = 'SELECT public_id FROM PORTAIL_CLUB_materiel_equipment WHERE public_id LIKE ?';
+    $params = [$prefix . '%'];
+    if ($structureId !== null && $structureId > 0) {
+        $sql .= ' AND structure_id = ?';
+        $params[] = $structureId;
+    }
+    $sql .= ' ORDER BY id DESC LIMIT 1';
+    $st = $pdo->prepare($sql);
+    $st->execute($params);
     $last = $st->fetchColumn();
     $num = 1;
     if (is_string($last) && preg_match('/(\d+)$/', $last, $m)) {

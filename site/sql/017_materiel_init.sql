@@ -153,15 +153,6 @@ INSERT INTO PORTAIL_CLUB_materiel_settings (setting_key, value_json)
 SELECT 'default_structure_id', JSON_OBJECT('value', NULL)
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM PORTAIL_CLUB_materiel_settings WHERE setting_key = 'default_structure_id');
 
--- Structures seed
-INSERT INTO PORTAIL_CLUB_materiel_structures (slug, label, sort_order)
-SELECT 'club', 'Club principal', 1 FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM PORTAIL_CLUB_materiel_structures WHERE slug = 'club');
-
-INSERT INTO PORTAIL_CLUB_materiel_structures (slug, label, sort_order)
-SELECT 'ecole', 'École', 2 FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM PORTAIL_CLUB_materiel_structures WHERE slug = 'ecole');
-
 -- Rôles métier seed
 INSERT INTO PORTAIL_CLUB_materiel_roles (slug, label, description, sort_order)
 SELECT 'referent_materiel', 'Référent matériel', 'Responsable du parc EPI', 1 FROM DUAL
