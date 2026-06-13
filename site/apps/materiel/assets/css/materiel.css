@@ -73,27 +73,6 @@
   font-weight: 500;
 }
 
-.sm-menu-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  border: 2px solid var(--pc-border);
-  border-radius: 14px;
-  background: var(--pc-surface);
-  color: var(--pc-accent);
-  flex-shrink: 0;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-}
-
-.sm-menu-btn:active {
-  background: var(--pc-accent-soft);
-  transform: scale(0.98);
-}
-
 /* — Barre utilisateur compacte — */
 .sm-user-bar {
   display: flex;
@@ -567,78 +546,66 @@
   margin-bottom: 0.75rem;
 }
 
-/* — Menu paramétrage (drawer) — */
-.sm-param-menu {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-}
-
-.sm-param-menu--open {
-  pointer-events: auto;
-}
-
-.sm-param-menu__backdrop {
-  position: absolute;
-  inset: 0;
-  border: none;
-  background: rgba(20, 33, 46, 0.45);
-  opacity: 0;
-  transition: opacity 0.2s;
-  cursor: pointer;
-  padding: 0;
-}
-
-.sm-param-menu--open .sm-param-menu__backdrop {
-  opacity: 1;
-}
-
-.sm-param-menu__panel {
-  position: absolute;
+/* — Segments paramétrage (sous-navigation sticky) — */
+.sm-param-segments {
+  position: sticky;
   top: 0;
-  right: 0;
-  width: min(18rem, 88vw);
-  height: 100%;
-  padding: calc(0.75rem + var(--safe-top)) 0.75rem calc(1rem + var(--safe-bottom));
-  background: var(--pc-surface);
-  border-left: 2px solid var(--pc-border);
-  box-shadow: -8px 0 24px rgba(13, 126, 168, 0.12);
-  transform: translateX(100%);
-  transition: transform 0.22s ease;
+  z-index: 12;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  margin: -0.35rem -1rem 1rem;
+  padding: 0.55rem 1rem 0.65rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: linear-gradient(
+    to bottom,
+    var(--pc-bg) 70%,
+    color-mix(in srgb, var(--pc-bg) 85%, transparent)
+  );
+  border-bottom: 1px solid var(--pc-border);
 }
 
-.sm-param-menu--open .sm-param-menu__panel {
-  transform: translateX(0);
+.sm-param-segments::-webkit-scrollbar {
+  display: none;
 }
 
-.sm-param-menu__item {
-  display: flex;
+.sm-param-seg {
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
   min-height: 2.75rem;
-  padding: 0.65rem 0.85rem;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  background: transparent;
+  padding: 0.4rem 0.9rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 999px;
+  background: var(--pc-surface);
   font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--pc-text);
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.sm-param-menu__item--active {
+.sm-param-seg--active {
   border-color: var(--pc-accent);
-  background: var(--pc-accent-soft);
-  color: var(--pc-accent);
+  background: var(--pc-accent);
+  color: #fff;
+  font-weight: 600;
 }
 
-.sm-param-menu__item:active {
-  transform: scale(0.98);
+.sm-param-seg:active {
+  transform: scale(0.97);
+}
+
+@media (min-width: 640px) {
+  .sm-param-segments {
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
 }
 
 /* — Chips rôles personnes — */
@@ -678,33 +645,6 @@
 
 .sm-check-card .sm-actions {
   margin-bottom: 0;
-}
-
-/* — Sous-onglets param (legacy, remplacé par menu) — */
-.sm-subtabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-}
-
-.sm-subtab {
-  min-height: 2.5rem;
-  padding: 0.4rem 0.8rem;
-  border: 2px solid var(--pc-border);
-  border-radius: 999px;
-  background: var(--pc-surface);
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.sm-subtab--active {
-  border-color: var(--pc-accent);
-  background: var(--pc-accent-soft);
-  color: var(--pc-accent);
-  font-weight: 600;
 }
 
 /* — Graphiques — */

@@ -46,7 +46,6 @@
     filters: { q: '', state: '', type_id: '' },
     loading: false,
     paramDraft: {},
-    paramMenuOpen: false,
   };
 
   function showToast(msg) {
@@ -185,7 +184,7 @@
     const tabs = [
       { id: 'parc', label: 'Parc', icon: '<path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/>' },
       { id: 'stats', label: 'Stats', icon: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 17V11"/><path d="M12 17V7"/><path d="M16 17v-4"/>' },
-      { id: 'param', label: 'Param.', icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
+      { id: 'param', label: 'Param', icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
     ];
     return `<nav class="sm-tabs" aria-label="Navigation">${tabs.map((t) =>
       `<button type="button" class="sm-tab${t.id === activeTab ? ' sm-tab--active' : ''}" data-tab="${t.id}">
@@ -197,7 +196,14 @@
 
   function bindTabs(container) {
     container.querySelectorAll('[data-tab]').forEach((btn) => {
-      btn.addEventListener('click', () => nav('#/' + btn.dataset.tab));
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        if (tab === 'param') {
+          nav('#/param/' + (state.paramSection || 'settings'));
+        } else {
+          nav('#/' + tab);
+        }
+      });
     });
   }
 
@@ -210,13 +216,6 @@
       : `<a href="../../index.html" class="sm-back" aria-label="Portail">
            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
          </a>`;
-    const menuBtn = opts.menuBtn
-      ? `<button type="button" class="sm-menu-btn" id="sm-param-menu-btn" aria-label="Menu paramétrage" aria-expanded="${state.paramMenuOpen ? 'true' : 'false'}">
-           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-             <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
-           </svg>
-         </button>`
-      : '';
     const subtitle = opts.subtitle
       ? `<p class="sm-topbar__subtitle">${esc(opts.subtitle)}</p>`
       : '';
@@ -227,7 +226,6 @@
         <h1 class="sm-title">${esc(title)}</h1>
         ${subtitle}
       </div>
-      ${menuBtn}
     </header>`;
   }
 
@@ -248,48 +246,16 @@
       `<span class="sm-role-chip">${esc(l)}</span>`).join('')}</div>`;
   }
 
-  function renderParamMenu(section) {
+  function renderParamSegments(section) {
     const items = PARAM_SECTIONS.map(([id, label]) =>
-      `<button type="button" class="sm-param-menu__item${id === section ? ' sm-param-menu__item--active' : ''}" data-param="${id}">${esc(label)}</button>`
+      `<button type="button" class="sm-param-seg${id === section ? ' sm-param-seg--active' : ''}" data-param="${id}" aria-current="${id === section ? 'page' : 'false'}">${esc(label)}</button>`
     ).join('');
-    return `<div class="sm-param-menu${state.paramMenuOpen ? ' sm-param-menu--open' : ''}" id="sm-param-menu" hidden>
-      <button type="button" class="sm-param-menu__backdrop" id="sm-param-menu-backdrop" aria-label="Fermer le menu"></button>
-      <nav class="sm-param-menu__panel" aria-label="Sections paramétrage">${items}</nav>
-    </div>`;
+    return `<nav class="sm-param-segments" aria-label="Sections paramétrage">${items}</nav>`;
   }
 
-  function bindParamMenu(container, section) {
-    const menu = container.querySelector('#sm-param-menu');
-    const btn = container.querySelector('#sm-param-menu-btn');
-    const backdrop = container.querySelector('#sm-param-menu-backdrop');
-    function closeMenu() {
-      state.paramMenuOpen = false;
-      if (menu) {
-        menu.classList.remove('sm-param-menu--open');
-        menu.hidden = true;
-      }
-      if (btn) btn.setAttribute('aria-expanded', 'false');
-    }
-    function openMenu() {
-      state.paramMenuOpen = true;
-      if (menu) {
-        menu.hidden = false;
-        requestAnimationFrame(() => menu.classList.add('sm-param-menu--open'));
-      }
-      if (btn) btn.setAttribute('aria-expanded', 'true');
-    }
-    if (btn) {
-      btn.addEventListener('click', () => {
-        if (state.paramMenuOpen) closeMenu();
-        else openMenu();
-      });
-    }
-    if (backdrop) backdrop.addEventListener('click', closeMenu);
+  function bindParamSegments(container) {
     container.querySelectorAll('[data-param]').forEach((el) => {
-      el.addEventListener('click', () => {
-        closeMenu();
-        nav('#/param/' + el.dataset.param);
-      });
+      el.addEventListener('click', () => nav('#/param/' + el.dataset.param));
     });
   }
 
@@ -485,9 +451,10 @@
       </form>
       <div class="sm-actions"><button type="button" class="sm-btn sm-btn--primary" id="sm-new-intervention">+ Intervention</button></div>
       <h2 class="sm-section-title">Interventions</h2>${interventions}
-      <h2 class="sm-section-title">Historique états</h2>${stateLog || '<p class="sm-empty sm-empty--inline">—</p>'}`;
-
+      <h2 class="sm-section-title">Historique états</h2>${stateLog || '<p class="sm-empty sm-empty--inline">—</p>'}
+      ${renderTabs('parc')}`;
     bindNav(root);
+    bindTabs(root);
     root.querySelector('#sm-new-intervention').addEventListener('click', () => nav('#/intervention/' + id));
     root.querySelector('#sm-state-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -564,9 +531,11 @@
         <div class="sm-field"><label class="sm-label">Notes</label><textarea class="sm-textarea" name="notes"></textarea></div>
         ${nfcOpt}
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Créer</button>
-      </form>`;
+      </form>
+      ${renderTabs('parc')}`;
 
     bindNav(root);
+    bindTabs(root);
     const structSelect = root.querySelector('[name=structure_id]');
     const publicIdInput = root.querySelector('[name=public_id]');
     structSelect.addEventListener('change', async () => {
@@ -619,9 +588,11 @@
         <div class="sm-field" id="sm-summary-field" hidden><label class="sm-label">Résumé réparation *</label>
           <textarea class="sm-textarea" name="summary"></textarea></div>
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
-      </form>`;
+      </form>
+      ${renderTabs('parc')}`;
 
     bindNav(root);
+    bindTabs(root);
     const subtypeEl = root.querySelector('[name=subtype]');
     const checkWrap = root.querySelector('#sm-check-fields');
     const summaryField = root.querySelector('#sm-summary-field');
@@ -734,7 +705,6 @@
 
   async function renderParam(section) {
     state.paramSection = section;
-    state.paramMenuOpen = false;
     let body = '';
     let paramStructures = state.structures;
 
@@ -803,14 +773,14 @@
     }
 
     root.innerHTML = `
-      ${renderTopbar(paramSectionLabel(section), null, { eyebrow: 'Paramétrage', menuBtn: true })}
-      ${renderParamMenu(section)}
+      ${renderTopbar('Paramétrage', null, { subtitle: paramSectionLabel(section) })}
+      ${renderParamSegments(section)}
       ${body}
       ${renderTabs('param')}`;
 
     bindNav(root);
     bindTabs(root);
-    bindParamMenu(root, section);
+    bindParamSegments(root);
 
     root.querySelectorAll('.sm-type-card').forEach((el) => {
       el.addEventListener('click', () => nav('#/param/types/' + el.dataset.typeId));
@@ -910,7 +880,6 @@
   async function renderParamTypeDetail(typeId) {
     const data = await api('/catalog.php?type_id=' + typeId);
     const type = data.type;
-    state.paramMenuOpen = false;
 
     const checkRows = (type.checks || []).map((c) => `
       <form class="sm-card sm-check-card" data-check-id="${c.id}">
@@ -935,7 +904,8 @@
       `<option value="${val}">${esc(lbl)}</option>`).join('');
 
     root.innerHTML = `
-      ${renderTopbar(type.label, '#/param/types', { eyebrow: 'Types EPI · Grille révision' })}
+      ${renderTopbar(type.label, '#/param/types', { eyebrow: 'Paramétrage', subtitle: 'Types EPI' })}
+      ${renderParamSegments('types')}
       <p class="sm-stats-summary">${type.checks.length} critère(s) · ${type.trackable ? 'Suivi actif' : 'Non suivi'}</p>
       ${checkRows}
       <form id="sm-check-add-form" class="sm-card">
@@ -951,6 +921,7 @@
 
     bindNav(root);
     bindTabs(root);
+    bindParamSegments(root);
 
     root.querySelectorAll('.sm-check-card').forEach((form) => {
       form.addEventListener('submit', async (ev) => {
