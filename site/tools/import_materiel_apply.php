@@ -340,10 +340,62 @@ function importMaterielDeleteEquipmentInterventions(PDO $pdo, int $equipmentId):
         ->execute([$equipmentId]);
 }
 
+function importMaterielCreateEquipmentCli(PDO $pdo, array $body): int
+{
+    $publicId = strtoupper(trim((string)($body['public_id'] ?? '')));
+    $typeId = (int)($body['type_id'] ?? 0);
+    if ($publicId === '' || $typeId <= 0) {
+        throw new RuntimeException('public_id ou type_id invalide.');
+    }
+    if (!portailClubMaterielCheckPublicIdAvailable($pdo, $publicId, $typeId)) {
+        throw new RuntimeException('Identifiant déjà utilisé pour ce type de matériel.');
+    }
+    $structureId = isset($body['structure_id']) && $body['structure_id'] !== '' && $body['structure_id'] !== null
+        ? (int)$body['structure_id'] : null;
+
+    $st = $pdo->prepare(
+        'INSERT INTO PORTAIL_CLUB_materiel_equipment
+         (public_id, structure_id, type_id, brand, purchase_year, model, serial, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    $year = isset($body['purchase_year']) && $body['purchase_year'] !== '' && $body['purchase_year'] !== null
+        ? (int)$body['purchase_year'] : null;
+    $st->execute([
+        $publicId,
+        $structureId,
+        $typeId,
+        portailClubTrimOptionalName($body['brand'] ?? '', 120),
+        $year,
+        portailClubTrimOptionalName($body['model'] ?? '', 120),
+        portailClubTrimOptionalName($body['serial'] ?? '', 120),
+        portailClubTrimOptionalName($body['notes'] ?? '', 2000),
+    ]);
+    $id = (int)$pdo->lastInsertId();
+    portailClubMaterielLogStateChange($pdo, $id, null, 'operational', null, null);
+    return $id;
+}
+
+function importMaterielFindEquipmentOwnerStructure(
+    PDO $pdo,
+    string $typeSlug,
+    string $publicId
+): ?string {
+    $typeId = importMaterielResolveTypeId($pdo, $typeSlug);
+    $st = $pdo->prepare(
+        'SELECT s.slug FROM PORTAIL_CLUB_materiel_equipment e
+         LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
+         WHERE e.public_id = ? AND e.type_id = ? LIMIT 1'
+    );
+    $st->execute([$publicId, $typeId]);
+    $slug = $st->fetchColumn();
+    return is_string($slug) && $slug !== '' ? $slug : null;
+}
+
 if ($syncFromSources) {
     $stats = [
         'created' => 0,
         'updated' => 0,
+        'skipped_collision' => 0,
         'interventions' => 0,
         'health_recomputed' => 0,
         'errors' => [],
@@ -371,7 +423,13 @@ if ($syncFromSources) {
             );
 
             if ($equipmentId === null) {
-                $created = portailClubMaterielCreateEquipment($pdo, [
+                $ownerSlug = importMaterielFindEquipmentOwnerStructure($pdo, $typeSlug, $publicId);
+                if ($ownerSlug !== null && $ownerSlug !== $structureSlug) {
+                    $stats['skipped_collision']++;
+                    $stats['errors'][] = "{$publicId}: collision cross-structure ({$ownerSlug} vs {$structureSlug})";
+                    continue;
+                }
+                $equipmentId = importMaterielCreateEquipmentCli($pdo, [
                     'public_id' => $publicId,
                     'structure_id' => $structureId,
                     'type_id' => $typeId,
@@ -381,7 +439,6 @@ if ($syncFromSources) {
                     'purchase_year' => $item['purchase_year'] ?? null,
                     'notes' => $item['notes'] ?? '',
                 ]);
-                $equipmentId = (int)$created['id'];
                 $stats['created']++;
             } else {
                 $stats['updated']++;
@@ -418,7 +475,11 @@ if ($syncFromSources) {
     }
 
     echo json_encode($stats, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
-    exit(empty($stats['errors']) ? 0 : 1);
+    $blockingErrors = array_filter(
+        $stats['errors'],
+        static fn(string $e): bool => !str_contains($e, 'collision cross-structure')
+    );
+    exit($blockingErrors === [] ? 0 : 1);
 }
 
 foreach ($payload['items'] as $item) {
