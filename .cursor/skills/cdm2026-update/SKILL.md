@@ -31,6 +31,7 @@ Actualiser **scores**, **statuts** (`scheduled` / `live` / `finished`), **grille
 | Match terminé | `score: { home, away, status: "finished" }` → score affiché + badge **Terminé** |
 | Match en cours | `status: "live"` → badge **En direct** |
 | Match à venir | `status: "scheduled"` ou absent → **vs** + horaire |
+| Badge MAJ | `meta.updatedBy` : **Local** (bleu) ou **Cloud** (violet) + `updatedAt` heure Paris |
 
 Les résultats connus doivent être renseignés dans le JSON : l'app les affiche automatiquement, sans modification JS.
 
@@ -77,10 +78,13 @@ Pour chaque groupe A–L, recalculer `standings` à partir des matchs `stage: "g
 ```json
 "meta": {
   "updatedAt": "<ISO maintenant>",
+  "updatedBy": "local",
   "sources": ["franceinfo", "lequipe", "..."],
   "tournament": { "start": "2026-06-11", "end": "2026-07-19", "timezone": "Europe/Paris" }
 }
 ```
+
+- **`updatedBy`** : `"local"` si MAJ manuelle (IDE / skill locale) ; `"cloud"` si MAJ via automatisation NAS (`CursorAutomation`).
 
 ### 6. Valider
 

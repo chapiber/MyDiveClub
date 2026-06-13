@@ -115,6 +115,49 @@
   text-align: center;
 }
 
+.wc-update-flag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem 0.6rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  background: var(--wc-surface);
+  border: 1px solid var(--wc-border);
+  box-shadow: 0 2px 8px rgba(0, 40, 104, 0.05);
+}
+
+.wc-update-flag__datetime {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--wc-muted);
+}
+
+.wc-update-flag__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wc-update-flag__badge--local {
+  background: rgba(0, 40, 104, 0.08);
+  color: var(--wc-usa-blue);
+  border: 1px solid rgba(0, 40, 104, 0.2);
+}
+
+.wc-update-flag__badge--cloud {
+  background: rgba(92, 45, 145, 0.1);
+  color: var(--wc-bein);
+  border: 1px solid rgba(92, 45, 145, 0.28);
+}
+
 .wc-section-title {
   margin: 0 0 0.75rem;
   font-size: 1.05rem;

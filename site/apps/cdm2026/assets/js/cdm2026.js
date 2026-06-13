@@ -209,10 +209,25 @@
     );
   }
 
+  function formatUpdateSource(by) {
+    if (by === 'cloud') return { label: 'Cloud', cls: 'wc-update-flag__badge--cloud' };
+    return { label: 'Local', cls: 'wc-update-flag__badge--local' };
+  }
+
   function renderHeader() {
-    const updated = state.data.meta.updatedAt
-      ? new Date(state.data.meta.updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+    const meta = state.data.meta || {};
+    const updated = meta.updatedAt
+      ? new Date(meta.updatedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Paris' })
       : '';
+    const source = formatUpdateSource(meta.updatedBy);
+    let metaHtml = '';
+    if (updated) {
+      metaHtml =
+        '<div class="wc-update-flag" role="status" aria-label="Dernière mise à jour des données">' +
+        '<span class="wc-update-flag__datetime">Dernière MAJ : ' + esc(updated) + '</span>' +
+        '<span class="wc-update-flag__badge ' + source.cls + '">' + esc(source.label) + '</span>' +
+        '</div>';
+    }
     return (
       '<a href="../../index.html" class="wc-back-portal">← Portail Club</a>' +
       '<header class="wc-header">' +
@@ -225,7 +240,7 @@
       '</div>' +
       '</div>' +
       '</header>' +
-      (updated ? '<p class="wc-meta">Dernière MAJ : ' + esc(updated) + '</p>' : '')
+      metaHtml
     );
   }
 

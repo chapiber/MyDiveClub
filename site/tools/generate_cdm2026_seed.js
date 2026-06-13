@@ -282,9 +282,13 @@ const teams = Object.entries(TEAMS).map(([code, t]) => ({
   group: t.group,
 }));
 
+const existing = fs.existsSync(dest) ? JSON.parse(fs.readFileSync(dest, 'utf8')) : null;
+const updatedBy = existing?.meta?.updatedBy || 'local';
+
 const out = {
   meta: {
     updatedAt: new Date().toISOString(),
+    updatedBy,
     sources: ['matchcalendar.football', 'fwctimes.com', 'franceinfo'],
     tournament: { start: '2026-06-11', end: '2026-07-19', timezone: 'Europe/Paris' },
   },

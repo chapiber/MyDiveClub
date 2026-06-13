@@ -9,6 +9,7 @@
       "required": ["updatedAt", "sources", "tournament"],
       "properties": {
         "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "enum": ["local", "cloud"] },
         "sources": { "type": "array", "items": { "type": "string" } },
         "tournament": {
           "type": "object",
