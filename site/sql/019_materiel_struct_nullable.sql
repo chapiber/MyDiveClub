@@ -43,8 +43,8 @@ EXECUTE stmt3;
 DEALLOCATE PREPARE stmt3;
 
 INSERT INTO PORTAIL_CLUB_schema_migrations (version)
-SELECT '019_materiel_equipment_structure_nullable'
+SELECT '019_materiel_struct_nullable'
 FROM DUAL
 WHERE NOT EXISTS (
-  SELECT 1 FROM PORTAIL_CLUB_schema_migrations WHERE version = '019_materiel_equipment_structure_nullable'
+  SELECT 1 FROM PORTAIL_CLUB_schema_migrations WHERE version = '019_materiel_struct_nullable'
 );
