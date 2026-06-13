@@ -854,21 +854,43 @@ function portailClubMaterielGetEquipment(PDO $pdo, int $id): array
     return $item;
 }
 
-function portailClubMaterielGetEquipmentByPublicId(PDO $pdo, string $publicId): array
+function portailClubMaterielListEquipmentByPublicId(PDO $pdo, string $publicId, ?int $typeId = null): array
 {
-    $st = $pdo->prepare(portailClubMaterielEquipmentSelectSql() . ' WHERE e.public_id = ?');
-    $st->execute([portailClubMaterielNormalizePublicId($publicId)]);
-    $r = $st->fetch();
-    if (!$r) {
-        portailClubJsonFail('Matériel introuvable.', 404);
+    $publicId = portailClubMaterielNormalizePublicId($publicId);
+    $sql = portailClubMaterielEquipmentSelectSql() . ' WHERE e.public_id = ?';
+    $params = [$publicId];
+    if ($typeId !== null && $typeId > 0) {
+        $sql .= ' AND e.type_id = ?';
+        $params[] = $typeId;
     }
-    return portailClubMaterielFormatEquipmentRow($r);
+    $sql .= ' ORDER BY t.label, e.id';
+    $st = $pdo->prepare($sql);
+    $st->execute($params);
+    $rows = $st->fetchAll();
+    return array_map('portailClubMaterielFormatEquipmentRow', $rows);
 }
 
-function portailClubMaterielCheckPublicIdAvailable(PDO $pdo, string $publicId, ?int $excludeId = null): bool
+function portailClubMaterielGetEquipmentByPublicId(PDO $pdo, string $publicId, ?int $typeId = null): array
 {
-    $sql = 'SELECT 1 FROM PORTAIL_CLUB_materiel_equipment WHERE public_id = ?';
-    $params = [$publicId];
+    $matches = portailClubMaterielListEquipmentByPublicId($pdo, $publicId, $typeId);
+    if ($matches === []) {
+        portailClubJsonFail('Matériel introuvable.', 404);
+    }
+    if (count($matches) > 1 && ($typeId === null || $typeId <= 0)) {
+        portailClubJsonFail('Plusieurs matériels portent cet identifiant — précisez le type.', 409);
+    }
+    return $matches[0];
+}
+
+function portailClubMaterielCheckPublicIdAvailable(
+    PDO $pdo,
+    string $publicId,
+    int $typeId,
+    ?int $excludeId = null
+): bool {
+    portailClubMaterielGetEquipmentType($pdo, $typeId);
+    $sql = 'SELECT 1 FROM PORTAIL_CLUB_materiel_equipment WHERE public_id = ? AND type_id = ?';
+    $params = [$publicId, $typeId];
     if ($excludeId !== null) {
         $sql .= ' AND id != ?';
         $params[] = $excludeId;
@@ -878,7 +900,7 @@ function portailClubMaterielCheckPublicIdAvailable(PDO $pdo, string $publicId, ?
     return !$st->fetchColumn();
 }
 
-function portailClubMaterielSuggestNextPublicId(PDO $pdo, ?int $structureId = null): string
+function portailClubMaterielSuggestNextPublicId(PDO $pdo, ?int $structureId = null, ?int $typeId = null): string
 {
     if ($structureId !== null && $structureId > 0) {
         portailClubMaterielValidateStructureId($pdo, $structureId);
@@ -892,6 +914,11 @@ function portailClubMaterielSuggestNextPublicId(PDO $pdo, ?int $structureId = nu
     if ($structureId !== null && $structureId > 0) {
         $sql .= ' AND structure_id = ?';
         $params[] = $structureId;
+    }
+    if ($typeId !== null && $typeId > 0) {
+        portailClubMaterielGetEquipmentType($pdo, $typeId);
+        $sql .= ' AND type_id = ?';
+        $params[] = $typeId;
     }
     $sql .= ' ORDER BY id DESC LIMIT 1';
     $st = $pdo->prepare($sql);
@@ -907,15 +934,15 @@ function portailClubMaterielSuggestNextPublicId(PDO $pdo, ?int $structureId = nu
 function portailClubMaterielCreateEquipment(PDO $pdo, array $body): array
 {
     $publicId = portailClubMaterielNormalizePublicId($body['public_id'] ?? '');
-    if (!portailClubMaterielCheckPublicIdAvailable($pdo, $publicId)) {
-        portailClubJsonFail('Identifiant public déjà utilisé.');
+    $typeId = portailClubIntParam($body['type_id'] ?? null, 'type_id');
+    if (!portailClubMaterielCheckPublicIdAvailable($pdo, $publicId, $typeId)) {
+        portailClubJsonFail('Identifiant déjà utilisé pour ce type de matériel.');
     }
     $structureId = null;
     if (isset($body['structure_id']) && $body['structure_id'] !== '' && $body['structure_id'] !== null) {
         $structureId = portailClubIntParam($body['structure_id'], 'structure_id');
         portailClubMaterielValidateStructureId($pdo, $structureId);
     }
-    $typeId = portailClubIntParam($body['type_id'] ?? null, 'type_id');
     portailClubMaterielGetEquipmentType($pdo, $typeId);
 
     $st = $pdo->prepare(
@@ -936,22 +963,36 @@ function portailClubMaterielCreateEquipment(PDO $pdo, array $body): array
     ]);
     $id = (int)$pdo->lastInsertId();
     portailClubMaterielLogStateChange($pdo, $id, null, 'operational', null, null);
+    if (!empty($body['nfc_linked'])) {
+        portailClubMaterielSetNfcLinked($pdo, $id, true);
+    }
     return portailClubMaterielGetEquipment($pdo, $id);
 }
 
 function portailClubMaterielPatchEquipment(PDO $pdo, int $id, array $body): array
 {
-    portailClubMaterielGetEquipment($pdo, $id);
+    $current = portailClubMaterielGetEquipment($pdo, $id);
     $sets = [];
     $params = [];
 
-    if (array_key_exists('public_id', $body)) {
-        $pid = portailClubMaterielNormalizePublicId($body['public_id']);
-        if (!portailClubMaterielCheckPublicIdAvailable($pdo, $pid, $id)) {
-            portailClubJsonFail('Identifiant public déjà utilisé.');
+    $finalPublicId = array_key_exists('public_id', $body)
+        ? portailClubMaterielNormalizePublicId($body['public_id'])
+        : $current['public_id'];
+    $finalTypeId = array_key_exists('type_id', $body)
+        ? portailClubIntParam($body['type_id'], 'type_id')
+        : (int)$current['type_id'];
+    if (
+        $finalPublicId !== $current['public_id']
+        || $finalTypeId !== (int)$current['type_id']
+    ) {
+        if (!portailClubMaterielCheckPublicIdAvailable($pdo, $finalPublicId, $finalTypeId, $id)) {
+            portailClubJsonFail('Identifiant déjà utilisé pour ce type de matériel.');
         }
+    }
+
+    if (array_key_exists('public_id', $body)) {
         $sets[] = 'public_id = ?';
-        $params[] = $pid;
+        $params[] = $finalPublicId;
     }
     if (array_key_exists('structure_id', $body)) {
         if ($body['structure_id'] === null || $body['structure_id'] === '') {

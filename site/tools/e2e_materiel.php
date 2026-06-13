@@ -50,6 +50,16 @@ try {
     ]);
     assertTrue($created['public_id'] === $publicId, 'create equipment');
 
+    $typeId2 = (int)$catalog['types'][1]['id'];
+    $createdSameId = portailClubMaterielCreateEquipment($pdo, [
+        'public_id' => $publicId,
+        'structure_id' => $structId,
+        'type_id' => $typeId2,
+        'brand' => 'TestBrand2',
+    ]);
+    assertTrue($createdSameId['public_id'] === $publicId, 'create equipment same id other type');
+    assertTrue((int)$createdSameId['type_id'] === $typeId2, 'create equipment other type id');
+
     $publicIdNone = 'E2E-N-' . date('YmdHis');
     $createdNone = portailClubMaterielCreateEquipment($pdo, [
         'public_id' => $publicIdNone,
@@ -82,6 +92,7 @@ try {
     assertTrue(str_contains($csv, $publicId), 'export csv');
 
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$created['id']]);
+    $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdSameId['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdNone['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_persons WHERE id = ?')->execute([(int)$person['id']]);
 

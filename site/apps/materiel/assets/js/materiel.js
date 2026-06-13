@@ -48,6 +48,7 @@
     filters: { q: '', state: '', type_id: '' },
     loading: false,
     paramDraft: {},
+    newDraft: null,
   };
 
   function showToast(msg) {
@@ -155,36 +156,59 @@
     return state.structures.filter((s) => s.active).map((s) => s.id).concat([STRUCT_NONE]);
   }
 
+  function isStructureFilterAll() {
+    return !state.structureFilter.length;
+  }
+
+  function structureFilterSummary() {
+    if (isStructureFilterAll()) return 'Toutes les structures';
+    const labels = state.structureFilter.map((id) => {
+      if (id === STRUCT_NONE) return STRUCT_NONE_LABEL;
+      const s = state.structures.find((x) => x.id === id);
+      return s ? s.label : String(id);
+    });
+    return labels.join(', ');
+  }
+
   function renderStructureFilter(extraClass) {
     const active = state.structures.filter((s) => s.active);
-    const allSelected = !state.structureFilter.length;
+    const allOn = isStructureFilterAll();
     const chips = active.map((s) => {
-      const on = allSelected || state.structureFilter.includes(s.id);
-      return `<button type="button" class="sm-chip${on ? ' sm-chip--on' : ''}" data-structure-id="${s.id}">${esc(s.label)}</button>`;
+      const on = !allOn && state.structureFilter.includes(s.id);
+      return `<button type="button" class="sm-chip${on ? ' sm-chip--on' : ''}" data-structure-id="${s.id}" aria-pressed="${on}">${esc(s.label)}</button>`;
     }).join('');
-    const noneOn = allSelected || state.structureFilter.includes(STRUCT_NONE);
+    const noneOn = !allOn && state.structureFilter.includes(STRUCT_NONE);
     return `<div class="sm-structure-filter ${extraClass || ''}">
-      <p class="sm-structure-filter__title">Structures ${allSelected ? '(toutes)' : ''}</p>
-      <div class="sm-structure-filter__chips">${chips}
-        <button type="button" class="sm-chip sm-chip--none${noneOn ? ' sm-chip--on' : ''}" data-structure-id="${STRUCT_NONE}">${STRUCT_NONE_LABEL}</button>
+      <p class="sm-structure-filter__title">Structures : <strong>${esc(structureFilterSummary())}</strong></p>
+      <p class="sm-structure-filter__hint">Par défaut : tout le parc. Cliquez une ou plusieurs puces pour n'afficher que ces structures ; recliquez une puce active pour la retirer. « ${STRUCT_NONE_LABEL} » = matériel sans structure assignée (combinable avec les autres).</p>
+      <div class="sm-structure-filter__chips">
+        <button type="button" class="sm-chip sm-chip--all${allOn ? ' sm-chip--on' : ''}" data-structure-all="1" aria-pressed="${allOn}">Toutes</button>
+        ${chips}
+        <button type="button" class="sm-chip sm-chip--none${noneOn ? ' sm-chip--on' : ''}" data-structure-id="${STRUCT_NONE}" aria-pressed="${noneOn}">${STRUCT_NONE_LABEL}</button>
       </div>
     </div>`;
   }
 
   function bindStructureFilter(container) {
-    container.querySelectorAll('[data-structure-id]').forEach((btn) => {
+    const wrap = container || root;
+    wrap.querySelector('[data-structure-all]')?.addEventListener('click', () => {
+      state.structureFilter = [];
+      saveStructureFilter();
+      refreshCurrentView();
+    });
+    wrap.querySelectorAll('[data-structure-id]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.structureId, 10);
         const allIds = selectableStructureIds();
-        if (!state.structureFilter.length) {
-          state.structureFilter = allIds.filter((x) => x !== id);
+        if (isStructureFilterAll()) {
+          state.structureFilter = [id];
         } else if (state.structureFilter.includes(id)) {
           state.structureFilter = state.structureFilter.filter((x) => x !== id);
         } else {
           state.structureFilter.push(id);
-        }
-        if (state.structureFilter.length >= allIds.length) {
-          state.structureFilter = [];
+          if (state.structureFilter.length >= allIds.length) {
+            state.structureFilter = [];
+          }
         }
         saveStructureFilter();
         refreshCurrentView();
@@ -311,12 +335,20 @@
     const typeOpts = (state.catalog?.types || []).map((t) =>
       `<option value="${t.id}"${String(state.filters.type_id) === String(t.id) ? ' selected' : ''}>${esc(t.label)}</option>`
     ).join('');
+    const nfcBtn = nfcFabVisible()
+      ? `<button type="button" class="sm-btn sm-btn--ghost sm-btn--nfc" id="sm-btn-scan-nfc" aria-label="Scanner NFC">
+           <span aria-hidden="true">📶</span> Scan NFC
+         </button>`
+      : '';
     return `<section class="sm-filter-panel" aria-label="Filtres">
       <h2 class="sm-section-title">Filtres</h2>
       <div class="sm-filter-grid">
-        <div class="sm-field sm-field--inline sm-field--search">
+        <div class="sm-field sm-field--inline sm-field--search${nfcFabVisible() ? ' sm-field--search-nfc' : ''}">
           <label class="sm-label" for="sm-search">Recherche</label>
-          <input id="sm-search" class="sm-input" type="search" placeholder="ID, marque, modèle…" value="${esc(state.filters.q)}">
+          <div class="sm-search-row">
+            <input id="sm-search" class="sm-input" type="search" placeholder="ID, marque, modèle…" value="${esc(state.filters.q)}">
+            ${nfcBtn}
+          </div>
         </div>
         <div class="sm-field sm-field--inline sm-field--state">
           <label class="sm-label" for="sm-filter-state">État</label>
@@ -354,6 +386,103 @@
 
   function nfcFabVisible() {
     return state.settings && state.settings.nfc_enabled && window.MaterielNfc && MaterielNfc.supported;
+  }
+
+  function isEquipmentNotFoundError(err) {
+    const msg = String(err && err.message || '');
+    return msg.includes('introuvable') || msg.includes('404');
+  }
+
+  async function resolveNfcScan(opts) {
+    opts = opts || {};
+    showToast('Approchez le badge…');
+    const publicId = await MaterielNfc.scan();
+    try {
+      const data = await api('/equipment.php?public_id=' + encodeURIComponent(publicId));
+      const matches = data.matches || (data.equipment ? [data.equipment] : []);
+      if (matches.length === 0) {
+        if (opts.onUnknown) {
+          opts.onUnknown(publicId);
+        } else {
+          showToast('Badge inconnu : ' + publicId);
+        }
+        return { found: false, publicId };
+      }
+      if (matches.length === 1) {
+        const equipment = matches[0];
+        if (opts.onFound) {
+          opts.onFound(equipment, publicId);
+        } else {
+          nav('#/item/' + equipment.id);
+        }
+        return { found: true, publicId, equipment };
+      }
+      const picked = await pickEquipmentMatch(publicId, matches);
+      if (!picked) {
+        return { found: false, publicId, cancelled: true };
+      }
+      if (opts.onFound) {
+        opts.onFound(picked, publicId);
+      } else {
+        nav('#/item/' + picked.id);
+      }
+      return { found: true, publicId, equipment: picked };
+    } catch (err) {
+      if (isEquipmentNotFoundError(err)) {
+        if (opts.onUnknown) {
+          opts.onUnknown(publicId);
+        } else {
+          showToast('Badge inconnu : ' + publicId);
+        }
+        return { found: false, publicId };
+      }
+      throw err;
+    }
+  }
+
+  function pickEquipmentMatch(publicId, matches) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'sm-picker-overlay';
+      overlay.innerHTML = `
+        <div class="sm-picker" role="dialog" aria-labelledby="sm-picker-title">
+          <p id="sm-picker-title" class="sm-picker__title">Identifiant <strong>${esc(publicId)}</strong> — choisir le matériel</p>
+          <div class="sm-picker__list">
+            ${matches.map((e) => `
+              <button type="button" class="sm-picker__item" data-item-id="${e.id}">
+                <span class="sm-picker__item-title">${esc(e.type_label)}</span>
+                <span class="sm-picker__item-meta">${esc(structureDisplayLabel(e.structure_label))} · ${esc(e.brand || '—')}</span>
+              </button>`).join('')}
+          </div>
+          <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" data-picker-cancel>Annuler</button>
+        </div>`;
+      document.body.appendChild(overlay);
+      const close = (value) => {
+        overlay.remove();
+        resolve(value);
+      };
+      overlay.querySelector('[data-picker-cancel]').addEventListener('click', () => close(null));
+      overlay.querySelectorAll('.sm-picker__item').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.dataset.itemId, 10);
+          close(matches.find((e) => e.id === id) || null);
+        });
+      });
+    });
+  }
+
+  function bindNfcScanButtons(container) {
+    (container || root).querySelectorAll('#sm-btn-scan-nfc, #sm-fab-scan').forEach((btn) => {
+      btn.addEventListener('click', () => handleNfcScan());
+    });
+  }
+
+  async function handleNfcScan() {
+    try {
+      await resolveNfcScan();
+    } catch (e) {
+      showToast(e.message);
+    }
   }
 
   async function loadBootstrap() {
@@ -403,10 +532,6 @@
 
     root.innerHTML = `
       ${renderTopbar('Suivi Matériel')}
-      <div class="sm-user-bar">
-        <label class="sm-user-bar__label" for="sm-user">Utilisateur</label>
-        <input id="sm-user" class="sm-input sm-input--compact" type="text" value="${esc(getUser())}" placeholder="Votre prénom" autocomplete="name">
-      </div>
       ${renderFilterPanel()}
       <div class="sm-actions">
         <button type="button" class="sm-btn sm-btn--primary" id="sm-btn-new">+ Nouveau matériel</button>
@@ -419,35 +544,22 @@
     bindNav(root);
     bindStructureFilter(root);
     bindNavFab(root);
-    root.querySelector('#sm-user').addEventListener('change', (e) => setUser(e.target.value));
     root.querySelector('#sm-search').addEventListener('input', (e) => { state.filters.q = e.target.value; debounceLoadParc(); });
     root.querySelector('#sm-filter-state').addEventListener('change', (e) => { state.filters.state = e.target.value; loadEquipmentList().then(renderParc); });
     root.querySelector('#sm-filter-type').addEventListener('change', (e) => { state.filters.type_id = e.target.value; loadEquipmentList().then(renderParc); });
-    root.querySelector('#sm-btn-new').addEventListener('click', () => nav('#/new'));
+    root.querySelector('#sm-btn-new').addEventListener('click', () => { state.newDraft = null; nav('#/new'); });
     const emptyNew = root.querySelector('#sm-empty-new');
-    if (emptyNew) emptyNew.addEventListener('click', () => nav('#/new'));
+    if (emptyNew) emptyNew.addEventListener('click', () => { state.newDraft = null; nav('#/new'); });
     root.querySelectorAll('.sm-equip-item').forEach((el) => {
       el.querySelector('.sm-equip-item__link').addEventListener('click', () => nav('#/item/' + el.dataset.itemId));
     });
-    const scanBtn = root.querySelector('#sm-fab-scan');
-    if (scanBtn) scanBtn.addEventListener('click', handleNfcScan);
+    bindNfcScanButtons(root);
   }
 
   let debounceT;
   function debounceLoadParc() {
     clearTimeout(debounceT);
     debounceT = setTimeout(() => loadEquipmentList().then(renderParc), 300);
-  }
-
-  async function handleNfcScan() {
-    try {
-      showToast('Approchez le badge…');
-      const publicId = await MaterielNfc.scan();
-      const data = await api('/equipment.php?public_id=' + encodeURIComponent(publicId));
-      nav('#/item/' + data.equipment.id);
-    } catch (e) {
-      showToast(e.message);
-    }
   }
 
   async function renderItem(id) {
@@ -575,25 +687,65 @@
     } catch (err) { showToast(err.message); }
   }
 
-  async function renderNew() {
+  function renderNewScanStep() {
+    root.innerHTML = `
+      ${renderTopbar('Nouveau matériel', '#/parc', { subtitle: 'Scanner le badge' })}
+      <div class="sm-card sm-nfc-scan-card">
+        <p class="sm-nfc-scan-card__hint">Approchez le badge NFC de l'équipement pour récupérer son identifiant, ou saisissez-le manuellement.</p>
+        <button type="button" class="sm-btn sm-btn--primary sm-btn--block" id="sm-new-scan-btn">📶 Scanner NFC</button>
+        <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-new-manual-btn">Saisir manuellement l'identifiant</button>
+      </div>
+      ${renderNavFab('parc')}`;
+    bindNav(root);
+    bindNavFab(root);
+    root.querySelector('#sm-new-scan-btn').addEventListener('click', async () => {
+      try {
+        await resolveNfcScan({
+          onFound: (equipment) => nav('#/item/' + equipment.id),
+          onUnknown: (publicId) => {
+            state.newDraft = { scannedId: publicId, nfcLinked: true };
+            renderNewForm(state.newDraft);
+          },
+        });
+      } catch (err) { showToast(err.message); }
+    });
+    root.querySelector('#sm-new-manual-btn').addEventListener('click', () => {
+      state.newDraft = { manual: true };
+      renderNewForm(state.newDraft);
+    });
+  }
+
+  async function renderNewForm(opts) {
+    opts = opts || {};
     const activeStructs = state.structures.filter((s) => s.active);
     const defaultStructId = activeStructs[0]?.id || '';
-    const suggest = await api('/equipment.php?suggest_id=1' + (defaultStructId ? '&structure_id=' + defaultStructId : ''));
+    const scannedId = opts.scannedId ? String(opts.scannedId).trim().toUpperCase() : '';
+    const idLocked = !!scannedId;
+    let suggestId = scannedId;
+    if (!suggestId) {
+      const firstTypeId = (state.catalog?.types || []).filter((t) => t.trackable)[0]?.id;
+      let suggestQ = '/equipment.php?suggest_id=1';
+      if (defaultStructId) suggestQ += '&structure_id=' + defaultStructId;
+      if (firstTypeId) suggestQ += '&type_id=' + firstTypeId;
+      const suggest = await api(suggestQ);
+      suggestId = suggest.public_id;
+    }
     const structOpts = activeStructs.map((s) =>
       `<option value="${s.id}">${esc(s.label)}</option>`).join('');
     const typeOpts = (state.catalog?.types || []).filter((t) => t.trackable).map((t) =>
       `<option value="${t.id}">${esc(t.label)}</option>`).join('');
-    const nfcOpt = state.settings.nfc_enabled && MaterielNfc.supported
+    const nfcOpt = !idLocked && state.settings.nfc_enabled && MaterielNfc.supported
       ? `<label class="sm-toggle"><input type="checkbox" id="sm-grave-nfc"> Gravier un badge maintenant</label>` : '';
+    const idReadonly = idLocked ? ' readonly class="sm-input sm-input--readonly"' : ' class="sm-input"';
 
     root.innerHTML = `
-      ${renderTopbar('Nouveau matériel', '#/parc')}
+      ${renderTopbar('Nouveau matériel', '#/parc', { subtitle: idLocked ? 'Badge scanné' : 'Compléter la fiche' })}
       <form id="sm-new-form">
         <div class="sm-field"><label class="sm-label">Structure</label>
           <select class="sm-select" name="structure_id">
             <option value="">— ${STRUCT_NONE_LABEL} —</option>${structOpts}</select></div>
         <div class="sm-field"><label class="sm-label">Identifiant public *</label>
-          <input class="sm-input" name="public_id" required value="${esc(suggest.public_id)}"></div>
+          <input name="public_id" required value="${esc(suggestId)}"${idReadonly}></div>
         <div class="sm-field"><label class="sm-label">Type *</label>
           <select class="sm-select" name="type_id" required>${typeOpts}</select></div>
         <div class="sm-field"><label class="sm-label">Marque</label><input class="sm-input" name="brand"></div>
@@ -609,23 +761,35 @@
     bindNav(root);
     bindNavFab(root);
     const structSelect = root.querySelector('[name=structure_id]');
+    const typeSelect = root.querySelector('[name=type_id]');
     const publicIdInput = root.querySelector('[name=public_id]');
-    structSelect.addEventListener('change', async () => {
+    async function refreshSuggestedId() {
+      if (idLocked) return;
       try {
         const sid = structSelect.value;
-        const res = await api('/equipment.php?suggest_id=1' + (sid ? '&structure_id=' + sid : ''));
+        const tid = typeSelect.value;
+        let q = '/equipment.php?suggest_id=1';
+        if (sid) q += '&structure_id=' + sid;
+        if (tid) q += '&type_id=' + tid;
+        const res = await api(q);
         publicIdInput.value = res.public_id;
       } catch (err) { showToast(err.message); }
-    });
+    }
+    if (!idLocked) {
+      structSelect.addEventListener('change', refreshSuggestedId);
+      typeSelect.addEventListener('change', refreshSuggestedId);
+    }
     root.querySelector('#sm-new-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
       const body = Object.fromEntries(fd.entries());
       if (!body.structure_id) body.structure_id = null;
       if (body.purchase_year === '') delete body.purchase_year;
+      if (opts.nfcLinked) body.nfc_linked = true;
       try {
         const res = await api('/equipment.php', { method: 'POST', body: JSON.stringify(body) });
         const item = res.equipment;
+        state.newDraft = null;
         const grave = root.querySelector('#sm-grave-nfc');
         if (grave && grave.checked) {
           await writeNfcAndLink(item);
@@ -635,6 +799,14 @@
         }
       } catch (err) { showToast(err.message); }
     });
+  }
+
+  async function renderNew() {
+    if (nfcFabVisible() && !(state.newDraft && (state.newDraft.manual || state.newDraft.scannedId))) {
+      renderNewScanStep();
+      return;
+    }
+    await renderNewForm(state.newDraft || {});
   }
 
   async function renderIntervention(equipmentId) {
@@ -919,6 +1091,11 @@
 
     if (section === 'settings') {
       body = `<form id="sm-settings-form">
+        <div class="sm-field">
+          <label class="sm-label" for="sm-user">Mon prénom</label>
+          <input id="sm-user" class="sm-input" type="text" value="${esc(getUser())}" placeholder="Ex. Jean" autocomplete="name" aria-describedby="sm-user-hint">
+          <p id="sm-user-hint" class="sm-hint">Prérempli comme technicien sur les changements d'état et les interventions. Mémorisé sur cet appareil.</p>
+        </div>
         <label class="sm-toggle"><input type="checkbox" name="nfc_enabled" ${state.settings.nfc_enabled ? 'checked' : ''}> Activer NFC</label>
         <div class="sm-field"><label class="sm-label">Préfixe ID par défaut</label>
           <input class="sm-input" name="id_prefix" value="${esc(state.settings.id_prefix)}" placeholder="EQ-">
@@ -980,10 +1157,16 @@
       el.addEventListener('click', () => nav('#/param/types/' + el.dataset.typeId));
     });
 
+    const userInput = root.querySelector('#sm-user');
+    if (userInput) {
+      userInput.addEventListener('change', (e) => setUser(e.target.value));
+    }
+
     const settingsForm = root.querySelector('#sm-settings-form');
     if (settingsForm) {
       settingsForm.addEventListener('submit', async (ev) => {
         ev.preventDefault();
+        if (userInput) setUser(userInput.value);
         const fd = new FormData(ev.target);
         try {
           const res = await api('/settings.php', {
@@ -1133,6 +1316,9 @@
 
   async function refreshCurrentView() {
     const route = parseRoute();
+    if (route.view !== 'new') {
+      state.newDraft = null;
+    }
     state.loading = true;
     try {
       if (route.view === 'item') {

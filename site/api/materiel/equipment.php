@@ -13,23 +13,38 @@ try {
     if ($method === 'GET') {
         if (isset($_GET['check_id']) && (string)$_GET['check_id'] === '1') {
             $publicId = portailClubMaterielNormalizePublicId($_GET['public_id'] ?? '');
+            $typeId = portailClubIntParam($_GET['type_id'] ?? null, 'type_id');
             $exclude = isset($_GET['exclude_id']) ? (int)$_GET['exclude_id'] : null;
             portailClubJsonOk([
-                'available' => portailClubMaterielCheckPublicIdAvailable($pdo, $publicId, $exclude ?: null),
+                'available' => portailClubMaterielCheckPublicIdAvailable($pdo, $publicId, $typeId, $exclude ?: null),
             ]);
         }
         if (isset($_GET['suggest_id']) && (string)$_GET['suggest_id'] === '1') {
             $structureId = isset($_GET['structure_id']) ? (int)$_GET['structure_id'] : null;
+            $typeId = isset($_GET['type_id']) ? (int)$_GET['type_id'] : null;
             portailClubJsonOk([
                 'public_id' => portailClubMaterielSuggestNextPublicId(
                     $pdo,
-                    $structureId !== null && $structureId > 0 ? $structureId : null
+                    $structureId !== null && $structureId > 0 ? $structureId : null,
+                    $typeId !== null && $typeId > 0 ? $typeId : null
                 ),
             ]);
         }
         $publicId = trim((string)($_GET['public_id'] ?? ''));
         if ($publicId !== '') {
-            portailClubJsonOk(['equipment' => portailClubMaterielGetEquipmentByPublicId($pdo, $publicId)]);
+            $typeId = isset($_GET['type_id']) ? (int)$_GET['type_id'] : 0;
+            $matches = portailClubMaterielListEquipmentByPublicId(
+                $pdo,
+                $publicId,
+                $typeId > 0 ? $typeId : null
+            );
+            if ($matches === []) {
+                portailClubJsonFail('Matériel introuvable.', 404);
+            }
+            portailClubJsonOk([
+                'equipment' => count($matches) === 1 ? $matches[0] : null,
+                'matches' => $matches,
+            ]);
         }
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
         if ($id > 0) {

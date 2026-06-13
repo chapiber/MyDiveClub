@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS PORTAIL_CLUB_materiel_equipment (
   notes TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_materiel_equipment_public_id (public_id),
+  UNIQUE KEY uq_materiel_equipment_type_public_id (type_id, public_id),
   KEY idx_materiel_equipment_structure (structure_id),
   KEY idx_materiel_equipment_type (type_id),
   KEY idx_materiel_equipment_state (state),

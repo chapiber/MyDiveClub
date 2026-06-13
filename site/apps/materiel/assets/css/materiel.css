@@ -76,8 +76,9 @@
 /* — Barre utilisateur compacte — */
 .sm-user-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem 0.65rem;
   margin-bottom: 0.85rem;
   padding: 0.55rem 0.75rem;
   border-radius: 12px;
@@ -89,6 +90,14 @@
   flex-shrink: 0;
   font-size: 0.78rem;
   font-weight: 600;
+  color: var(--pc-muted);
+}
+
+.sm-user-bar__hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
   color: var(--pc-muted);
 }
 
@@ -117,6 +126,49 @@
   grid-column: 1 / -1;
 }
 
+.sm-search-row {
+  display: flex;
+  gap: 0.45rem;
+  align-items: stretch;
+}
+
+.sm-search-row .sm-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sm-btn--nfc {
+  flex-shrink: 0;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.sm-input--readonly {
+  background: var(--pc-bg);
+  color: var(--pc-muted);
+}
+
+.sm-nfc-scan-card {
+  text-align: center;
+}
+
+.sm-nfc-scan-card__hint {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--pc-muted);
+}
+
+.sm-nfc-scan-card .sm-btn {
+  margin-bottom: 0.55rem;
+}
+
+.sm-nfc-scan-card .sm-btn:last-child {
+  margin-bottom: 0;
+}
+
 @media (min-width: 640px) {
   .sm-filter-grid {
     grid-template-columns: 1.4fr 1fr 1fr;
@@ -140,11 +192,21 @@
 }
 
 .sm-structure-filter__title {
-  margin: 0 0 0.45rem;
-  font-size: 0.72rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pc-text);
+}
+
+.sm-structure-filter__title strong {
+  color: var(--pc-accent);
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+}
+
+.sm-structure-filter__hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
   color: var(--pc-muted);
 }
 
@@ -295,9 +357,26 @@
 
 .sm-chip--on {
   border-color: var(--pc-accent);
-  background: var(--pc-accent-soft);
-  color: var(--pc-accent);
+  background: var(--pc-accent);
+  color: #fff;
   font-weight: 600;
+}
+
+.sm-chip--all.sm-chip--on {
+  background: var(--pc-accent);
+}
+
+.sm-chip:not(.sm-chip--on) {
+  background: var(--pc-bg);
+  color: var(--pc-text);
+}
+
+.sm-chip--none:not(.sm-chip--on) {
+  border-style: dashed;
+}
+
+.sm-chip--none.sm-chip--on {
+  border-style: solid;
 }
 
 /* — Liste matériel — */
@@ -988,10 +1067,6 @@
   transform: scale(0.96);
 }
 
-.sm-chip--none.sm-chip--on {
-  border-style: dashed;
-}
-
 .sm-inline-form {
   margin: 0 0 1rem;
 }
@@ -1026,4 +1101,68 @@
   .sm-struct-row__prefix { grid-area: prefix; }
   .sm-struct-row__slug { grid-area: slug; }
   .sm-struct-row__actions { grid-area: actions; align-self: center; }
+}
+
+/* — Sélecteur homonymes (scan NFC / lookup ID) — */
+.sm-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.sm-picker {
+  width: min(100%, 420px);
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 2px solid var(--pc-border);
+  background: var(--pc-surface);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+}
+
+.sm-picker__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--pc-text);
+}
+
+.sm-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sm-picker__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.85rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 14px;
+  background: var(--pc-bg);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sm-picker__item-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pc-text);
+}
+
+.sm-picker__item-meta {
+  font-size: 0.78rem;
+  color: var(--pc-muted);
 }
