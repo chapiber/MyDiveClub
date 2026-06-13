@@ -281,12 +281,19 @@ def should_skip_sheet(name: str) -> bool:
     return any(s in low for s in SKIP_SHEET_SUBSTR)
 
 
+def is_valid_public_id(public_id: str) -> bool:
+    return bool(public_id) and bool(re.match(r"^[A-Z0-9-]+$", public_id))
+
+
 def sheet_fallback_id(sheet_name: str) -> str:
     cleaned = re.sub(r"^(GILET|GILETS|MASQUE|MASQUES|VETEMENT|SHORTY|ORDI)\s+", "", sheet_name.strip(), flags=re.I)
     cleaned = cleaned.strip()
     if cleaned:
-        return norm_id(cleaned.split()[-1] if " " in cleaned else cleaned)
-    return norm_id(sheet_name)
+        pid = norm_id(cleaned.split()[-1] if " " in cleaned else cleaned)
+        if is_valid_public_id(pid):
+            return pid
+    pid = norm_id(sheet_name)
+    return pid if is_valid_public_id(pid) else ""
 
 
 def equipment_merge_key(item: EquipmentItem) -> str:
@@ -333,7 +340,7 @@ def parse_fiche_epi_rows(
     if not public_id:
         public_id = sheet_fallback_id(sheet_name)
 
-    if not public_id:
+    if not is_valid_public_id(public_id):
         return None
 
     interventions: list[Intervention] = []
