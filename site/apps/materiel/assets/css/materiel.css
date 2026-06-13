@@ -823,6 +823,10 @@
   line-height: 1.35;
 }
 
+.sm-hint--warn {
+  color: var(--pc-warning, #b45309);
+}
+
 .sm-type-card {
   width: 100%;
   text-align: left;

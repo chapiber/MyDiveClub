@@ -1,8 +1,60 @@
 (function (global) {
   'use strict';
 
+  function hasNdefReader() {
+    return 'NDEFReader' in global;
+  }
+
+  function hasNdefWriterLegacy() {
+    return 'NDEFWriter' in global;
+  }
+
+  function hasNdefWriteApi() {
+    if (hasNdefWriterLegacy()) return true;
+    if (!hasNdefReader()) return false;
+    try {
+      return typeof NDEFReader.prototype.write === 'function';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function writeUnavailableReason() {
+    if (!global.isSecureContext) {
+      return 'Connexion HTTPS requise pour la gravure NFC.';
+    }
+    if (!hasNdefReader() && !hasNdefWriterLegacy()) {
+      return 'Gravure NFC : utilisez Chrome sur Android (NFC activé). iOS et la plupart des PC ne gravent pas via le navigateur.';
+    }
+    if (hasNdefReader() && !hasNdefWriteApi()) {
+      return 'Votre navigateur lit le NFC mais ne permet pas la gravure — mettez Chrome à jour sur Android.';
+    }
+    return 'Écriture NFC indisponible sur cet appareil.';
+  }
+
   const MaterielNfc = {
-    supported: 'NDEFReader' in global,
+    /** Lecture (scan) */
+    get supported() {
+      return hasNdefReader();
+    },
+
+    /** Gravure badge vierge */
+    get writeSupported() {
+      return hasNdefWriteApi() && global.isSecureContext;
+    },
+
+    getDiagnostics() {
+      const ua = global.navigator?.userAgent || '';
+      return {
+        secureContext: !!global.isSecureContext,
+        ndefReader: hasNdefReader(),
+        ndefWriterLegacy: hasNdefWriterLegacy(),
+        ndefReaderWrite: hasNdefReader() && typeof NDEFReader.prototype.write === 'function',
+        writeSupported: this.writeSupported,
+        scanSupported: this.supported && global.isSecureContext,
+        platformHint: /Android/i.test(ua) ? 'android' : (/iPhone|iPad/i.test(ua) ? 'ios' : 'other'),
+      };
+    },
 
     buildPayload(equipment) {
       return JSON.stringify({
@@ -44,7 +96,10 @@
       if (!this.supported) {
         throw new Error('NFC non disponible sur cet appareil (Android Chrome requis).');
       }
-      if (global.MaterielLog) MaterielLog.info('nfc', 'scan_start', null);
+      if (!global.isSecureContext) {
+        throw new Error('NFC requiert une connexion HTTPS sécurisée.');
+      }
+      if (global.MaterielLog) MaterielLog.info('nfc', 'scan_start', this.getDiagnostics());
       const reader = new NDEFReader();
       await reader.scan();
       return new Promise((resolve, reject) => {
@@ -79,19 +134,27 @@
     },
 
     async write(payloadJson) {
-      if (!('NDEFWriter' in global)) {
-        throw new Error('Écriture NFC non disponible (Android Chrome requis).');
+      if (!this.writeSupported) {
+        const reason = writeUnavailableReason();
+        if (global.MaterielLog) MaterielLog.error('nfc', 'write_unavailable', this.getDiagnostics());
+        throw new Error(reason);
       }
+      const message = {
+        records: [{ recordType: 'text', data: payloadJson }],
+      };
       if (global.MaterielLog) {
-        MaterielLog.info('nfc', 'write_request', { bytes: payloadJson.length });
+        MaterielLog.info('nfc', 'write_request', { bytes: payloadJson.length, ...this.getDiagnostics() });
       }
-      const writer = new NDEFWriter();
-      await writer.write({
-        records: [{ recordType: 'text', data: payloadJson, mediaType: 'application/json' }],
-      });
-      if (global.MaterielLog) {
-        MaterielLog.info('nfc', 'write_complete', null);
+      if (hasNdefWriterLegacy()) {
+        const writer = new NDEFWriter();
+        await writer.write({
+          records: [{ recordType: 'text', data: payloadJson, mediaType: 'application/json' }],
+        });
+      } else {
+        const reader = new NDEFReader();
+        await reader.write(message, { overwrite: true });
       }
+      if (global.MaterielLog) MaterielLog.info('nfc', 'write_complete', null);
     },
   };
 

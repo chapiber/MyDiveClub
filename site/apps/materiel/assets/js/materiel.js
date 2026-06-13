@@ -396,7 +396,11 @@
   }
 
   function nfcScanAvailable() {
-    return nfcEnabled() && window.MaterielNfc && MaterielNfc.supported;
+    return nfcEnabled() && window.MaterielNfc && MaterielNfc.supported && window.isSecureContext;
+  }
+
+  function nfcWriteAvailable() {
+    return nfcEnabled() && window.MaterielNfc && MaterielNfc.writeSupported;
   }
 
   function nfcFabVisible() {
@@ -477,6 +481,10 @@
         return;
       }
       if (result.blank) {
+        if (!nfcWriteAvailable()) {
+          showToast('Badge vierge détecté, mais la gravure nécessite Chrome sur Android.');
+          return;
+        }
         state.newDraft = { blankTag: true, nfcLinked: true };
         showToast('Badge vierge — complétez la fiche, gravure à la création.');
         renderNewForm(state.newDraft);
@@ -709,12 +717,18 @@
       e.nfc_linked
         ? `<div class="sm-panel__footer sm-panel__footer--nfc">
             <p class="sm-hint">Badge illisible au scan ? Utilisez « Regraver » avec le badge vierge.</p>
-            <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-regrave">Regraver badge</button>
+            ${nfcWriteAvailable()
+              ? `<button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-regrave">Regraver badge</button>`
+              : '<p class="sm-hint sm-hint--warn">Gravure indisponible ici — Chrome Android requis.</p>'}
             <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-unlink">Dissocier NFC</button>
           </div>`
-        : `<div class="sm-panel__footer sm-panel__footer--nfc">
+        : (nfcWriteAvailable()
+          ? `<div class="sm-panel__footer sm-panel__footer--nfc">
             <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-link">📶 Associer un badge vierge</button>
           </div>`
+          : `<div class="sm-panel__footer sm-panel__footer--nfc">
+            <p class="sm-hint sm-hint--warn">Gravure NFC : Chrome sur Android (HTTPS), NFC activé. La lecture seule ne suffit pas pour un badge vierge.</p>
+          </div>`)
     ) : '';
 
     root.innerHTML = `
@@ -894,6 +908,12 @@
   async function writeNfcAndLink(equipment, regraveOnly, options) {
     options = options || {};
     const log = window.MaterielLog;
+    if (!nfcWriteAvailable()) {
+      const diag = MaterielNfc.getDiagnostics?.() || {};
+      log?.error('nfc', 'write_blocked', diag);
+      showToast('Gravure NFC indisponible sur cet appareil — Chrome Android (HTTPS) requis.');
+      return false;
+    }
     try {
       log?.info('nfc', 'link_flow_start', {
         equipmentId: equipment.id,
@@ -985,10 +1005,12 @@
         <h2 class="sm-panel__title">Badge NFC</h2>
         ${opts.blankTag ? '<p class="sm-hint">Badge vierge détecté — l\'identifiant sera gravé à la création.</p>' : ''}
         ${opts.scannedId ? '<p class="sm-hint">Identifiant lu sur le badge : <strong>' + esc(opts.scannedId) + '</strong></p>' : ''}
-        ${nfcScanAvailable()
+        ${nfcWriteAvailable()
           ? `<button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-new-rescan">📶 ${idLocked ? 'Scanner un autre badge' : 'Scanner un badge'}</button>`
-          : '<p class="sm-hint">Gravure/scan : Android Chrome + NFC activé (Param → Réglages).</p>'}
-        <label class="sm-toggle"><input type="checkbox" id="sm-grave-nfc"${nfcGraveChecked}${nfcGraveDisabled}> Gravier le badge à la création</label>
+          : ''}
+        ${nfcWriteAvailable()
+          ? `<label class="sm-toggle"><input type="checkbox" id="sm-grave-nfc"${nfcGraveChecked}${nfcGraveDisabled}> Gravier le badge à la création</label>`
+          : '<p class="sm-hint sm-hint--warn">Gravure badge vierge : Chrome Android (HTTPS). Scan seul possible sur cet appareil.</p>'}
       </section>` : '';
     const idReadonly = idLocked ? ' readonly class="sm-input sm-input--readonly"' : ' class="sm-input"';
     const subtitle = opts.blankTag ? 'Badge vierge' : (idLocked ? 'Badge scanné' : 'Compléter la fiche');
