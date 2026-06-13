@@ -34,8 +34,33 @@ Tables :
 - Phase 1 : `PORTAIL_CLUB_schema_migrations`, `PORTAIL_CLUB_spaces`
 - Suivi Formation V1 : `PORTAIL_CLUB_catalog_orgs`, `PORTAIL_CLUB_catalog_levels`, `PORTAIL_CLUB_catalog_skills`, `PORTAIL_CLUB_formations`, `PORTAIL_CLUB_formation_levels`, `PORTAIL_CLUB_formation_level_closure`, `PORTAIL_CLUB_formation_students`, `PORTAIL_CLUB_formation_sessions`, `PORTAIL_CLUB_session_evaluations`, `PORTAIL_CLUB_session_student_comments`, `PORTAIL_CLUB_recent_instructors`
 - Double cursus : migration `010_dual_curriculum.sql` (via `tools/migrate.php`)
+- **Suivi Matériel V1** (`017_materiel_init.sql`) :
+  - `PORTAIL_CLUB_materiel_settings`, `PORTAIL_CLUB_materiel_structures`
+  - `PORTAIL_CLUB_materiel_roles`, `PORTAIL_CLUB_materiel_persons`, `PORTAIL_CLUB_materiel_person_role_links`
+  - `PORTAIL_CLUB_materiel_equipment_types`, `PORTAIL_CLUB_materiel_equipment_type_checks`
+  - `PORTAIL_CLUB_materiel_equipment`, `PORTAIL_CLUB_materiel_equipment_state_log`
+  - `PORTAIL_CLUB_materiel_interventions`, `PORTAIL_CLUB_materiel_intervention_check_values`
 
-## Code source (Git)
+## Suivi Matériel (V1)
+
+```
+site/apps/materiel/          # SPA 3 onglets + fiche item
+site/api/materiel/*.php      # REST JSON (settings, structures, roles, persons, catalog, equipment, interventions, stats, export)
+site/lib/materiel.inc.php    # logique métier
+site/tools/e2e_materiel.php  # smoke test CLI
+docs/suivi-materiel-dsf.md   # user stories
+```
+
+Identification hybride : `public_id` manuel obligatoire, badge NFC optionnel (`nfc_linked`). Paramètre club `nfc_enabled` en BDD.
+
+```mermaid
+flowchart LR
+  portal[index.html] --> app[apps/materiel]
+  app --> api[api/materiel]
+  api --> lib[materiel.inc.php]
+  lib --> db[(PORTAIL_CLUB_materiel_*)]
+```
+
 
 ```
 MyDiveClub/site/
@@ -110,4 +135,12 @@ Fichiers nginx générés (réf.) : `conf.d-available/356277b9-…w3conf` contie
 /usr/local/bin/php82 /volume1/web/portailClub/api/formations/formations.php
 ```
 
-HTTP : les endpoints PHP répondent en CLI (`php82`). En navigateur, **500** tant que le chemin URL Web Station reste `/portailCLub/` (casse incorrecte) — voir [Diagnostic HTTP 500](#diagnostic-http-500).
+## API / tests Suivi Matériel (CLI php82)
+
+```bash
+/usr/local/bin/php82 /volume1/web/portailClub/tools/migrate.php
+/usr/local/bin/php82 /volume1/web/portailClub/tools/e2e_materiel.php
+/usr/local/bin/php82 /volume1/web/portailClub/api/materiel/settings.php
+/usr/local/bin/php82 /volume1/web/portailClub/api/materiel/equipment.php
+```
+
