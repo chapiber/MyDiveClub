@@ -204,6 +204,14 @@ def cell_str(v: Any) -> str:
     return str(v).strip()
 
 
+def validate_date_iso(iso: str) -> str | None:
+    try:
+        dt.date.fromisoformat(iso)
+        return iso
+    except ValueError:
+        return None
+
+
 def parse_date(v: Any) -> str | None:
     if v is None or v == "":
         return None
@@ -214,25 +222,27 @@ def parse_date(v: Any) -> str | None:
     if isinstance(v, float):
         try:
             date_tuple = xlrd.xldate_as_tuple(v, 0)
-            return dt.date(date_tuple[0], date_tuple[1], date_tuple[2]).isoformat()
+            return validate_date_iso(
+                dt.date(date_tuple[0], date_tuple[1], date_tuple[2]).isoformat()
+            )
         except Exception:
             return None
     s = str(v).strip()
     if re.match(r"^\d{4}-\d{2}-\d{2}$", s):
-        return s
+        return validate_date_iso(s)
     m = re.match(r"^(\d{4}-\d{2}-\d{2})\b", s)
     if m:
-        return m.group(1)
+        return validate_date_iso(m.group(1))
     m = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})$", s)
     if m:
         d, mo, y = m.groups()
-        return f"{y}-{int(mo):02d}-{int(d):02d}"
+        return validate_date_iso(f"{y}-{int(mo):02d}-{int(d):02d}")
     m = re.match(r"^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$", s)
     if m:
         d, mo, y = m.groups()
         if len(y) == 2:
             y = "20" + y
-        return f"{y}-{int(mo):02d}-{int(d):02d}"
+        return validate_date_iso(f"{y}-{int(mo):02d}-{int(d):02d}")
     m = re.match(r"^\.\./(\d{4})$", s)
     if m:
         return f"{m.group(1)}-01-01"
