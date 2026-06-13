@@ -60,10 +60,24 @@
 
   function formatKickoff(iso) {
     const d = new Date(iso);
-    const opts = { timeZone: 'Europe/Paris' };
-    const date = d.toLocaleDateString('fr-FR', { ...opts, weekday: 'long', day: 'numeric', month: 'long' });
-    const time = d.toLocaleTimeString('fr-FR', { ...opts, hour: '2-digit', minute: '2-digit' });
-    const dateKey = d.toLocaleDateString('fr-CA', opts);
+    const tz = 'Europe/Paris';
+    const date = d.toLocaleDateString('fr-FR', {
+      timeZone: tz,
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    const parts = new Intl.DateTimeFormat('fr-FR', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      hourCycle: 'h23',
+    }).formatToParts(d);
+    const hour = (parts.find((p) => p.type === 'hour')?.value || '00').padStart(2, '0');
+    const minute = (parts.find((p) => p.type === 'minute')?.value || '00').padStart(2, '0');
+    const time = hour + 'h' + minute;
+    const dateKey = d.toLocaleDateString('fr-CA', { timeZone: tz });
     return { date, time, dateKey };
   }
 
