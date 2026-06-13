@@ -7,6 +7,7 @@ declare(strict_types=1);
  */
 require_once __DIR__ . '/../lib/db.inc.php';
 require_once __DIR__ . '/../lib/materiel.inc.php';
+require_once __DIR__ . '/../lib/materiel_person_aliases.php';
 
 $inputFile = $argv[1] ?? null;
 $raw = $inputFile ? @file_get_contents($inputFile) : file_get_contents('php://stdin');
@@ -50,15 +51,13 @@ function importMaterielResolveTypeId(PDO $pdo, string $slug): int
 
 function importMaterielEnsurePerson(PDO $pdo, string $name): ?int
 {
-    $name = trim($name);
-    if ($name === '') {
+    $name = portailClubMaterielNormalizePersonName(trim($name));
+    if ($name === '' || portailClubMaterielIsImportFreeLabel($name)) {
         return null;
     }
-    $st = $pdo->prepare('SELECT id FROM PORTAIL_CLUB_materiel_persons WHERE display_name = ? LIMIT 1');
-    $st->execute([$name]);
-    $id = $st->fetchColumn();
-    if ($id) {
-        return (int)$id;
+    $existing = portailClubMaterielResolvePersonIdByName($pdo, $name);
+    if ($existing !== null) {
+        return $existing;
     }
     $pdo->prepare('INSERT INTO PORTAIL_CLUB_materiel_persons (display_name) VALUES (?)')->execute([$name]);
     return (int)$pdo->lastInsertId();
@@ -66,19 +65,28 @@ function importMaterielEnsurePerson(PDO $pdo, string $name): ?int
 
 function importMaterielInsertIntervention(PDO $pdo, int $equipmentId, array $int): void
 {
-    $personId = importMaterielEnsurePerson($pdo, (string)($int['responsible_free'] ?? ''));
+    $raw = trim((string)($int['responsible_free'] ?? ''));
+    if ($raw === '') {
+        $personId = null;
+        $free = null;
+    } elseif (portailClubMaterielIsImportFreeLabel($raw)) {
+        $personId = null;
+        $free = PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL;
+    } else {
+        $personId = importMaterielEnsurePerson($pdo, $raw);
+        $free = $personId ? null : portailClubMaterielNormalizePersonName($raw);
+    }
     $st = $pdo->prepare(
         'INSERT INTO PORTAIL_CLUB_materiel_interventions
          (equipment_id, subtype, done_on, person_id, responsible_free, summary)
          VALUES (?, ?, ?, ?, ?, ?)'
     );
-    $free = $personId ? null : trim((string)($int['responsible_free'] ?? ''));
     $st->execute([
         $equipmentId,
         $int['subtype'] ?? 'repair',
         $int['done_on'],
         $personId,
-        $free !== '' ? $free : null,
+        $free !== null && $free !== '' ? $free : null,
         trim((string)($int['summary'] ?? '')) ?: null,
     ]);
 }

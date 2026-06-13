@@ -118,6 +118,9 @@
       if (parts[1] === 'types' && parts[2]) {
         return { view: 'param_type', typeId: parseInt(parts[2], 10) };
       }
+      if (parts[1] === 'persons' && parts[2]) {
+        return { view: 'param_person', personId: parseInt(parts[2], 10) };
+      }
       const paramSection = PARAM_SECTIONS.some(([id]) => id === parts[1]) ? parts[1] : 'settings';
       return { view: 'tab', tab: 'param', paramSection };
     }
@@ -1262,6 +1265,12 @@
       paramStructures = await loadParamStructures();
     }
 
+    if (section === 'persons') {
+      const personsRes = await api('/persons.php?all=1');
+      state.persons = personsRes.persons;
+      state.roles = personsRes.roles;
+    }
+
     if (section === 'settings') {
       body = `<form id="sm-settings-form">
         <div class="sm-field">
@@ -1289,10 +1298,16 @@
           <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter rôle</button>
         </form>`;
     } else if (section === 'persons') {
-      body = state.persons.map((p) => `<div class="sm-card">
-          <strong>${esc(p.display_name)}</strong>${p.active ? '' : ' <span class="sm-card__meta">(inactif)</span>'}
-          ${renderRoleChips(p)}
-        </div>`).join('') +
+      body = state.persons.map((p) => `
+        <button type="button" class="sm-card sm-card--clickable sm-person-card" data-person-id="${p.id}">
+          <div class="sm-card__row">
+            <div>
+              <strong>${esc(p.display_name)}</strong>${p.active ? '' : ' <span class="sm-card__meta">(inactif)</span>'}
+              ${renderRoleChips(p)}
+            </div>
+            <span class="sm-equip-item__chev" aria-hidden="true">›</span>
+          </div>
+        </button>`).join('') +
         `<form id="sm-person-form" class="sm-card">
           <div class="sm-field"><label class="sm-label">Nom</label><input class="sm-input" name="display_name" required></div>
           <div class="sm-field"><label class="sm-label">Rôles</label>
@@ -1339,6 +1354,10 @@
 
     root.querySelectorAll('.sm-type-card').forEach((el) => {
       el.addEventListener('click', () => nav('#/param/types/' + el.dataset.typeId));
+    });
+
+    root.querySelectorAll('.sm-person-card').forEach((el) => {
+      el.addEventListener('click', () => nav('#/param/persons/' + el.dataset.personId));
     });
 
     const userInput = root.querySelector('#sm-user');
@@ -1447,6 +1466,87 @@
       <p class="sm-hint">La suppression est impossible si du matériel utilise encore ce type.</p>
       <button type="button" class="sm-btn sm-btn--danger sm-btn--block" id="sm-type-delete">Supprimer ce type</button>
     </div>`;
+  }
+
+  async function renderParamPersonDetail(personId) {
+    const data = await api('/persons.php?all=1');
+    state.persons = data.persons;
+    state.roles = data.roles;
+    const person = state.persons.find((p) => p.id === personId);
+    if (!person) {
+      showToast('Personne introuvable');
+      nav('#/param/persons');
+      return;
+    }
+
+    const roleChecks = state.roles.map((r) => {
+      const checked = (person.role_ids || []).includes(r.id);
+      return `<label class="sm-toggle"><input type="checkbox" name="role_${r.id}"${checked ? ' checked' : ''}> ${esc(r.label)}</label>`;
+    }).join('');
+
+    root.innerHTML = `
+      ${renderTopbar(person.display_name, '#/param/persons', { eyebrow: 'Paramétrage', subtitle: 'Personnes' })}
+      ${renderParamSegments('persons')}
+      <form id="sm-person-edit-form" class="sm-panel sm-panel--form">
+        <h2 class="sm-panel__title">Fiche personne</h2>
+        <div class="sm-field sm-field--inline">
+          <label class="sm-label" for="sm-person-name">Nom affiché</label>
+          <input id="sm-person-name" class="sm-input" name="display_name" required value="${esc(person.display_name)}">
+        </div>
+        <div class="sm-field sm-field--inline">
+          <label class="sm-label">Rôles</label>
+          <div class="sm-role-checks">${roleChecks || '<p class="sm-hint">Aucun rôle défini.</p>'}</div>
+        </div>
+        <label class="sm-toggle"><input type="checkbox" name="active"${person.active ? ' checked' : ''}> Active (visible dans les listes)</label>
+        <div class="sm-panel__actions sm-panel__actions--end">
+          <button type="submit" class="sm-btn sm-btn--primary">Enregistrer</button>
+        </div>
+      </form>
+      ${person.active ? `<div class="sm-panel sm-panel--danger">
+        <h2 class="sm-panel__title">Zone sensible</h2>
+        <p class="sm-hint">Désactive la personne sans effacer son historique d'interventions.</p>
+        <button type="button" class="sm-btn sm-btn--danger sm-btn--block" id="sm-person-deactivate">Désactiver</button>
+      </div>` : `<p class="sm-hint">Personne inactive — réactivez via « Active » puis Enregistrer.</p>`}
+      ${renderNavFab('param')}`;
+
+    bindNav(root);
+    bindNavFab(root);
+    bindParamSegments(root);
+
+    root.querySelector('#sm-person-edit-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const roleIds = state.roles.filter((r) => fd.get('role_' + r.id)).map((r) => r.id);
+      try {
+        await api('/persons.php?id=' + personId, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            display_name: fd.get('display_name'),
+            active: !!fd.get('active'),
+            role_ids: roleIds,
+          }),
+        });
+        state.persons = (await api('/persons.php?all=1')).persons;
+        showToast('Personne enregistrée');
+        renderParamPersonDetail(personId);
+      } catch (err) { showToast(err.message); }
+    });
+
+    const deactivateBtn = root.querySelector('#sm-person-deactivate');
+    if (deactivateBtn) {
+      deactivateBtn.addEventListener('click', async () => {
+        if (!confirm(`Désactiver « ${person.display_name} » ?`)) return;
+        try {
+          await api('/persons.php?id=' + personId, {
+            method: 'PATCH',
+            body: JSON.stringify({ active: false }),
+          });
+          state.persons = (await api('/persons.php?all=1')).persons;
+          showToast('Personne désactivée');
+          renderParamPersonDetail(personId);
+        } catch (err) { showToast(err.message); }
+      });
+    }
   }
 
   async function renderParamTypeDetail(typeId) {
@@ -1595,6 +1695,8 @@
         await renderIntervention(route.equipmentId);
       } else if (route.view === 'param_type') {
         await renderParamTypeDetail(route.typeId);
+      } else if (route.view === 'param_person') {
+        await renderParamPersonDetail(route.personId);
       } else if (route.tab === 'stats') {
         await loadStats();
         renderStats();

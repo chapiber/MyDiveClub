@@ -786,6 +786,16 @@
 }
 
 /* — Chips rôles personnes — */
+.sm-role-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sm-person-card .sm-role-chips {
+  margin-top: 0.35rem;
+}
+
 .sm-role-chips {
   display: flex;
   flex-wrap: wrap;
