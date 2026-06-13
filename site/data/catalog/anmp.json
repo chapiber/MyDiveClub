@@ -1,0 +1,52 @@
+{
+  "org_code": "ANMP",
+  "org_name": "ANMP",
+  "sort_order": 4,
+  "levels": [
+    {
+      "code": "INIT",
+      "name": "Initiation",
+      "sort_order": 1,
+      "skills": [
+        { "code": "ANINIT-01-DEC", "abbr": "DEC", "name": "Découverte matériel", "sort_order": 1 },
+        { "code": "ANINIT-02-VDM", "abbr": "VDM", "name": "Vidage de masque", "sort_order": 2 },
+        { "code": "ANINIT-03-FLT", "abbr": "FLT", "name": "Flottabilité de base", "sort_order": 3 },
+        { "code": "ANINIT-04-COM", "abbr": "COM", "name": "Signes de communication", "sort_order": 4 }
+      ]
+    },
+    {
+      "code": "NIV1",
+      "name": "Niveau 1",
+      "sort_order": 2,
+      "skills": [
+        { "code": "ANNIV1-01-VDM", "abbr": "VDM", "name": "Vidage de masque", "sort_order": 1 },
+        { "code": "ANNIV1-02-FLT", "abbr": "FLT", "name": "Flottabilité", "sort_order": 2 },
+        { "code": "ANNIV1-03-RMT", "abbr": "RMT", "name": "Contrôle de remontée", "sort_order": 3 },
+        { "code": "ANNIV1-04-LRE", "abbr": "LRE", "name": "Lâcher reprise d'embout", "sort_order": 4 },
+        { "code": "ANNIV1-05-PA", "abbr": "PA", "name": "Panne d'air — relais", "sort_order": 5 },
+        { "code": "ANNIV1-06-EQU", "abbr": "EQU", "name": "Équipement et gréement", "sort_order": 6 },
+        { "code": "ANNIV1-07-IMM", "abbr": "IMM", "name": "Immersion contrôlée", "sort_order": 7 },
+        { "code": "ANNIV1-08-COM", "abbr": "COM", "name": "Communication sous-marine", "sort_order": 8 },
+        { "code": "ANNIV1-09-BTV", "abbr": "BTV", "name": "Équilibrage oreilles", "sort_order": 9 },
+        { "code": "ANNIV1-10-MEE", "abbr": "MEE", "name": "Mise à l'eau et sortie", "sort_order": 10 },
+        { "code": "ANNIV1-11-PAL", "abbr": "PAL", "name": "Évolution en palanquée", "sort_order": 11 },
+        { "code": "ANNIV1-12-CHK", "abbr": "CHK", "name": "Contrôle binôme", "sort_order": 12 }
+      ]
+    },
+    {
+      "code": "NIV2",
+      "name": "Niveau 2",
+      "sort_order": 3,
+      "skills": [
+        { "code": "ANNIV2-01-NAV", "abbr": "NAV", "name": "Navigation", "sort_order": 1 },
+        { "code": "ANNIV2-02-PROF", "abbr": "PROF", "name": "Plongée profonde", "sort_order": 2 },
+        { "code": "ANNIV2-03-PAR", "abbr": "PAR", "name": "Parachute de palier", "sort_order": 3 },
+        { "code": "ANNIV2-04-ORDI", "abbr": "ORDI", "name": "Ordinateur de plongée", "sort_order": 4 },
+        { "code": "ANNIV2-05-IPD", "abbr": "IPD", "name": "Remontée assistée / paliers", "sort_order": 5 },
+        { "code": "ANNIV2-06-PLAN", "abbr": "PLAN", "name": "Planification de plongée", "sort_order": 6 },
+        { "code": "ANNIV2-07-PA", "abbr": "PA", "name": "Panne d'air en relais", "sort_order": 7 },
+        { "code": "ANNIV2-08-NAVB", "abbr": "NAVB", "name": "Navigation boussole", "sort_order": 8 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "org_code": "SSI",
+  "org_name": "SSI",
+  "sort_order": 3,
+  "levels": [
+    {
+      "code": "OWD",
+      "name": "Open Water Diver",
+      "sort_order": 1,
+      "skills": [
+        { "code": "SIOWD-01-VDM", "abbr": "VDM", "name": "Vidage de masque", "sort_order": 1 },
+        { "code": "SIOWD-02-FLT", "abbr": "FLT", "name": "Flottabilité", "sort_order": 2 },
+        { "code": "SIOWD-03-LRE", "abbr": "LRE", "name": "Récupération détendeur", "sort_order": 3 },
+        { "code": "SIOWD-04-ASC", "abbr": "ASC", "name": "Remontée contrôlée", "sort_order": 4 },
+        { "code": "SIOWD-05-PA", "abbr": "PA", "name": "Partage d'air stationnaire", "sort_order": 5 },
+        { "code": "SIOWD-06-EQU", "abbr": "EQU", "name": "Montage et contrôle matériel", "sort_order": 6 },
+        { "code": "SIOWD-07-MSKR", "abbr": "MSKR", "name": "Retrait et remise du masque", "sort_order": 7 },
+        { "code": "SIOWD-08-HOV", "abbr": "HOV", "name": "Stabilisation / vol stationnaire", "sort_order": 8 },
+        { "code": "SIOWD-09-CESA", "abbr": "CESA", "name": "Remontée d'urgence contrôlée", "sort_order": 9 },
+        { "code": "SIOWD-10-ENT", "abbr": "ENT", "name": "Entrée / sortie de l'eau", "sort_order": 10 },
+        { "code": "SIOWD-11-ASA", "abbr": "ASA", "name": "Remontée partage d'air", "sort_order": 11 },
+        { "code": "SIOWD-12-SSP", "abbr": "SSP", "name": "Palier de sécurité", "sort_order": 12 }
+      ]
+    },
+    {
+      "code": "AOWD",
+      "name": "Advanced Adventurer",
+      "sort_order": 2,
+      "skills": [
+        { "code": "SIAOWD-01-PROF", "abbr": "PROF", "name": "Plongée profonde", "sort_order": 1 },
+        { "code": "SIAOWD-02-NAV", "abbr": "NAV", "name": "Navigation", "sort_order": 2 },
+        { "code": "SIAOWD-03-NIGHT", "abbr": "NIGHT", "name": "Plongée de nuit", "sort_order": 3 },
+        { "code": "SIAOWD-04-DSMB", "abbr": "DSMB", "name": "Déploiement parachute de surface", "sort_order": 4 },
+        { "code": "SIAOWD-05-PEAK", "abbr": "PEAK", "name": "Flottabilité perfectionnée", "sort_order": 5 }
+      ]
+    },
+    {
+      "code": "STRESS",
+      "name": "Stress & Rescue",
+      "sort_order": 3,
+      "skills": [
+        { "code": "SISTRESS-01-STR", "abbr": "STR", "name": "Gestion du stress", "sort_order": 1 },
+        { "code": "SISTRESS-02-SEC", "abbr": "SEC", "name": "Secourisme / premiers secours", "sort_order": 2 },
+        { "code": "SISTRESS-03-PAN", "abbr": "PAN", "name": "Plongeur paniqué", "sort_order": 3 },
+        { "code": "SISTRESS-04-INC", "abbr": "INC", "name": "Plongeur inconscient", "sort_order": 4 },
+        { "code": "SISTRESS-05-MIS", "abbr": "MIS", "name": "Plongeur manquant", "sort_order": 5 },
+        { "code": "SISTRESS-06-SRF", "abbr": "SRF", "name": "Secours en surface", "sort_order": 6 },
+        { "code": "SISTRESS-07-EAP", "abbr": "EAP", "name": "Plan d'action urgence", "sort_order": 7 },
+        { "code": "SISTRESS-08-O2", "abbr": "O2", "name": "Administration oxygène", "sort_order": 8 }
+      ]
+    }
+  ]
+}

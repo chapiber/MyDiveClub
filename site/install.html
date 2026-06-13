@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Installer â€” Portail Club</title>
+  <meta name="description" content="Installer le Portail Club sur votre tÃ©lÃ©phone â€” QR code et raccourci Ã©cran d'accueil.">
+  <meta name="theme-color" content="#0d7ea8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/portal.css">
+</head>
+<body data-page="install">
+  <main class="install-page">
+    <a href="index.html" class="install-page__back" aria-label="Retour au portail">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Retour
+    </a>
+
+    <h1>Installer le portail</h1>
+    <p class="install-page__lead">Scannez le QR code ou ajoutez le raccourci sur l'Ã©cran d'accueil â€” sans Play Store.</p>
+
+    <section class="install-card" aria-labelledby="qr-title">
+      <h2 id="qr-title" class="visually-hidden">QR code</h2>
+      <div class="install-card__qr">
+        <canvas id="install-qr" width="240" height="240" role="img" aria-label="QR code vers le Portail Club"></canvas>
+      </div>
+      <p class="install-card__url"><strong id="install-url">https://diveapps.serveblog.net/portailClub/</strong></p>
+    </section>
+
+    <button type="button" id="pwa-install-btn" class="install-btn install-btn--hidden">Installer sur cet appareil</button>
+
+    <section class="install-steps" aria-labelledby="steps-title">
+      <h2 id="steps-title">Sur un autre tÃ©lÃ©phone</h2>
+      <ol>
+        <li><strong>Android</strong> â€” Chrome â†’ menu â‹® â†’ Â« Ajouter Ã  l'Ã©cran d'accueil Â».</li>
+        <li><strong>iPhone</strong> â€” Safari â†’ partager â†‘ â†’ Â« Sur l'Ã©cran d'accueil Â».</li>
+        <li>Ouvrir depuis l'icÃ´ne â€” mode plein Ã©cran, gros boutons, utilisable en combinaison mouillÃ©e.</li>
+      </ol>
+    </section>
+  </main>
+  <script src="assets/js/qrcodegen.js"></script>
+  <script src="assets/js/app-update.js" defer></script>
+  <script src="assets/js/portal.js" defer></script>
+</body>
+</html>

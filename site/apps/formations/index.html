@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Suivi Formation — Portail Club</title>
+  <meta name="theme-color" content="#0d7ea8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="icon" href="../../assets/icons/icon-192.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/portal.css?v=__BUILD_VERSION__">
+  <link rel="stylesheet" href="assets/css/formations.css?v=__BUILD_VERSION__">
+  <script>
+    (function () {
+      if (localStorage.getItem('portailClub_swMigrated') === '2') return;
+      var dest = '/portailClub/update.html?to=' + encodeURIComponent(location.pathname + location.search + location.hash);
+      location.replace(dest);
+    })();
+  </script>
+</head>
+<body>
+  <div id="sf-root" class="sf-app" aria-live="polite"></div>
+  <div id="sf-toast" class="sf-toast" role="status" aria-live="polite"></div>
+  <script src="../../assets/js/app-update.js?v=__BUILD_VERSION__" defer></script>
+  <script src="assets/js/sortable.min.js?v=__BUILD_VERSION__" defer></script>
+  <script src="assets/js/formations.js?v=__BUILD_VERSION__" defer></script>
+</body>
+</html>

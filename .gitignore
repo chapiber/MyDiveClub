@@ -1,0 +1,21 @@
+# Secrets locaux (dev)
+site/config.local.php
+
+# Journaux de déploiement
+deploy_logs/
+
+# Dépendances et artefacts
+node_modules/
+test-results/
+
+# OS et temporaires
+*.log
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+.cursorignore

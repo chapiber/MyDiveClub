@@ -1,0 +1,20 @@
+# Rôle : Portail Club (MyDiveClub)
+
+> Règles workspace : `../.cursor/rules/myDiveClub.mdc`
+
+Application PWA PHP autonome pour le suivi des formations en club de plongée.
+
+## Stack technique (réelle)
+* **Front :** HTML/CSS/JS vanilla — `site/`, app `site/apps/formations/`.
+* **Back :** PHP (`site/api/`, `site/lib/`) ; secrets via `site/config.local.php` (non versionné).
+* **PWA :** `manifest.webmanifest`, `sw-v2.js`.
+* **BDD :** MariaDB `DiveKit`, préfixe `PORTAIL_CLUB_`, migrations `site/sql/`.
+* **Docs :** `ARCHITECTURE.md`, `space.json`.
+
+## Déploiement
+* Production : `deployer.bat` → `\\NasChapron\web\portailClub`.
+* Post-deploy : `/usr/local/bin/php82 /volume1/web/portailClub/tools/migrate.php`.
+* Git (commit/push) et deploy NAS sont deux étapes distinctes.
+
+## Langue
+Réponses et commentaires utiles en **français** ; nommage code en anglais.

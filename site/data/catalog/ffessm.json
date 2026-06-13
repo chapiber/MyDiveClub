@@ -1,0 +1,77 @@
+{
+  "org_code": "FFESSM",
+  "org_name": "FFESSM",
+  "sort_order": 1,
+  "levels": [
+    {
+      "code": "PE12",
+      "name": "Préparation Niveau 1 / 2",
+      "sort_order": 1,
+      "skills": [
+        { "code": "FFPE12-01-EQU", "abbr": "EQU", "name": "Équipement et mise à l'eau", "sort_order": 1 },
+        { "code": "FFPE12-02-VDM", "abbr": "VDM", "name": "Vidage de masque", "sort_order": 2 },
+        { "code": "FFPE12-03-LRE", "abbr": "LRE", "name": "Récupération détendeur", "sort_order": 3 }
+      ]
+    },
+    {
+      "code": "N1",
+      "name": "Niveau 1 — PE20",
+      "sort_order": 2,
+      "skills": [
+        { "code": "FFN1-01-MAT", "abbr": "MAT", "name": "Équipement et déséquipement", "sort_order": 1 },
+        { "code": "FFN1-02-VDM", "abbr": "VDM", "name": "Vidage de masque", "sort_order": 2 },
+        { "code": "FFN1-03-LRE", "abbr": "LRE", "name": "Lâcher reprise d'embout", "sort_order": 3 },
+        { "code": "FFN1-04-BTV", "abbr": "BTV", "name": "Équilibrage oreilles", "sort_order": 4 },
+        { "code": "FFN1-05-FLT", "abbr": "FLT", "name": "Flottabilité et stabilisation", "sort_order": 5 },
+        { "code": "FFN1-06-PA", "abbr": "PA", "name": "Panne d'air — relais octopus", "sort_order": 6 },
+        { "code": "FFN1-07-COM", "abbr": "COM", "name": "Communication sous-marine", "sort_order": 7 },
+        { "code": "FFN1-08-PRP", "abbr": "PRP", "name": "Propulsion / palmage", "sort_order": 8 },
+        { "code": "FFN1-09-IMM", "abbr": "IMM", "name": "Immersion contrôlée", "sort_order": 9 },
+        { "code": "FFN1-10-MEE", "abbr": "MEE", "name": "Mise à l'eau et sortie", "sort_order": 10 },
+        { "code": "FFN1-11-PAL", "abbr": "PAL", "name": "Évolution en palanquée guidée", "sort_order": 11 },
+        { "code": "FFN1-12-RMT", "abbr": "RMT", "name": "Remontée contrôlée", "sort_order": 12 },
+        { "code": "FFN1-13-SEC", "abbr": "SEC", "name": "Conduites de sécurité", "sort_order": 13 },
+        { "code": "FFN1-14-CHK", "abbr": "CHK", "name": "Contrôle binôme", "sort_order": 14 },
+        { "code": "FFN1-15-VDMP", "abbr": "VDMP", "name": "Vidage masque complet / retrait masque", "sort_order": 15 },
+        { "code": "FFN1-16-GRE", "abbr": "GRE", "name": "Gréer / dégréer bloc-gilet", "sort_order": 16 },
+        { "code": "FFN1-17-CON", "abbr": "CON", "name": "Surveillance consommation / manomètre", "sort_order": 17 },
+        { "code": "FFN1-18-MIL", "abbr": "MIL", "name": "Milieu et environnement marin", "sort_order": 18 }
+      ]
+    },
+    {
+      "code": "N2",
+      "name": "Niveau 2 — PE40",
+      "sort_order": 3,
+      "skills": [
+        { "code": "FFN2-01-VDM", "abbr": "VDM", "name": "VDM complet", "sort_order": 1 },
+        { "code": "FFN2-02-LRE", "abbr": "LRE", "name": "LRE complet", "sort_order": 2 },
+        { "code": "FFN2-03-BAL", "abbr": "BAL", "name": "Check matériel croisé", "sort_order": 3 },
+        { "code": "FFN2-04-PAR", "abbr": "PAR", "name": "Parachute de palier", "sort_order": 4 },
+        { "code": "FFN2-05-NAV", "abbr": "NAV", "name": "Orientation sans instrument", "sort_order": 5 },
+        { "code": "FFN2-06-NAVB", "abbr": "NAVB", "name": "Orientation boussole", "sort_order": 6 },
+        { "code": "FFN2-07-IPD", "abbr": "IPD", "name": "IPD remontée assistée 20 m", "sort_order": 7 },
+        { "code": "FFN2-08-PROF", "abbr": "PROF", "name": "Plongée profonde 40 m", "sort_order": 8 },
+        { "code": "FFN2-09-ORDI", "abbr": "ORDI", "name": "Ordinateur de plongée", "sort_order": 9 },
+        { "code": "FFN2-10-PLAN", "abbr": "PLAN", "name": "Planification sans palier", "sort_order": 10 },
+        { "code": "FFN2-11-DTR", "abbr": "DTR", "name": "Durée totale remontée", "sort_order": 11 },
+        { "code": "FFN2-12-PA", "abbr": "PA", "name": "Panne d'air en relais", "sort_order": 12 }
+      ]
+    },
+    {
+      "code": "N3",
+      "name": "Niveau 3 — PA60",
+      "sort_order": 4,
+      "skills": [
+        { "code": "FFN3-01-PLAN", "abbr": "PLAN", "name": "Planification", "sort_order": 1 },
+        { "code": "FFN3-02-BRF", "abbr": "BRF", "name": "Briefing profonde", "sort_order": 2 },
+        { "code": "FFN3-03-AUTP", "abbr": "AUTP", "name": "Autonomie profonde", "sort_order": 3 },
+        { "code": "FFN3-04-AUTO", "abbr": "AUTO", "name": "Autonomie orientation", "sort_order": 4 },
+        { "code": "FFN3-05-IPD", "abbr": "IPD", "name": "IPD assistance 40 m", "sort_order": 5 },
+        { "code": "FFN3-06-RIF", "abbr": "RIF", "name": "RIFAP — secourisme", "sort_order": 6 },
+        { "code": "FFN3-07-IPD35", "abbr": "IPD35", "name": "IPD 35 → 5 m", "sort_order": 7 },
+        { "code": "FFN3-08-DTR", "abbr": "DTR", "name": "Planification DTR", "sort_order": 8 },
+        { "code": "FFN3-09-SITE", "abbr": "SITE", "name": "Choix site de plongée", "sort_order": 9 }
+      ]
+    }
+  ]
+}

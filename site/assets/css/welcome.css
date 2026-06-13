@@ -1,0 +1,113 @@
+:root {
+  --pc-bg: #0f1a24;
+  --pc-surface: #1a2a38;
+  --pc-text: #e8eef4;
+  --pc-muted: #9eb0c0;
+  --pc-accent: #3d9be9;
+  --pc-border: rgba(255, 255, 255, 0.08);
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: var(--pc-text);
+  background: radial-gradient(ellipse at 30% 0%, #1e3a52 0%, var(--pc-bg) 55%);
+}
+
+.welcome {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.welcome__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pc-accent);
+}
+
+.welcome__title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 6vw, 3rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.welcome__lead {
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+  color: var(--pc-muted);
+  line-height: 1.5;
+}
+
+.welcome__card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: var(--pc-surface);
+  border: 1px solid var(--pc-border);
+}
+
+.welcome__card-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.welcome__card-text {
+  margin: 0 0 1rem;
+  line-height: 1.55;
+  color: var(--pc-muted);
+}
+
+.welcome__card-text strong {
+  color: var(--pc-text);
+}
+
+.welcome__meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--pc-muted);
+}
+
+.welcome__meta code {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.welcome__footer {
+  margin-top: 2.5rem;
+  font-size: 0.875rem;
+  color: var(--pc-muted);
+}
+
+.welcome__link {
+  color: var(--pc-accent);
+  text-decoration: none;
+}
+
+.welcome__link:hover {
+  text-decoration: underline;
+}
+
+.welcome__sep {
+  margin: 0 0.5rem;
+}

@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Portail Club</title>
+  <meta name="description" content="Outils moniteurs — club de plongée. Accès rapide, optimisé mobile.">
+  <meta name="theme-color" content="#0d7ea8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Portail Club">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="stylesheet" href="assets/css/portal.css?v=__BUILD_VERSION__">
+  <script>
+    (function () {
+      if (localStorage.getItem('portailClub_swMigrated') === '2') return;
+      location.replace('/portailClub/update.html?to=' + encodeURIComponent(location.pathname + location.search + location.hash));
+    })();
+  </script>
+</head>
+<body>
+  <div class="portal">
+    <header class="portal__top">
+      <div class="portal__brand">
+        <p class="portal__eyebrow">Club de plongée</p>
+        <h1 class="portal__title">Portail Club</h1>
+      </div>
+      <a href="install.html" class="portal__install-btn" aria-label="Installer l'application et partager par QR code" title="Installer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </a>
+    </header>
+
+    <nav class="apps" aria-label="Applications">
+      <a href="apps/formations/index.html" class="app-tile app-tile--solo">
+        <span class="app-tile__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3L2 8l10 5 10-5-10-5z"/>
+            <path d="M6 10v4c0 2.2 2.7 4 6 4s6-1.8 6-4v-4"/>
+            <path d="M22 8v6"/>
+            <circle cx="22" cy="16" r="1" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        <span class="app-tile__label">Suivi Formation</span>
+      </a>
+    </nav>
+
+    <footer class="portal__footer">
+      <a href="install.html">Installer · QR code</a>
+    </footer>
+  </div>
+  <script src="assets/js/app-update.js?v=__BUILD_VERSION__" defer></script>
+  <script src="assets/js/portal.js?v=__BUILD_VERSION__" defer></script>
+</body>
+</html>

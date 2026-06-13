@@ -1,0 +1,53 @@
+{
+  "org_code": "PADI",
+  "org_name": "PADI",
+  "sort_order": 2,
+  "levels": [
+    {
+      "code": "OW",
+      "name": "Open Water Diver",
+      "sort_order": 1,
+      "skills": [
+        { "code": "PAOW-01-MSK", "abbr": "MSK", "name": "Mask clearing", "sort_order": 1 },
+        { "code": "PAOW-02-BUO", "abbr": "BUO", "name": "Buoyancy control", "sort_order": 2 },
+        { "code": "PAOW-03-LRE", "abbr": "LRE", "name": "Regulator recovery", "sort_order": 3 },
+        { "code": "PAOW-04-ASC", "abbr": "ASC", "name": "Controlled ascent", "sort_order": 4 },
+        { "code": "PAOW-05-AAS", "abbr": "AAS", "name": "Alternate air source", "sort_order": 5 },
+        { "code": "PAOW-06-EQU", "abbr": "EQU", "name": "Equipment setup and buddy check", "sort_order": 6 },
+        { "code": "PAOW-07-BCD", "abbr": "BCD", "name": "BCD inflate / deflate", "sort_order": 7 },
+        { "code": "PAOW-08-MSKR", "abbr": "MSKR", "name": "Mask removal and replacement", "sort_order": 8 },
+        { "code": "PAOW-09-CESA", "abbr": "CESA", "name": "Controlled emergency swimming ascent", "sort_order": 9 },
+        { "code": "PAOW-10-HOV", "abbr": "HOV", "name": "Hovering / neutral buoyancy", "sort_order": 10 },
+        { "code": "PAOW-11-TOW", "abbr": "TOW", "name": "Tired diver tow", "sort_order": 11 },
+        { "code": "PAOW-12-SSP", "abbr": "SSP", "name": "Safety stop", "sort_order": 12 }
+      ]
+    },
+    {
+      "code": "AOW",
+      "name": "Advanced Open Water",
+      "sort_order": 2,
+      "skills": [
+        { "code": "PAAOW-01-DEEP", "abbr": "DEEP", "name": "Deep dive", "sort_order": 1 },
+        { "code": "PAAOW-02-NAV", "abbr": "NAV", "name": "Underwater navigation", "sort_order": 2 },
+        { "code": "PAAOW-03-NIGHT", "abbr": "NIGHT", "name": "Night dive", "sort_order": 3 },
+        { "code": "PAAOW-04-PEAK", "abbr": "PEAK", "name": "Peak performance buoyancy", "sort_order": 4 },
+        { "code": "PAAOW-05-SEARCH", "abbr": "SEARCH", "name": "Search and recovery", "sort_order": 5 }
+      ]
+    },
+    {
+      "code": "RESCUE",
+      "name": "Rescue Diver",
+      "sort_order": 3,
+      "skills": [
+        { "code": "PARESCUE-01-STR", "abbr": "STR", "name": "Stress recognition", "sort_order": 1 },
+        { "code": "PARESCUE-02-TIR", "abbr": "TIR", "name": "Tired diver assist", "sort_order": 2 },
+        { "code": "PARESCUE-03-PAN", "abbr": "PAN", "name": "Panicked diver rescue", "sort_order": 3 },
+        { "code": "PARESCUE-04-DIS", "abbr": "DIS", "name": "Distressed diver underwater", "sort_order": 4 },
+        { "code": "PARESCUE-05-MIS", "abbr": "MIS", "name": "Missing diver search", "sort_order": 5 },
+        { "code": "PARESCUE-06-SURF", "abbr": "SURF", "name": "Surfacing unresponsive diver", "sort_order": 6 },
+        { "code": "PARESCUE-07-EAP", "abbr": "EAP", "name": "Emergency assistance plan", "sort_order": 7 },
+        { "code": "PARESCUE-08-O2", "abbr": "O2", "name": "Oxygen administration / first aid", "sort_order": 8 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Portail Club">
+  <rect width="512" height="512" fill="#0d7ea8"/>
+  <circle cx="256" cy="228" r="88" fill="none" stroke="#fff" stroke-width="20"/>
+  <path d="M156 312 Q256 388 356 312" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round"/>
+  <ellipse cx="256" cy="400" rx="130" ry="24" fill="#fff" opacity="0.35"/>
+</svg>

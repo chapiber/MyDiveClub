@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Mise à jour — Portail Club</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; min-height: 100dvh; align-items: center; justify-content: center; margin: 0; background: #f4f7fb; color: #14212e; }
+    p { text-align: center; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <p id="msg">Mise à jour du portail en cours…</p>
+  <script>
+    (async function () {
+      const msg = document.getElementById('msg');
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        localStorage.setItem('portailClub_swMigrated', '2');
+        const target = new URLSearchParams(location.search).get('to')
+          || '/portailClub/apps/formations/';
+        msg.textContent = 'Terminé — redirection…';
+        location.replace(target);
+      } catch (e) {
+        msg.textContent = 'Erreur : ' + e.message + ' — rechargez la page.';
+      }
+    })();
+  </script>
+</body>
+</html>

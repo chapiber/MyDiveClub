@@ -1,0 +1,16 @@
+{
+  "repo": "chapiber/MyDiveClub",
+  "source_path": "site/",
+  "client_id": "0002-Loic-SuiviFormationsClub",
+  "assistance_ref": "ASS-20260609-E8E93C",
+  "slug": "portailClub",
+  "portal_type": "hybrid",
+  "public_url": "https://diveapps.serveblog.net/portailClub/",
+  "web_deploy_path": "\\\\NasChapron\\web\\portailClub",
+  "web_deploy_linux": "/volume1/web/portailClub",
+  "nas_data_path": "home/consulting-clients/0002-Loic-SuiviFormationsClub",
+  "nas_data_linux": "/volume1/homes/consulting-clients/0002-Loic-SuiviFormationsClub",
+  "db_name": "DiveKit",
+  "db_table_prefix": "PORTAIL_CLUB_",
+  "allowed_emails": ["chapron.loic@gmail.com"]
+}
