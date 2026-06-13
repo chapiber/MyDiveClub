@@ -149,10 +149,10 @@ try {
         }
     }
 
-    $checkTypeSlugs = array_merge(
-        ['bcd', 'mask', 'computer', 'compass'],
+    $checkTypeSlugs = array_values(array_unique(array_merge(
+        ['bcd', 'mask'],
         array_column($newTypes, 'slug')
-    );
+    )));
 
     foreach ($checkTypeSlugs as $typeSlug) {
         $checks = importMaterielChecksForTypeSlug($typeSlug);
@@ -161,6 +161,14 @@ try {
         }
         $typeId = importMaterielResolveTypeIdBySlug($pdo, $typeSlug);
         if ($typeId === null) {
+            if (!$apply) {
+                $stats['checks_synced'][] = [
+                    'type_slug' => $typeSlug,
+                    'action' => 'pending',
+                    'count' => count($checks),
+                ];
+                continue;
+            }
             $stats['errors'][] = "Type « {$typeSlug} » introuvable pour sync checks.";
             continue;
         }
