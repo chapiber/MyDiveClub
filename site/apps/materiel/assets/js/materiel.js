@@ -584,17 +584,36 @@
     </div>`;
   }
 
+  function resolveInterventionSubtype(intervention) {
+    if (intervention.subtype === 'revision') return 'revision';
+    const summary = String(intervention.summary || '').toLowerCase();
+    if (
+      summary.includes('révision') || summary.includes('revision')
+      || summary.includes('contrôle périodique') || summary.includes('controle periodique')
+      || summary.includes('maintenance détendeur importée') || summary.includes('maintenance detendeur importee')
+      || summary === 'neuf'
+    ) {
+      return 'revision';
+    }
+    return 'repair';
+  }
+
+  function interventionTypeLabel(intervention) {
+    return resolveInterventionSubtype(intervention) === 'revision' ? 'Révision' : 'Réparation';
+  }
+
   function renderTimelineInterventions(interventions) {
     if (!interventions.length) {
       return '<p class="sm-empty sm-empty--inline">Aucune intervention enregistrée.</p>';
     }
     return `<ul class="sm-timeline">${interventions.map((i) => {
-      const typeLabel = i.subtype === 'revision' ? 'Révision' : 'Réparation';
+      const sub = resolveInterventionSubtype(i);
+      const typeLabel = interventionTypeLabel(i);
       const who = esc(i.person_name || i.responsible_free || '—');
       const summary = i.summary ? `<p class="sm-timeline-item__summary">${esc(i.summary)}</p>` : '';
       return `<li class="sm-timeline-item">
         <div class="sm-timeline-item__head">
-          <span class="sm-timeline-item__type sm-timeline-item__type--${esc(i.subtype)}">${typeLabel}</span>
+          <span class="sm-timeline-item__type sm-timeline-item__type--${esc(sub)}">${typeLabel}</span>
           <time class="sm-timeline-item__date" datetime="${esc(i.done_on)}">${formatLogDate(i.done_on)}</time>
         </div>
         <p class="sm-timeline-item__who">${who}</p>

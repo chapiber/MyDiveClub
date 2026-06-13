@@ -242,12 +242,16 @@ def parse_fiche_epi_rows(rows: list[list[Any]], sheet_name: str, structure_slug:
                 summary_parts.append("Contrôle périodique importé")
             if "NEUF" in " ".join(cell_str(c) for c in row).upper():
                 summary_parts.append("NEUF")
+            summary = " — ".join(summary_parts) or "Révision importée"
+            row_text = " ".join(cell_str(c) for c in row).upper()
+            # Révisions périodiques Excel ; réparation seulement si mention explicite
+            is_repair = bool(re.search(r"REPARATION|RÉPARATION", row_text))
             interventions.append(
                 Intervention(
-                    subtype="repair",
+                    subtype="repair" if is_repair else "revision",
                     done_on=done,
                     responsible_free=tech,
-                    summary=" — ".join(summary_parts) or "Révision importée",
+                    summary=summary,
                 )
             )
             state = derive_state_from_row(row)
@@ -280,7 +284,15 @@ def parse_fiche_epi_workbook(wb_path: Path, structure_slug: str, type_slug: str)
     return items
 
 
-def parse_detendeur_rows(rows: list[list[Any]], sheet_name: str, structure_slug: str, type_slug: str, source: str) -> EquipmentItem | None:
+def parse_detendeur_rows(
+    rows: list[list[Any]],
+    sheet_name: str,
+    structure_slug: str,
+    type_slug: str,
+    source: str,
+    *,
+    form_kind: str = "form",
+) -> EquipmentItem | None:
     public_id = ""
     brand = "AQUALUNG"
     model = ""
@@ -288,7 +300,7 @@ def parse_detendeur_rows(rows: list[list[Any]], sheet_name: str, structure_slug:
     purchase_year = None
     observations: list[str] = []
     repairs: list[str] = []
-    subtype = "repair"
+    subtype = "revision" if form_kind == "form" else "repair"
 
     for row in rows:
         c0 = cell_str(row[0] if len(row) > 0 else "")
@@ -327,9 +339,13 @@ def parse_detendeur_rows(rows: list[list[Any]], sheet_name: str, structure_slug:
             done_on = parse_date(row[1]) or done_on
             break
 
-    summary = " | ".join([s for s in observations + repairs if s]) or "Maintenance détendeur importée"
-    if not re.search(r"repar", summary, re.I):
+    summary = " | ".join([s for s in observations + repairs if s]) or (
+        "Maintenance détendeur importée" if form_kind == "form" else "Réparation détendeur importée"
+    )
+    if form_kind == "repair" or re.search(r"repar|répar", summary, re.I):
         subtype = "repair"
+    elif form_kind == "form":
+        subtype = "revision"
 
     return EquipmentItem(
         public_id=public_id,
@@ -359,17 +375,21 @@ def parse_detendeur_xls(path: Path, structure_slug: str, type_slug: str) -> list
         if name.strip().upper() in SKIP_SHEETS:
             continue
         sh = wb.sheet_by_name(name)
-        item = parse_detendeur_rows(rows_from_xlrd(sh), name, structure_slug, type_slug, f"{path.name}:{name}")
+        item = parse_detendeur_rows(
+            rows_from_xlrd(sh), name, structure_slug, type_slug, f"{path.name}:{name}", form_kind="form"
+        )
         if item:
             items.append(item)
     return items
 
 
-def parse_detendeur_xlsx(path: Path, structure_slug: str, type_slug: str) -> list[EquipmentItem]:
+def parse_detendeur_xlsx(path: Path, structure_slug: str, type_slug: str, *, form_kind: str = "repair") -> list[EquipmentItem]:
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     items: list[EquipmentItem] = []
     for name in wb.sheetnames:
-        item = parse_detendeur_rows(rows_from_openpyxl(wb[name]), name, structure_slug, type_slug, path.name)
+        item = parse_detendeur_rows(
+            rows_from_openpyxl(wb[name]), name, structure_slug, type_slug, path.name, form_kind=form_kind
+        )
         if item:
             items.append(item)
     wb.close()
@@ -414,8 +434,10 @@ def collect_items() -> dict[str, EquipmentItem]:
                 for fp in folder.glob(rel):
                     if parser == "detendeur_form" and fp.suffix.lower() == ".xls":
                         items = parse_detendeur_xls(fp, structure_slug, type_slug)
-                    elif parser in {"detendeur_form", "detendeur_repair"}:
-                        items = parse_detendeur_xlsx(fp, structure_slug, type_slug)
+                    elif parser == "detendeur_form":
+                        items = parse_detendeur_xlsx(fp, structure_slug, type_slug, form_kind="form")
+                    elif parser == "detendeur_repair":
+                        items = parse_detendeur_xlsx(fp, structure_slug, type_slug, form_kind="repair")
                     else:
                         continue
                     for item in items:

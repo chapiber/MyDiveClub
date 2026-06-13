@@ -1136,6 +1136,11 @@
   color: var(--pc-accent);
 }
 
+.sm-timeline-item__type--revision {
+  background: var(--pc-accent-soft);
+  color: var(--pc-accent);
+}
+
 .sm-timeline-item__type--repair {
   background: color-mix(in srgb, #e67e22 18%, var(--pc-surface));
   color: #c0651a;
