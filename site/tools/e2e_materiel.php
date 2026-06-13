@@ -91,6 +91,21 @@ try {
     $csv = portailClubMaterielExportCsv($pdo, [$structId]);
     assertTrue(str_contains($csv, $publicId), 'export csv');
 
+    $typeTest = portailClubMaterielCreateEquipmentType($pdo, [
+        'label' => 'E2E Type Test',
+        'slug' => 'e2e_type_' . date('His'),
+        'trackable' => true,
+    ]);
+    assertTrue($typeTest['label'] === 'E2E Type Test', 'create equipment type');
+
+    $typePatched = portailClubMaterielPatchEquipmentType($pdo, (int)$typeTest['id'], [
+        'label' => 'E2E Type Modifié',
+    ]);
+    assertTrue($typePatched['label'] === 'E2E Type Modifié', 'patch equipment type');
+
+    portailClubMaterielDeleteEquipmentType($pdo, (int)$typeTest['id']);
+    assertTrue(true, 'delete equipment type');
+
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$created['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdSameId['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdNone['id']]);

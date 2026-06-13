@@ -28,8 +28,21 @@
     },
 
     async scan(onTag) {
+      const result = await this.scanRaw();
+      if (result.blank) {
+        throw new Error('Badge vierge — créez le matériel via « Nouveau matériel » pour le gravier.');
+      }
+      if (!result.id) {
+        throw new Error('Badge NFC illisible (JSON attendu).');
+      }
+      if (typeof onTag === 'function') onTag(result.id);
+      return result.id;
+    },
+
+    /** Lecture brute : id connu sur badge, ou blank si tag vierge. */
+    async scanRaw() {
       if (!this.supported) {
-        throw new Error('NFC non disponible sur cet appareil.');
+        throw new Error('NFC non disponible sur cet appareil (Android Chrome requis).');
       }
       const reader = new NDEFReader();
       await reader.scan();
@@ -41,12 +54,16 @@
         reader.onreading = (event) => {
           clearTimeout(timeout);
           const id = this.parseScanMessage(event.message);
-          if (!id) {
-            reject(new Error('Badge NFC illisible (JSON attendu).'));
+          if (id) {
+            resolve({ id, blank: false });
             return;
           }
-          if (typeof onTag === 'function') onTag(id);
-          resolve(id);
+          const hasRecords = (event.message.records || []).length > 0;
+          if (!hasRecords) {
+            resolve({ id: null, blank: true });
+            return;
+          }
+          reject(new Error('Badge NFC illisible (JSON attendu).'));
         };
         reader.onreadingerror = () => {
           clearTimeout(timeout);

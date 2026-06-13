@@ -384,8 +384,16 @@
     </article>`;
   }
 
+  function nfcEnabled() {
+    return !!(state.settings && state.settings.nfc_enabled);
+  }
+
+  function nfcScanAvailable() {
+    return nfcEnabled() && window.MaterielNfc && MaterielNfc.supported;
+  }
+
   function nfcFabVisible() {
-    return state.settings && state.settings.nfc_enabled && window.MaterielNfc && MaterielNfc.supported;
+    return nfcScanAvailable();
   }
 
   function isEquipmentNotFoundError(err) {
@@ -393,50 +401,81 @@
     return msg.includes('introuvable') || msg.includes('404');
   }
 
-  async function resolveNfcScan(opts) {
+  async function lookupEquipmentByPublicId(publicId, opts) {
     opts = opts || {};
-    showToast('Approchez le badge…');
-    const publicId = await MaterielNfc.scan();
     try {
       const data = await api('/equipment.php?public_id=' + encodeURIComponent(publicId));
       const matches = data.matches || (data.equipment ? [data.equipment] : []);
       if (matches.length === 0) {
-        if (opts.onUnknown) {
-          opts.onUnknown(publicId);
-        } else {
-          showToast('Badge inconnu : ' + publicId);
-        }
+        if (opts.onUnknown) opts.onUnknown(publicId);
+        else showToast('Badge inconnu : ' + publicId);
         return { found: false, publicId };
       }
       if (matches.length === 1) {
         const equipment = matches[0];
-        if (opts.onFound) {
-          opts.onFound(equipment, publicId);
-        } else {
-          nav('#/item/' + equipment.id);
-        }
+        if (opts.onFound) opts.onFound(equipment, publicId);
+        else nav('#/item/' + equipment.id);
         return { found: true, publicId, equipment };
       }
       const picked = await pickEquipmentMatch(publicId, matches);
-      if (!picked) {
-        return { found: false, publicId, cancelled: true };
-      }
-      if (opts.onFound) {
-        opts.onFound(picked, publicId);
-      } else {
-        nav('#/item/' + picked.id);
-      }
+      if (!picked) return { found: false, publicId, cancelled: true };
+      if (opts.onFound) opts.onFound(picked, publicId);
+      else nav('#/item/' + picked.id);
       return { found: true, publicId, equipment: picked };
     } catch (err) {
       if (isEquipmentNotFoundError(err)) {
-        if (opts.onUnknown) {
-          opts.onUnknown(publicId);
-        } else {
-          showToast('Badge inconnu : ' + publicId);
-        }
+        if (opts.onUnknown) opts.onUnknown(publicId);
+        else showToast('Badge inconnu : ' + publicId);
         return { found: false, publicId };
       }
       throw err;
+    }
+  }
+
+  async function resolveNfcScan(opts) {
+    opts = opts || {};
+    let publicId = opts.publicId || null;
+    try {
+      if (!publicId) {
+        showToast('Approchez le badge…');
+        publicId = await MaterielNfc.scan();
+      }
+      return await lookupEquipmentByPublicId(publicId, opts);
+    } catch (err) {
+      if (isEquipmentNotFoundError(err)) {
+        if (opts.onUnknown) opts.onUnknown(publicId);
+        else showToast('Badge inconnu : ' + publicId);
+        return { found: false, publicId };
+      }
+      throw err;
+    }
+  }
+
+  async function handleNewEquipmentScan() {
+    if (!nfcScanAvailable()) {
+      showToast('Scan NFC : activez NFC (Param) et utilisez Android Chrome.');
+      return;
+    }
+    try {
+      showToast('Approchez le badge…');
+      const result = await MaterielNfc.scanRaw();
+      if (result.id) {
+        await lookupEquipmentByPublicId(result.id, {
+          onFound: (equipment) => nav('#/item/' + equipment.id),
+          onUnknown: (publicId) => {
+            state.newDraft = { scannedId: publicId, nfcLinked: true };
+            renderNewForm(state.newDraft);
+          },
+        });
+        return;
+      }
+      if (result.blank) {
+        state.newDraft = { blankTag: true, nfcLinked: true };
+        showToast('Badge vierge — complétez la fiche, gravure à la création.');
+        renderNewForm(state.newDraft);
+      }
+    } catch (err) {
+      showToast(err.message);
     }
   }
 
@@ -811,27 +850,22 @@
   }
 
   function renderNewScanStep() {
+    const scanBtn = nfcScanAvailable()
+      ? `<button type="button" class="sm-btn sm-btn--primary sm-btn--block" id="sm-new-scan-btn">📶 Scanner un badge</button>
+         <p class="sm-nfc-scan-card__sub">Badge déjà gravé → ouvre la fiche. Badge vierge → création avec gravure.</p>`
+      : `<p class="sm-hint sm-nfc-scan-card__warn">Scan NFC indisponible ici. Utilisez <strong>Android + Chrome</strong> avec NFC activé (Param → Réglages).</p>`;
     root.innerHTML = `
-      ${renderTopbar('Nouveau matériel', '#/parc', { subtitle: 'Scanner le badge' })}
+      ${renderTopbar('Nouveau matériel', '#/parc', { subtitle: 'Identifier le matériel' })}
       <div class="sm-card sm-nfc-scan-card">
-        <p class="sm-nfc-scan-card__hint">Approchez le badge NFC de l'équipement pour récupérer son identifiant, ou saisissez-le manuellement.</p>
-        <button type="button" class="sm-btn sm-btn--primary sm-btn--block" id="sm-new-scan-btn">📶 Scanner NFC</button>
-        <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-new-manual-btn">Saisir manuellement l'identifiant</button>
+        <p class="sm-nfc-scan-card__hint">Scannez le badge NFC pour identifier l'équipement (existant ou nouveau), ou saisissez la fiche manuellement.</p>
+        ${scanBtn}
+        <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-new-manual-btn">Saisir sans scanner</button>
       </div>
       ${renderNavFab('parc')}`;
     bindNav(root);
     bindNavFab(root);
-    root.querySelector('#sm-new-scan-btn').addEventListener('click', async () => {
-      try {
-        await resolveNfcScan({
-          onFound: (equipment) => nav('#/item/' + equipment.id),
-          onUnknown: (publicId) => {
-            state.newDraft = { scannedId: publicId, nfcLinked: true };
-            renderNewForm(state.newDraft);
-          },
-        });
-      } catch (err) { showToast(err.message); }
-    });
+    const scanEl = root.querySelector('#sm-new-scan-btn');
+    if (scanEl) scanEl.addEventListener('click', () => handleNewEquipmentScan());
     root.querySelector('#sm-new-manual-btn').addEventListener('click', () => {
       state.newDraft = { manual: true };
       renderNewForm(state.newDraft);
@@ -857,12 +891,25 @@
       `<option value="${s.id}">${esc(s.label)}</option>`).join('');
     const typeOpts = (state.catalog?.types || []).filter((t) => t.trackable).map((t) =>
       `<option value="${t.id}">${esc(t.label)}</option>`).join('');
-    const nfcOpt = !idLocked && state.settings.nfc_enabled && MaterielNfc.supported
-      ? `<label class="sm-toggle"><input type="checkbox" id="sm-grave-nfc"> Gravier un badge maintenant</label>` : '';
+    const willLinkNfc = !!(opts.nfcLinked || opts.blankTag);
+    const nfcGraveChecked = willLinkNfc ? ' checked' : '';
+    const nfcGraveDisabled = willLinkNfc ? ' disabled' : '';
+    const nfcSection = nfcEnabled() ? `
+      <section class="sm-panel sm-panel--nfc-new">
+        <h2 class="sm-panel__title">Badge NFC</h2>
+        ${opts.blankTag ? '<p class="sm-hint">Badge vierge détecté — l\'identifiant sera gravé à la création.</p>' : ''}
+        ${opts.scannedId ? '<p class="sm-hint">Identifiant lu sur le badge : <strong>' + esc(opts.scannedId) + '</strong></p>' : ''}
+        ${nfcScanAvailable()
+          ? `<button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-new-rescan">📶 ${idLocked ? 'Scanner un autre badge' : 'Scanner un badge'}</button>`
+          : '<p class="sm-hint">Gravure/scan : Android Chrome + NFC activé (Param → Réglages).</p>'}
+        <label class="sm-toggle"><input type="checkbox" id="sm-grave-nfc"${nfcGraveChecked}${nfcGraveDisabled}> Gravier le badge à la création</label>
+      </section>` : '';
     const idReadonly = idLocked ? ' readonly class="sm-input sm-input--readonly"' : ' class="sm-input"';
+    const subtitle = opts.blankTag ? 'Badge vierge' : (idLocked ? 'Badge scanné' : 'Compléter la fiche');
 
     root.innerHTML = `
-      ${renderTopbar('Nouveau matériel', '#/parc', { subtitle: idLocked ? 'Badge scanné' : 'Compléter la fiche' })}
+      ${renderTopbar('Nouveau matériel', '#/parc', { subtitle })}
+      ${nfcSection}
       <form id="sm-new-form">
         <div class="sm-field"><label class="sm-label">Structure</label>
           <select class="sm-select" name="structure_id">
@@ -876,7 +923,6 @@
         <div class="sm-field"><label class="sm-label">Modèle</label><input class="sm-input" name="model"></div>
         <div class="sm-field"><label class="sm-label">N° série</label><input class="sm-input" name="serial"></div>
         <div class="sm-field"><label class="sm-label">Notes</label><textarea class="sm-textarea" name="notes"></textarea></div>
-        ${nfcOpt}
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Créer</button>
       </form>
       ${renderNavFab('parc')}`;
@@ -902,19 +948,21 @@
       structSelect.addEventListener('change', refreshSuggestedId);
       typeSelect.addEventListener('change', refreshSuggestedId);
     }
+    root.querySelector('#sm-new-rescan')?.addEventListener('click', () => handleNewEquipmentScan());
     root.querySelector('#sm-new-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const fd = new FormData(ev.target);
       const body = Object.fromEntries(fd.entries());
       if (!body.structure_id) body.structure_id = null;
       if (body.purchase_year === '') delete body.purchase_year;
-      if (opts.nfcLinked) body.nfc_linked = true;
+      const grave = root.querySelector('#sm-grave-nfc');
+      if (opts.nfcLinked || opts.blankTag || (grave && grave.checked)) body.nfc_linked = true;
       try {
         const res = await api('/equipment.php', { method: 'POST', body: JSON.stringify(body) });
         const item = res.equipment;
         state.newDraft = null;
         const grave = root.querySelector('#sm-grave-nfc');
-        if (grave && grave.checked) {
+        if (grave && (grave.checked || opts.blankTag || opts.nfcLinked)) {
           await writeNfcAndLink(item);
         } else {
           showToast('Matériel créé');
@@ -925,11 +973,13 @@
   }
 
   async function renderNew() {
-    if (nfcFabVisible() && !(state.newDraft && (state.newDraft.manual || state.newDraft.scannedId))) {
+    const draft = state.newDraft || {};
+    const skipScan = draft.manual || draft.scannedId || draft.blankTag;
+    if (nfcEnabled() && !skipScan) {
       renderNewScanStep();
       return;
     }
-    await renderNewForm(state.newDraft || {});
+    await renderNewForm(draft);
   }
 
   async function renderIntervention(equipmentId) {
@@ -1256,11 +1306,22 @@
           <div class="sm-card__row">
             <div>
               <strong>${esc(t.label)}</strong>
-              <p class="sm-card__meta">${t.checks.length} critère(s) de révision${t.trackable ? '' : ' · non suivi'}</p>
+              <p class="sm-card__meta">${esc(t.slug)} · ${t.checks.length} critère(s)${t.trackable ? '' : ' · non suivi'}</p>
             </div>
             <span class="sm-equip-item__chev" aria-hidden="true">›</span>
           </div>
-        </button>`).join('');
+        </button>`).join('') +
+        `<form id="sm-type-add-form" class="sm-card sm-card--form">
+          <h2 class="sm-section-title">Ajouter un type</h2>
+          <div class="sm-field"><label class="sm-label">Libellé *</label>
+            <input class="sm-input" name="label" required placeholder="Ex. Combinaison"></div>
+          <div class="sm-field"><label class="sm-label">Code (slug)</label>
+            <input class="sm-input" name="slug" placeholder="Auto depuis le libellé"></div>
+          <div class="sm-field"><label class="sm-label">Renouvellement (ans)</label>
+            <input class="sm-input" name="renewal_years" type="number" min="1" max="50" placeholder="Optionnel"></div>
+          <label class="sm-toggle"><input type="checkbox" name="trackable" checked> Suivi actif (révisions)</label>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Créer le type</button>
+        </form>`;
     }
 
     root.innerHTML = `
@@ -1337,6 +1398,55 @@
         } catch (err) { showToast(err.message); }
       });
     }
+
+    const typeAddForm = root.querySelector('#sm-type-add-form');
+    if (typeAddForm) {
+      typeAddForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        try {
+          const res = await api('/catalog.php', {
+            method: 'POST',
+            body: JSON.stringify({
+              label: fd.get('label'),
+              slug: fd.get('slug') || undefined,
+              renewal_years: fd.get('renewal_years') || null,
+              trackable: !!fd.get('trackable'),
+            }),
+          });
+          state.catalog = await api('/catalog.php');
+          showToast('Type créé');
+          nav('#/param/types/' + res.type.id);
+        } catch (err) { showToast(err.message); }
+      });
+    }
+  }
+
+  function renderTypeSettingsForm(type) {
+    return `<form id="sm-type-edit-form" class="sm-panel sm-panel--form">
+      <h2 class="sm-panel__title">Propriétés du type</h2>
+      <div class="sm-field sm-field--inline"><label class="sm-label">Libellé *</label>
+        <input class="sm-input" name="label" required value="${esc(type.label)}"></div>
+      <div class="sm-field sm-field--inline"><label class="sm-label">Code (slug)</label>
+        <input class="sm-input" name="slug" required value="${esc(type.slug)}" pattern="[a-z0-9_]+"></div>
+      <div class="sm-field sm-field--inline"><label class="sm-label">Renouvellement (ans)</label>
+        <input class="sm-input" name="renewal_years" type="number" min="1" max="50"
+          value="${type.renewal_years != null ? type.renewal_years : ''}" placeholder="—"></div>
+      <div class="sm-field sm-field--inline"><label class="sm-label">Alerte stock min.</label>
+        <input class="sm-input" name="min_stock_alert" type="number" min="0"
+          value="${type.min_stock_alert != null ? type.min_stock_alert : ''}" placeholder="—"></div>
+      <div class="sm-field sm-field--inline"><label class="sm-label">Ordre d'affichage</label>
+        <input class="sm-input" name="sort_order" type="number" min="0" value="${type.sort_order || 0}"></div>
+      <label class="sm-toggle"><input type="checkbox" name="trackable"${type.trackable ? ' checked' : ''}> Suivi actif (révisions)</label>
+      <div class="sm-panel__actions sm-panel__actions--end">
+        <button type="submit" class="sm-btn sm-btn--primary">Enregistrer le type</button>
+      </div>
+    </form>
+    <div class="sm-panel sm-panel--danger">
+      <h2 class="sm-panel__title">Zone sensible</h2>
+      <p class="sm-hint">La suppression est impossible si du matériel utilise encore ce type.</p>
+      <button type="button" class="sm-btn sm-btn--danger sm-btn--block" id="sm-type-delete">Supprimer ce type</button>
+    </div>`;
   }
 
   async function renderParamTypeDetail(typeId) {
@@ -1368,7 +1478,9 @@
     root.innerHTML = `
       ${renderTopbar(type.label, '#/param/types', { eyebrow: 'Paramétrage', subtitle: 'Types EPI' })}
       ${renderParamSegments('types')}
-      <p class="sm-stats-summary">${type.checks.length} critère(s) · ${type.trackable ? 'Suivi actif' : 'Non suivi'}</p>
+      ${renderTypeSettingsForm(type)}
+      <h2 class="sm-section-title">Critères de révision</h2>
+      <p class="sm-stats-summary">${type.checks.length} critère(s) configuré(s)</p>
       ${checkRows}
       <form id="sm-check-add-form" class="sm-card">
         <h2 class="sm-section-title">Ajouter un critère</h2>
@@ -1384,6 +1496,37 @@
     bindNav(root);
     bindNavFab(root);
     bindParamSegments(root);
+
+    root.querySelector('#sm-type-edit-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      try {
+        await api('/catalog.php?id=' + typeId, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            label: fd.get('label'),
+            slug: fd.get('slug'),
+            renewal_years: fd.get('renewal_years') || null,
+            min_stock_alert: fd.get('min_stock_alert') || null,
+            sort_order: parseInt(fd.get('sort_order'), 10) || 0,
+            trackable: !!fd.get('trackable'),
+          }),
+        });
+        state.catalog = await api('/catalog.php');
+        showToast('Type enregistré');
+        renderParamTypeDetail(typeId);
+      } catch (err) { showToast(err.message); }
+    });
+
+    root.querySelector('#sm-type-delete').addEventListener('click', async () => {
+      if (!confirm(`Supprimer le type « ${type.label} » ? Cette action est irréversible.`)) return;
+      try {
+        await api('/catalog.php?type_id=' + typeId, { method: 'DELETE' });
+        state.catalog = await api('/catalog.php');
+        showToast('Type supprimé');
+        nav('#/param/types');
+      } catch (err) { showToast(err.message); }
+    });
 
     root.querySelectorAll('.sm-check-card').forEach((form) => {
       form.addEventListener('submit', async (ev) => {

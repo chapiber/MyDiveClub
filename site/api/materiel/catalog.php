@@ -39,6 +39,11 @@ try {
     }
 
     if ($method === 'DELETE') {
+        $typeId = isset($_GET['type_id']) ? (int)$_GET['type_id'] : 0;
+        if ($typeId > 0) {
+            portailClubMaterielDeleteEquipmentType($pdo, $typeId);
+            portailClubJsonOk(['deleted' => true]);
+        }
         $checkId = portailClubIntParam($_GET['check_id'] ?? null, 'check_id');
         portailClubMaterielDeleteTypeCheck($pdo, $checkId);
         portailClubJsonOk(['deleted' => true]);

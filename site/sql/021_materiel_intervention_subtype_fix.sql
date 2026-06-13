@@ -13,8 +13,8 @@ WHERE subtype = 'repair'
   AND summary NOT LIKE '%Réparation détendeur importée%';
 
 INSERT INTO PORTAIL_CLUB_schema_migrations (version)
-SELECT '021_materiel_intervention_subtype_fix'
+SELECT '021_materiel_int_subtype'
 FROM DUAL
 WHERE NOT EXISTS (
-  SELECT 1 FROM PORTAIL_CLUB_schema_migrations WHERE version = '021_materiel_intervention_subtype_fix'
+  SELECT 1 FROM PORTAIL_CLUB_schema_migrations WHERE version = '021_materiel_int_subtype'
 );

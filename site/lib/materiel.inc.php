@@ -586,6 +586,12 @@ function portailClubMaterielCreateEquipmentType(PDO $pdo, array $body): array
     $slug = strtolower(trim((string)($body['slug'] ?? '')));
     if ($slug === '') {
         $slug = preg_replace('/[^a-z0-9]+/', '_', strtolower($label)) ?? 'type';
+        $slug = trim($slug, '_');
+    }
+    $dup = $pdo->prepare('SELECT 1 FROM PORTAIL_CLUB_materiel_equipment_types WHERE slug = ? LIMIT 1');
+    $dup->execute([$slug]);
+    if ($dup->fetchColumn()) {
+        portailClubJsonFail('Ce code type (slug) existe déjà.');
     }
     $st = $pdo->prepare(
         'INSERT INTO PORTAIL_CLUB_materiel_equipment_types
@@ -663,6 +669,18 @@ function portailClubMaterielPatchEquipmentType(PDO $pdo, int $id, array $body): 
         $sets[] = 'trackable = ?';
         $params[] = (bool)$body['trackable'] ? 1 : 0;
     }
+    if (array_key_exists('slug', $body)) {
+        $newSlug = strtolower(trim((string)$body['slug']));
+        if ($newSlug !== '') {
+            $dup = $pdo->prepare(
+                'SELECT 1 FROM PORTAIL_CLUB_materiel_equipment_types WHERE slug = ? AND id != ? LIMIT 1'
+            );
+            $dup->execute([$newSlug, $id]);
+            if ($dup->fetchColumn()) {
+                portailClubJsonFail('Ce code type (slug) existe déjà.');
+            }
+        }
+    }
     if ($sets !== []) {
         $params[] = $id;
         $pdo->prepare('UPDATE PORTAIL_CLUB_materiel_equipment_types SET ' . implode(', ', $sets) . ' WHERE id = ?')
@@ -672,6 +690,17 @@ function portailClubMaterielPatchEquipmentType(PDO $pdo, int $id, array $body): 
         portailClubMaterielSyncTypeChecks($pdo, $id, $body['checks']);
     }
     return portailClubMaterielGetEquipmentType($pdo, $id);
+}
+
+function portailClubMaterielDeleteEquipmentType(PDO $pdo, int $id): void
+{
+    portailClubMaterielGetEquipmentType($pdo, $id);
+    $st = $pdo->prepare('SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment WHERE type_id = ?');
+    $st->execute([$id]);
+    if ((int)$st->fetchColumn() > 0) {
+        portailClubJsonFail('Impossible de supprimer : du matériel utilise encore ce type.');
+    }
+    $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment_types WHERE id = ?')->execute([$id]);
 }
 
 function portailClubMaterielNormalizeCheckInputType(mixed $value): string

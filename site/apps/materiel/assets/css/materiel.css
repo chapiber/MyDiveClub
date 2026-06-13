@@ -161,6 +161,26 @@
   color: var(--pc-muted);
 }
 
+.sm-nfc-scan-card__sub {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--pc-muted);
+}
+
+.sm-nfc-scan-card__warn {
+  margin-bottom: 0.75rem;
+  text-align: left;
+}
+
+.sm-panel--nfc-new {
+  margin-bottom: 0.85rem;
+}
+
+.sm-panel--nfc-new .sm-toggle {
+  margin-top: 0.65rem;
+}
+
 .sm-nfc-scan-card .sm-btn {
   margin-bottom: 0.55rem;
 }
@@ -1005,6 +1025,32 @@
 
 .sm-panel--timeline {
   padding-bottom: 0.65rem;
+}
+
+.sm-panel--form {
+  margin-bottom: 0.85rem;
+}
+
+.sm-panel--danger {
+  margin-bottom: 1rem;
+  border-color: color-mix(in srgb, #c0392b 35%, var(--pc-border));
+  background: color-mix(in srgb, #c0392b 4%, var(--pc-surface));
+}
+
+.sm-panel--danger .sm-panel__title {
+  color: #c0392b;
+}
+
+.sm-card--form {
+  margin-top: 0.5rem;
+}
+
+.sm-card--form .sm-section-title {
+  margin-top: 0;
+}
+
+.sm-panel__actions--end {
+  grid-template-columns: 1fr;
 }
 
 .sm-panel__title {
