@@ -35,6 +35,43 @@ MAPPING_FILE = SOURCES / "import_mapping.yaml"
 APPLY_PHP = Path(__file__).resolve().parent / "import_materiel_apply.php"
 
 SKIP_SHEETS = {"FR", "FORMULAIRE MAINTENANCE DETENDEUR"}
+SKIP_SHEET_SUBSTR = ("liste menu", "feuil1")
+
+# Colonnes critères (index) alignées sur import_materiel_prepare.php
+CHECK_COLUMNS: dict[str, list[tuple[int, str]]] = {
+    "bcd": [
+        (2, "flex_ds_devise"),
+        (3, "flex_ds_coupe"),
+        (4, "flex_ds_hernie"),
+        (5, "flex_ds_5ans"),
+        (9, "ras"),
+        (10, "mineure"),
+        (11, "majeure"),
+    ],
+    "mask": [
+        (2, "jupe_trou"),
+        (3, "jupe_desolidarisee"),
+        (4, "verres_rayures"),
+        (9, "ras"),
+        (10, "mineure"),
+        (11, "majeure"),
+    ],
+    "wetsuit": [
+        (2, "fermeture_dents"),
+        (3, "fermeture_curseur"),
+        (9, "ras"),
+        (10, "mineure"),
+        (11, "majeure"),
+    ],
+    "computer": [
+        (2, "batterie_boutons"),
+        (3, "couvercle"),
+        (4, "ordi_hs"),
+        (9, "ras"),
+        (10, "mineure"),
+        (11, "majeure"),
+    ],
+}
 
 
 @dataclass
@@ -43,14 +80,18 @@ class Intervention:
     done_on: str
     responsible_free: str
     summary: str = ""
+    check_values: dict[str, str] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "subtype": self.subtype,
             "done_on": self.done_on,
             "responsible_free": self.responsible_free,
             "summary": self.summary,
         }
+        if self.check_values:
+            out["check_values"] = self.check_values
+        return out
 
 
 @dataclass
@@ -116,6 +157,12 @@ def parse_date(v: Any) -> str | None:
     if m:
         d, mo, y = m.groups()
         return f"{y}-{int(mo):02d}-{int(d):02d}"
+    m = re.match(r"^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$", s)
+    if m:
+        d, mo, y = m.groups()
+        if len(y) == 2:
+            y = "20" + y
+        return f"{y}-{int(mo):02d}-{int(d):02d}"
     m = re.match(r"^\.\./(\d{4})$", s)
     if m:
         return f"{m.group(1)}-01-01"
@@ -137,15 +184,58 @@ def is_marked(row: list[Any], idx: int) -> bool:
     return s in {"X", "O", "OUI", "OK", "1", "TRUE"} or s == "NEUF"
 
 
+def cell_to_check_value(row: list[Any], idx: int, field_key: str) -> str | None:
+    if idx >= len(row):
+        return None
+    v = row[idx]
+    if v is None or str(v).strip() == "":
+        return None
+    if is_marked(row, idx):
+        return "ok" if field_key == "ras" else "ok"
+    s = str(v).strip().lower()
+    if s in {"ko", "nok", "non"}:
+        return "ko"
+    if s in {"na", "n/a", "-"}:
+        return "na"
+    return "ok"
+
+
+def check_profile_for_type(type_slug: str) -> str:
+    if type_slug in {"bcd", "mask", "computer", "compass"}:
+        return type_slug
+    if type_slug.startswith("combi_") or type_slug.startswith("shorty_"):
+        return "wetsuit"
+    return ""
+
+
+def extract_check_values(row: list[Any], type_slug: str) -> dict[str, str]:
+    profile = check_profile_for_type(type_slug)
+    if not profile or profile == "compass":
+        return {}
+    cols = CHECK_COLUMNS.get(profile, [])
+    out: dict[str, str] = {}
+    for col_idx, field_key in cols:
+        val = cell_to_check_value(row, col_idx, field_key)
+        if val is not None:
+            out[field_key] = val
+    return out
+
+
 def derive_state_from_row(row: list[Any]) -> str:
     text = " ".join(cell_str(c).upper() for c in row if c is not None)
     if "NEUF" in text or "DEFINITIVE" in text and is_marked(row, 5):
         return "operational"
+    if is_marked(row, 11) or ("MAJEURE" in text and is_marked(row, 11)):
+        return "in_repair"
+    if is_marked(row, 10) or ("MINEURE" in text and is_marked(row, 10)):
+        return "in_repair"
     if "DEFINITIVE" in text and any(is_marked(row, i) for i in range(4, 8)):
         return "scrapped"
-    if "MAJEURE" in text and any(is_marked(row, i) for i in range(3, 7)):
-        return "in_repair"
     return "operational"
+
+
+def import_free_label(structure_slug: str) -> str:
+    return "Import RÉDERIS" if structure_slug == "rederis" else "Import AQUABLUE"
 
 
 def rows_from_openpyxl(ws) -> list[list[Any]]:
@@ -168,7 +258,6 @@ def find_label_row(rows: list[list[Any]], label: str, col: int = 0) -> int | Non
 
 
 def find_intervention_columns(header_row: list[Any]) -> tuple[int, int]:
-    """Col. technicien (A) et date de révision (souvent F, pas B — cellules fusionnées)."""
     tech_col = 0
     date_col: int | None = None
     for i, cell in enumerate(header_row):
@@ -184,13 +273,32 @@ def find_intervention_columns(header_row: list[Any]) -> tuple[int, int]:
     return tech_col, date_col if date_col is not None else 5
 
 
+def should_skip_sheet(name: str) -> bool:
+    upper = name.strip().upper()
+    if upper in SKIP_SHEETS:
+        return True
+    low = name.strip().lower()
+    return any(s in low for s in SKIP_SHEET_SUBSTR)
+
+
+def sheet_fallback_id(sheet_name: str) -> str:
+    cleaned = re.sub(r"^(GILET|GILETS|MASQUE|MASQUES|VETEMENT|SHORTY|ORDI)\s+", "", sheet_name.strip(), flags=re.I)
+    cleaned = cleaned.strip()
+    if cleaned:
+        return norm_id(cleaned.split()[-1] if " " in cleaned else cleaned)
+    return norm_id(sheet_name)
+
+
 def equipment_merge_key(item: EquipmentItem) -> str:
-    return f"{item.type_slug}:{item.public_id}"
+    return f"{item.structure_slug}:{item.type_slug}:{item.public_id}"
 
 
-def parse_fiche_epi_rows(rows: list[list[Any]], sheet_name: str, structure_slug: str, type_slug: str, source: str) -> EquipmentItem | None:
+def parse_fiche_epi_rows(
+    rows: list[list[Any]], sheet_name: str, structure_slug: str, type_slug: str, source: str
+) -> EquipmentItem | None:
     title = cell_str(rows[2][0] if len(rows) > 2 and rows[2] else "")
-    if "FICHE DE GESTION" not in title.upper() and "FICHE" not in title.upper():
+    title_u = title.upper()
+    if "FICHE DE GESTION" not in title_u and "FICHE" not in title_u:
         return None
 
     public_id = ""
@@ -203,7 +311,7 @@ def parse_fiche_epi_rows(rows: list[list[Any]], sheet_name: str, structure_slug:
         c0 = cell_str(row[0] if len(row) > 0 else "")
         c1 = cell_str(row[1] if len(row) > 1 else "")
         c2 = cell_str(row[2] if len(row) > 2 else "")
-        if c0.lower() == "modèle" or c0.lower() == "modele":
+        if c0.lower() in {"modèle", "modele"}:
             model = c1
             if "série" in c2.lower() or "serie" in c2.lower():
                 serial = cell_str(row[3] if len(row) > 3 else "")
@@ -211,16 +319,19 @@ def parse_fiche_epi_rows(rows: list[list[Any]], sheet_name: str, structure_slug:
                 brand = c2
         if c1.upper() == "AQUALUNG" and not brand:
             brand = "AQUALUNG"
-        if c0.upper() == "AQUABLUE PLONGEE" or c1.upper() == "AQUABLUE PLONGEE":
-            ident = cell_str(row[2] if c0.upper().startswith("AQUABLUE") else row[2])
-            if ident and ident.lower() != "identification":
+        if c0.upper() in {"AQUABLUE PLONGEE", "REDERIS"} or c1.upper() in {"AQUABLUE PLONGEE", "REDERIS"}:
+            ident = cell_str(row[2] if c0.upper() in {"AQUABLUE PLONGEE", "REDERIS"} else row[2])
+            if ident and ident.lower() not in {"identification", ""}:
                 public_id = norm_id(ident)
         if c0.lower().startswith("date achat"):
             purchase_year = year_from_date(row[1] if len(row) > 1 else None) or purchase_year
+        if c0.lower() == "identification" and c1:
+            public_id = norm_id(c1) or public_id
+            if c2:
+                brand = brand or c2
 
     if not public_id:
-        fallback = re.sub(r"^(GILET|MASQUE|MASQUES)\s+", "", sheet_name.strip(), flags=re.I)
-        public_id = norm_id(fallback.split()[-1] if fallback.split() else sheet_name)
+        public_id = sheet_fallback_id(sheet_name)
 
     if not public_id:
         return None
@@ -230,28 +341,31 @@ def parse_fiche_epi_rows(rows: list[list[Any]], sheet_name: str, structure_slug:
     header_idx = find_label_row(rows, "Nom du technicien")
     if header_idx is not None:
         tech_col, date_col = find_intervention_columns(rows[header_idx])
-        for row in rows[header_idx + 1 : header_idx + 20]:
+        for row in rows[header_idx + 1 : header_idx + 25]:
             tech = cell_str(row[tech_col] if len(row) > tech_col else "")
             if not tech or tech.lower().startswith("nom "):
                 continue
             done = parse_date(row[date_col] if len(row) > date_col else None)
             if not done:
                 continue
+            check_values = extract_check_values(row, type_slug)
             summary_parts = []
-            if any(is_marked(row, i) for i in range(2, 6)):
+            if check_values:
                 summary_parts.append("Contrôle périodique importé")
             if "NEUF" in " ".join(cell_str(c) for c in row).upper():
                 summary_parts.append("NEUF")
             summary = " — ".join(summary_parts) or "Révision importée"
             row_text = " ".join(cell_str(c) for c in row).upper()
-            # Révisions périodiques Excel ; réparation seulement si mention explicite
-            is_repair = bool(re.search(r"REPARATION|RÉPARATION", row_text))
+            is_repair = bool(re.search(r"REPARATION|RÉPARATION", row_text)) or check_values.get("majeure") == "ok"
+            if check_values.get("mineure") == "ok" and not is_repair:
+                is_repair = True
             interventions.append(
                 Intervention(
                     subtype="repair" if is_repair else "revision",
                     done_on=done,
                     responsible_free=tech,
                     summary=summary,
+                    check_values=check_values if not is_repair else {},
                 )
             )
             state = derive_state_from_row(row)
@@ -274,12 +388,65 @@ def parse_fiche_epi_workbook(wb_path: Path, structure_slug: str, type_slug: str)
     wb = openpyxl.load_workbook(wb_path, read_only=True, data_only=True)
     items: list[EquipmentItem] = []
     for name in wb.sheetnames:
-        if name.strip().upper() in SKIP_SHEETS:
+        if should_skip_sheet(name):
             continue
         ws = wb[name]
         item = parse_fiche_epi_rows(rows_from_openpyxl(ws), name, structure_slug, type_slug, str(wb_path.name))
         if item:
             items.append(item)
+    wb.close()
+    return items
+
+
+def parse_liste_epi_rows(rows: list[list[Any]], structure_slug: str, type_slug: str, source: str) -> list[EquipmentItem]:
+    items: list[EquipmentItem] = []
+    header_idx: int | None = None
+    for i, row in enumerate(rows):
+        c0 = cell_str(row[0] if row else "").lower()
+        if c0 == "identification":
+            header_idx = i
+            break
+    if header_idx is None:
+        return items
+
+    for row in rows[header_idx + 1 :]:
+        ident = norm_id(row[0] if len(row) > 0 else "")
+        if not ident:
+            continue
+        brand = cell_str(row[1] if len(row) > 1 else "")
+        model = cell_str(row[2] if len(row) > 2 else "")
+        done = parse_date(row[3] if len(row) > 3 else None)
+        interventions: list[Intervention] = []
+        if done:
+            interventions.append(
+                Intervention(
+                    subtype="revision",
+                    done_on=done,
+                    responsible_free=import_free_label(structure_slug),
+                    summary="Mise en service importée",
+                    check_values={"controle_visuel": "ok", "fonctionnement": "ok"},
+                )
+            )
+        items.append(
+            EquipmentItem(
+                public_id=ident,
+                structure_slug=structure_slug,
+                type_slug=type_slug,
+                brand=brand,
+                model=model,
+                purchase_year=year_from_date(done),
+                interventions=interventions,
+                source=source,
+            )
+        )
+    return items
+
+
+def parse_liste_epi_workbook(wb_path: Path, structure_slug: str, type_slug: str) -> list[EquipmentItem]:
+    wb = openpyxl.load_workbook(wb_path, read_only=True, data_only=True)
+    items: list[EquipmentItem] = []
+    for name in wb.sheetnames:
+        items.extend(parse_liste_epi_rows(rows_from_openpyxl(wb[name]), structure_slug, type_slug, wb_path.name))
     wb.close()
     return items
 
@@ -360,7 +527,7 @@ def parse_detendeur_rows(
             Intervention(
                 subtype=subtype,
                 done_on=done_on,
-                responsible_free="Import AQUABLUE",
+                responsible_free=import_free_label(structure_slug),
                 summary=summary[:2000],
             )
         ],
@@ -372,7 +539,7 @@ def parse_detendeur_xls(path: Path, structure_slug: str, type_slug: str) -> list
     wb = xlrd.open_workbook(str(path))
     items: list[EquipmentItem] = []
     for name in wb.sheet_names():
-        if name.strip().upper() in SKIP_SHEETS:
+        if should_skip_sheet(name):
             continue
         sh = wb.sheet_by_name(name)
         item = parse_detendeur_rows(
@@ -387,6 +554,8 @@ def parse_detendeur_xlsx(path: Path, structure_slug: str, type_slug: str, *, for
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     items: list[EquipmentItem] = []
     for name in wb.sheetnames:
+        if should_skip_sheet(name):
+            continue
         item = parse_detendeur_rows(
             rows_from_openpyxl(wb[name]), name, structure_slug, type_slug, path.name, form_kind=form_kind
         )
@@ -420,23 +589,31 @@ def collect_items() -> dict[str, EquipmentItem]:
             continue
         structure_slug = cfg["structure_slug"]
         type_slug = cfg["type_slug"]
+        parser = cfg.get("parser")
 
-        if cfg.get("parser") == "fiche_epi":
+        if parser == "fiche_epi":
             file_name = cfg["file"]
-            matches = list(folder.glob(file_name)) if "*" not in file_name else list(folder.glob(file_name))
+            matches = list(folder.glob(file_name))
             for fp in matches:
+                if fp.suffix.lower() == ".pdf":
+                    continue
                 for item in parse_fiche_epi_workbook(fp, structure_slug, type_slug):
+                    add_item(item)
+        elif parser == "liste_epi":
+            file_name = cfg["file"]
+            for fp in folder.glob(file_name):
+                for item in parse_liste_epi_workbook(fp, structure_slug, type_slug):
                     add_item(item)
         elif cfg.get("sources"):
             for src in cfg["sources"]:
                 rel = src["path"]
-                parser = src["parser"]
+                src_parser = src["parser"]
                 for fp in folder.glob(rel):
-                    if parser == "detendeur_form" and fp.suffix.lower() == ".xls":
+                    if src_parser == "detendeur_form" and fp.suffix.lower() == ".xls":
                         items = parse_detendeur_xls(fp, structure_slug, type_slug)
-                    elif parser == "detendeur_form":
+                    elif src_parser == "detendeur_form":
                         items = parse_detendeur_xlsx(fp, structure_slug, type_slug, form_kind="form")
-                    elif parser == "detendeur_repair":
+                    elif src_parser == "detendeur_repair":
                         items = parse_detendeur_xlsx(fp, structure_slug, type_slug, form_kind="repair")
                     else:
                         continue
@@ -462,32 +639,64 @@ def payload_from_items(items: dict[str, EquipmentItem]) -> dict[str, Any]:
                 "interventions": [i.as_dict() for i in it.interventions],
                 "source": it.source,
             }
-            for it in sorted(items.values(), key=lambda x: x.public_id)
+            for it in sorted(items.values(), key=lambda x: (x.structure_slug, x.type_slug, x.public_id))
         ]
     }
 
 
+def normalize_tech_name(name: str) -> str:
+    """Approximation aliases PHP pour rapport dry-run."""
+    aliases = {
+        "courtaudiere": "Julien C.",
+        "coutaudiere": "Julien C.",
+        "mesnier": "Marie M.",
+        "petit": "Eric D.",
+        "lacote": "Julie L.",
+    }
+    key = name.strip().lower()
+    return aliases.get(key, name.strip())
+
+
 def print_report(items: dict[str, EquipmentItem]) -> None:
     by_type: dict[str, int] = {}
+    by_structure: dict[str, int] = {}
     int_count = 0
+    checks_count = 0
+    unknown_techs: set[str] = set()
+    known = {
+        "julien c.", "marie m.", "eric d.", "julie l.", "nicolas c.",
+        "import aquablue", "import réderis", "import rederis",
+    }
+
     for it in items.values():
         by_type[it.type_slug] = by_type.get(it.type_slug, 0) + 1
-        int_count += len(it.interventions)
+        by_structure[it.structure_slug] = by_structure.get(it.structure_slug, 0) + 1
+        for inv in it.interventions:
+            int_count += 1
+            if inv.check_values:
+                checks_count += 1
+            tech = normalize_tech_name(inv.responsible_free).lower()
+            if tech and tech not in known and not tech.startswith("import "):
+                unknown_techs.add(inv.responsible_free.strip())
+
     print(f"Équipements : {len(items)}")
+    for slug, cnt in sorted(by_structure.items()):
+        print(f"  [{slug}] {cnt}")
     for slug, cnt in sorted(by_type.items()):
         print(f"  - {slug}: {cnt}")
-    print(f"Interventions : {int_count}")
+    print(f"Interventions : {int_count} ({checks_count} avec critères)")
+
+    if unknown_techs:
+        print(f"\nTechniciens non aliasés ({len(unknown_techs)}) :")
+        for t in sorted(unknown_techs)[:20]:
+            print(f"  - {t}")
+        if len(unknown_techs) > 20:
+            print(f"  … et {len(unknown_techs) - 20} autres")
+
     print("\nÉchantillon (10 premiers IDs) :")
     for key in sorted(items.keys())[:10]:
         it = items[key]
-        print(f"  {it.public_id} ({it.type_slug}) — {len(it.interventions)} int.")
-
-    by_public_id: dict[str, list[str]] = {}
-    for it in items.values():
-        by_public_id.setdefault(it.public_id, []).append(it.type_slug)
-    collisions = {pid: types for pid, types in by_public_id.items() if len(types) > 1}
-    if collisions:
-        print(f"\nInfo : {len(collisions)} ID(s) partagés entre types (autorisé : unicité par type).")
+        print(f"  {it.public_id} ({it.structure_slug}/{it.type_slug}) — {len(it.interventions)} int.")
 
 
 def run_apply(payload: dict[str, Any]) -> int:
@@ -528,8 +737,9 @@ def main() -> int:
     payload = payload_from_items(items)
 
     if args.export:
-        Path(args.export).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"\nPayload exporté : {args.export}")
+        out = Path(args.export)
+        out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"\nPayload exporté : {out}")
 
     if args.apply:
         print("\nApplication en base…")

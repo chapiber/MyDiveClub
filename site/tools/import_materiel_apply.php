@@ -71,7 +71,7 @@ function importMaterielInsertIntervention(PDO $pdo, int $equipmentId, array $int
         $free = null;
     } elseif (portailClubMaterielIsImportFreeLabel($raw)) {
         $personId = null;
-        $free = PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL;
+        $free = $raw;
     } else {
         $personId = importMaterielEnsurePerson($pdo, $raw);
         $free = $personId ? null : portailClubMaterielNormalizePersonName($raw);
@@ -89,6 +89,25 @@ function importMaterielInsertIntervention(PDO $pdo, int $equipmentId, array $int
         $free !== null && $free !== '' ? $free : null,
         trim((string)($int['summary'] ?? '')) ?: null,
     ]);
+    $interventionId = (int)$pdo->lastInsertId();
+
+    $subtype = (string)($int['subtype'] ?? 'repair');
+    $checkValues = $int['check_values'] ?? null;
+    if ($subtype === 'revision' && is_array($checkValues) && $checkValues !== []) {
+        $stCheck = $pdo->prepare(
+            'INSERT INTO PORTAIL_CLUB_materiel_intervention_check_values (intervention_id, field_key, value)
+             VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE value = VALUES(value)'
+        );
+        foreach ($checkValues as $fieldKey => $value) {
+            $fieldKey = strtolower(trim((string)$fieldKey));
+            $value = trim((string)$value);
+            if ($fieldKey === '' || $value === '') {
+                continue;
+            }
+            $stCheck->execute([$interventionId, $fieldKey, $value]);
+        }
+    }
 }
 
 foreach ($payload['items'] as $item) {

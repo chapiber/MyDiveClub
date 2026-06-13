@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 
-/** Libellé saisie libre pour interventions importées (pas de fiche personne). */
+/** Libellé saisie libre pour interventions importées AQUABLUE (pas de fiche personne). */
 const PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL = 'Import AQUABLUE';
+
+/** Libellé saisie libre pour interventions importées RÉDERIS. */
+const PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL_REDERIS = 'Import RÉDERIS';
 
 /** Renommages display_name avant fusion des alias. */
 function portailClubMaterielPersonRenames(): array
@@ -17,16 +20,35 @@ function portailClubMaterielPersonRenames(): array
 function portailClubMaterielPersonMergeMap(): array
 {
     return [
-        'Julien C.' => ['COURTAUDIERE', 'COUTAUDIERE'],
+        'Julien C.' => ['COURTAUDIERE', 'COUTAUDIERE', 'COURDAUDIERE', 'COURTAIDIERE', 'CPUTAUDIERE'],
         'Marie M.' => ['MESNIER'],
         'Eric D.' => ['PETIT'],
         'Julie L.' => ['LACOTE'],
+        'Nicolas C.' => ['coffin nicolas', 'coffin', 'nicolas'],
     ];
+}
+
+function portailClubMaterielImportFreeLabels(): array
+{
+    return [PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL, PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL_REDERIS];
 }
 
 function portailClubMaterielIsImportFreeLabel(string $name): bool
 {
-    return mb_strtolower(trim($name)) === mb_strtolower(PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL);
+    $lower = mb_strtolower(trim($name));
+    foreach (portailClubMaterielImportFreeLabels() as $label) {
+        if ($lower === mb_strtolower($label)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function portailClubMaterielImportFreeLabelForStructure(string $structureSlug): string
+{
+    return $structureSlug === 'rederis'
+        ? PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL_REDERIS
+        : PORTAIL_CLUB_MATERIEL_IMPORT_FREE_LABEL;
 }
 
 /**
