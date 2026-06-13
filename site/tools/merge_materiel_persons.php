@@ -51,7 +51,7 @@ try {
 
     // 2. Fusions alias → canonique
     foreach (portailClubMaterielPersonMergeMap() as $canonical => $aliases) {
-        $canonicalId = portailClubMaterielResolvePersonIdByName($pdo, $canonical);
+        $canonicalId = portailClubMaterielResolveCanonicalPersonId($pdo, $canonical);
         if ($canonicalId === null) {
             $stats['errors'][] = "Personne canonique introuvable : {$canonical}";
             continue;

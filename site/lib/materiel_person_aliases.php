@@ -86,3 +86,19 @@ function portailClubMaterielResolvePersonIdByName(PDO $pdo, string $displayName)
     $id = $st->fetchColumn();
     return $id ? (int)$id : null;
 }
+
+/** Résout l'id canonique (compte les renommages prévus si la cible n'existe pas encore). */
+function portailClubMaterielResolveCanonicalPersonId(PDO $pdo, string $canonical): ?int
+{
+    $id = portailClubMaterielResolvePersonIdByName($pdo, $canonical);
+    if ($id !== null) {
+        return $id;
+    }
+    $canonicalLower = mb_strtolower(trim($canonical));
+    foreach (portailClubMaterielPersonRenames() as $from => $to) {
+        if (mb_strtolower(trim($to)) === $canonicalLower) {
+            return portailClubMaterielResolvePersonIdByName($pdo, $from);
+        }
+    }
+    return null;
+}
