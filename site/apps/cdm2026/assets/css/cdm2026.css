@@ -232,6 +232,16 @@
   animation: wc-pulse 1.5s ease infinite;
 }
 
+.wc-badge--done {
+  background: #e8eef5;
+  color: var(--wc-usa-blue);
+  border: 1px solid rgba(0, 40, 104, 0.2);
+}
+
+.wc-match--finished .wc-match__score {
+  font-size: 1.65rem;
+}
+
 @keyframes wc-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.65; }

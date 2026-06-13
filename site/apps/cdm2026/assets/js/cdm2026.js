@@ -122,6 +122,7 @@
     let cls = 'wc-match';
     if (fra) cls += ' wc-match--fra';
     if (live) cls += ' wc-match--live';
+    if (finished) cls += ' wc-match--finished';
 
     let scoreHtml;
     if (m.label && !m.home && !m.away) {
@@ -157,6 +158,7 @@
     let badges = '';
     if (fra) badges += '<span class="wc-badge wc-badge--fra">Bleus</span>';
     if (live) badges += '<span class="wc-badge wc-badge--live">En direct</span>';
+    if (finished) badges += '<span class="wc-badge wc-badge--done">Terminé</span>';
 
     return (
       '<article class="' + cls + '">' +

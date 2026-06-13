@@ -77,8 +77,8 @@ const GROUPS = {
 const FIXTURES = [
   ['M001', 'group', 'A', 'MEX', 'RSA', '2026-06-11T21:00:00+02:00', 'Estadio Azteca', 'Mexico City', null, { home: 2, away: 0, status: 'finished' }],
   ['M002', 'group', 'A', 'KOR', 'CZE', '2026-06-12T04:00:00+02:00', 'Estadio Akron', 'Guadalajara', null, { home: 2, away: 1, status: 'finished' }],
-  ['M003', 'group', 'B', 'CAN', 'BIH', '2026-06-12T21:00:00+02:00', 'BMO Field', 'Toronto'],
-  ['M004', 'group', 'D', 'USA', 'PAR', '2026-06-13T03:00:00+02:00', 'SoFi Stadium', 'Los Angeles'],
+  ['M003', 'group', 'B', 'CAN', 'BIH', '2026-06-12T21:00:00+02:00', 'BMO Field', 'Toronto', null, { home: 1, away: 1, status: 'finished' }],
+  ['M004', 'group', 'D', 'USA', 'PAR', '2026-06-13T03:00:00+02:00', 'SoFi Stadium', 'Los Angeles', null, { home: 4, away: 1, status: 'finished' }],
   ['M005', 'group', 'C', 'HTI', 'SCO', '2026-06-14T03:00:00+02:00', 'Gillette Stadium', 'Boston'],
   ['M006', 'group', 'D', 'AUS', 'TUR', '2026-06-14T06:00:00+02:00', 'BC Place', 'Vancouver'],
   ['M007', 'group', 'C', 'BRA', 'MAR', '2026-06-14T00:00:00+02:00', 'MetLife Stadium', 'New York'],
