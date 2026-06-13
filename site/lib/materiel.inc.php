@@ -993,7 +993,10 @@ function portailClubMaterielCreateEquipment(PDO $pdo, array $body): array
     $id = (int)$pdo->lastInsertId();
     portailClubMaterielLogStateChange($pdo, $id, null, 'operational', null, null);
     if (!empty($body['nfc_linked'])) {
+        error_log('[materiel] create nfc_linked flag id=' . $id . ' public_id=' . $publicId);
         portailClubMaterielSetNfcLinked($pdo, $id, true);
+    } else {
+        error_log('[materiel] create id=' . $id . ' public_id=' . $publicId . ' nfc_pending_write');
     }
     return portailClubMaterielGetEquipment($pdo, $id);
 }
@@ -1102,7 +1105,8 @@ function portailClubMaterielChangeEquipmentState(PDO $pdo, int $id, array $body)
 
 function portailClubMaterielSetNfcLinked(PDO $pdo, int $id, bool $linked): array
 {
-    portailClubMaterielGetEquipment($pdo, $id);
+    $item = portailClubMaterielGetEquipment($pdo, $id);
+    error_log('[materiel] nfc_' . ($linked ? 'link' : 'unlink') . ' id=' . $id . ' public_id=' . $item['public_id']);
     $pdo->prepare(
         'UPDATE PORTAIL_CLUB_materiel_equipment
          SET nfc_linked = ?, nfc_linked_at = CASE WHEN ? = 1 THEN NOW() ELSE NULL END

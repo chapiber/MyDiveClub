@@ -93,13 +93,17 @@
   }
 
   async function api(path, options) {
+    const method = (options && options.method) || 'GET';
+    if (window.MaterielLog) MaterielLog.debug('api', method + ' ' + path);
     const res = await fetch(API + path, {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       ...options,
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.ok === false) {
-      throw new Error(data.error || 'Erreur réseau');
+      const errMsg = data.error || 'Erreur réseau';
+      if (window.MaterielLog) MaterielLog.error('api', method + ' ' + path + ' → ' + errMsg, { status: res.status });
+      throw new Error(errMsg);
     }
     return data;
   }
@@ -704,11 +708,12 @@
     const nfcFooter = state.settings.nfc_enabled ? (
       e.nfc_linked
         ? `<div class="sm-panel__footer sm-panel__footer--nfc">
+            <p class="sm-hint">Badge illisible au scan ? Utilisez « Regraver » avec le badge vierge.</p>
             <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-regrave">Regraver badge</button>
             <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" id="sm-unlink">Dissocier NFC</button>
           </div>`
         : `<div class="sm-panel__footer sm-panel__footer--nfc">
-            <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-link">📶 Associer badge NFC</button>
+            <button type="button" class="sm-btn sm-btn--ghost sm-btn--block" id="sm-link">📶 Associer un badge vierge</button>
           </div>`
     ) : '';
 
@@ -723,15 +728,45 @@
         <p class="sm-item-hero__meta">${esc(e.type_label)} · ${esc(structureDisplayLabel(e.structure_label))}${e.brand ? ' · ' + esc(e.brand) : ''}</p>
       </header>
 
-      <section class="sm-panel" aria-labelledby="sm-panel-specs">
+      <section class="sm-panel sm-panel--form" aria-labelledby="sm-panel-specs">
         <h2 id="sm-panel-specs" class="sm-panel__title">Fiche technique</h2>
-        <dl class="sm-spec-list">
-          ${renderSpecItem('Marque', esc(e.brand || '—'))}
-          ${renderSpecItem('Année', esc(e.purchase_year || '—'))}
-          ${renderSpecItem('Modèle', esc(e.model || '—'))}
-          ${renderSpecItem('N° série', esc(e.serial || '—'))}
-          ${e.notes ? renderSpecItem('Notes', esc(e.notes), true) : ''}
-        </dl>
+        <form id="sm-item-edit-form">
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-edit-public-id">Identifiant public</label>
+            <input id="sm-edit-public-id" class="sm-input" name="public_id" required value="${esc(e.public_id)}">
+          </div>
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-edit-type">Type</label>
+            <select id="sm-edit-type" class="sm-select" name="type_id" required>
+              ${(state.catalog?.types || []).filter((t) => t.trackable).map((t) =>
+                `<option value="${t.id}"${e.type_id === t.id ? ' selected' : ''}>${esc(t.label)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-edit-brand">Marque</label>
+            <input id="sm-edit-brand" class="sm-input" name="brand" value="${esc(e.brand || '')}">
+          </div>
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-edit-year">Année achat</label>
+            <input id="sm-edit-year" class="sm-input" name="purchase_year" type="number" min="1980" max="2100"
+              value="${e.purchase_year != null ? esc(String(e.purchase_year)) : ''}">
+          </div>
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-edit-model">Modèle</label>
+            <input id="sm-edit-model" class="sm-input" name="model" value="${esc(e.model || '')}">
+          </div>
+          <div class="sm-field sm-field--inline">
+            <label class="sm-label" for="sm-edit-serial">N° série</label>
+            <input id="sm-edit-serial" class="sm-input" name="serial" value="${esc(e.serial || '')}">
+          </div>
+          <div class="sm-field">
+            <label class="sm-label" for="sm-edit-notes">Notes</label>
+            <textarea id="sm-edit-notes" class="sm-textarea" name="notes">${esc(e.notes || '')}</textarea>
+          </div>
+          <div class="sm-panel__actions sm-panel__actions--end">
+            <button type="submit" class="sm-btn sm-btn--primary">Enregistrer la fiche</button>
+          </div>
+        </form>
       </section>
 
       <section class="sm-panel" aria-labelledby="sm-panel-org">
@@ -823,11 +858,30 @@
       } catch (err) { showToast(err.message); }
     });
 
+    root.querySelector('#sm-item-edit-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const body = Object.fromEntries(fd.entries());
+      if (body.purchase_year === '') body.purchase_year = null;
+      try {
+        MaterielLog?.info('item', 'patch_start', { id, publicId: body.public_id });
+        await api('/equipment.php?id=' + id, { method: 'PATCH', body: JSON.stringify(body) });
+        showToast('Fiche enregistrée');
+        renderItem(id);
+      } catch (err) { showToast(err.message); }
+    });
+
     const linkBtn = root.querySelector('#sm-link');
     const regraveBtn = root.querySelector('#sm-regrave');
     const unlinkBtn = root.querySelector('#sm-unlink');
-    if (linkBtn) linkBtn.addEventListener('click', () => writeNfcAndLink(e));
-    if (regraveBtn) regraveBtn.addEventListener('click', () => writeNfcAndLink(e, true));
+    if (linkBtn) linkBtn.addEventListener('click', async () => {
+      const fresh = await api('/equipment.php?id=' + id);
+      await writeNfcAndLink(fresh.equipment);
+    });
+    if (regraveBtn) regraveBtn.addEventListener('click', async () => {
+      const fresh = await api('/equipment.php?id=' + id);
+      await writeNfcAndLink(fresh.equipment, true);
+    });
     if (unlinkBtn) unlinkBtn.addEventListener('click', async () => {
       try {
         await api('/equipment.php', { method: 'POST', body: JSON.stringify({ action: 'unlink_nfc', equipment_id: id }) });
@@ -837,19 +891,48 @@
     });
   }
 
-  async function writeNfcAndLink(equipment, regraveOnly) {
+  async function writeNfcAndLink(equipment, regraveOnly, options) {
+    options = options || {};
+    const log = window.MaterielLog;
     try {
-      showToast('Approchez le badge vierge…');
-      await MaterielNfc.write(MaterielNfc.buildPayload(equipment));
+      log?.info('nfc', 'link_flow_start', {
+        equipmentId: equipment.id,
+        publicId: equipment.public_id,
+        regraveOnly: !!regraveOnly,
+        alreadyLinked: !!equipment.nfc_linked,
+      });
+      showToast(regraveOnly ? 'Approchez le badge à regraver…' : 'Approchez le badge vierge…');
+      const payload = MaterielNfc.buildPayload(equipment);
+      await MaterielNfc.write(payload);
       if (!regraveOnly || !equipment.nfc_linked) {
-        await api('/equipment.php', {
+        const linked = await api('/equipment.php', {
           method: 'POST',
           body: JSON.stringify({ action: 'link_nfc', equipment_id: equipment.id }),
         });
+        equipment = linked.equipment || equipment;
+        log?.info('nfc', 'link_db_ok', { equipmentId: equipment.id });
       }
-      showToast('Badge gravé');
-      renderItem(equipment.id);
-    } catch (err) { showToast(err.message); }
+      showToast('Badge gravé' + (equipment.nfc_linked ? ' et associé' : ''));
+      if (options.afterCreate) {
+        nav('#/item/' + equipment.id);
+      } else {
+        renderItem(equipment.id);
+      }
+      return true;
+    } catch (err) {
+      log?.error('nfc', 'link_flow_fail', {
+        equipmentId: equipment.id,
+        publicId: equipment.public_id,
+        message: err.message,
+      });
+      if (options.afterCreate) {
+        showToast('Matériel créé — gravure NFC échouée : ' + err.message);
+        nav('#/item/' + equipment.id);
+      } else {
+        showToast(err.message);
+      }
+      return false;
+    }
   }
 
   function renderNewScanStep() {
@@ -959,14 +1042,16 @@
       if (!body.structure_id) body.structure_id = null;
       if (body.purchase_year === '') delete body.purchase_year;
       const grave = root.querySelector('#sm-grave-nfc');
-      if (opts.nfcLinked || opts.blankTag || (grave && grave.checked)) body.nfc_linked = true;
+      const willWriteAfterCreate = !!(opts.blankTag || (grave && grave.checked));
+      // Ne marquer lié en base qu'après gravure physique réussie (badge vierge).
+      if (!willWriteAfterCreate && opts.scannedId) body.nfc_linked = true;
       try {
+        MaterielLog?.info('item', 'create_start', { publicId: body.public_id, willWriteNfc: willWriteAfterCreate });
         const res = await api('/equipment.php', { method: 'POST', body: JSON.stringify(body) });
         const item = res.equipment;
         state.newDraft = null;
-        const grave = root.querySelector('#sm-grave-nfc');
-        if (grave && (grave.checked || opts.blankTag || opts.nfcLinked)) {
-          await writeNfcAndLink(item);
+        if (willWriteAfterCreate) {
+          await writeNfcAndLink(item, false, { afterCreate: true });
         } else {
           showToast('Matériel créé');
           nav('#/item/' + item.id);
@@ -1279,6 +1364,8 @@
           <p id="sm-user-hint" class="sm-hint">Prérempli comme technicien sur les changements d'état et les interventions. Mémorisé sur cet appareil.</p>
         </div>
         <label class="sm-toggle"><input type="checkbox" name="nfc_enabled" ${state.settings.nfc_enabled ? 'checked' : ''}> Activer NFC</label>
+        <label class="sm-toggle"><input type="checkbox" name="debug_log" ${localStorage.getItem('portailClub_materiel_debug') === '1' ? 'checked' : ''}> Journal détaillé (console navigateur)</label>
+        <p class="sm-hint">Diagnostic NFC / API : ouvrir les outils développeur, filtrer <code>[Materiel]</code>. Commande : <code>MaterielLog.dump()</code></p>
         <div class="sm-field"><label class="sm-label">Préfixe ID par défaut</label>
           <input class="sm-input" name="id_prefix" value="${esc(state.settings.id_prefix)}" placeholder="EQ-">
           <p class="sm-hint">Utilisé si une structure n'a pas de préfixe propre.</p></div>
@@ -1381,6 +1468,7 @@
             }),
           });
           state.settings = res.settings;
+          if (window.MaterielLog) MaterielLog.setDebug(!!fd.get('debug_log'));
           showToast('Réglages enregistrés');
         } catch (err) { showToast(err.message); }
       });
