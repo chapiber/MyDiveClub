@@ -21,6 +21,19 @@ disable-model-invocation: true
 
 Actualiser **scores**, **statuts** (`scheduled` / `live` / `finished`), **grilles TV France** et **classements des poules** sans base de données.
 
+## Affichage app (référence IHM)
+
+| Élément | Comportement |
+|---------|--------------|
+| Onglet navigation | **Matchs à venir** (`#/`, vue interne `today`) |
+| Bloc du jour | **Aujourd'hui · {date}** — section en surbrillance (bordure dorée, cartes accentuées) |
+| Jours suivants | Jusqu'à **5 jours** : `Demain · …` puis date seule, style atténué |
+| Match terminé | `score: { home, away, status: "finished" }` → score affiché + badge **Terminé** |
+| Match en cours | `status: "live"` → badge **En direct** |
+| Match à venir | `status: "scheduled"` ou absent → **vs** + horaire |
+
+Les résultats connus doivent être renseignés dans le JSON : l'app les affiche automatiquement, sans modification JS.
+
 ## Étapes
 
 ### 1. Lire l'existant
@@ -42,7 +55,8 @@ Utiliser **WebSearch** puis **WebFetch** sur ces sources (par ordre de priorité
 Pour chaque match (`id` M001–M104) :
 
 - **Scores** : mettre à jour uniquement si la source confirme un résultat officiel.
-- **Statut** : `live` si en cours signalé ; `finished` si score final ; sinon `scheduled`.
+- **Statut** : `live` si en cours signalé ; `finished` si score final (renseigner `home` et `away`) ; sinon `scheduled`.
+- **Résultats terminés** : dès qu'un match est fini (ex. USA–Paraguay), mettre le score officiel — il apparaît dans la vue **Matchs à venir** et les poules.
 - **Horaires** : toujours en `kickoffParis` ISO 8601 avec offset `+02:00` (CEST).
 - **TV** : normaliser les chaînes :
   - `M6`, `M6+`, `beIN Sports 1`, `beIN Sports 2`

@@ -198,6 +198,7 @@
     const d = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
     const label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     const formatted = label.charAt(0).toUpperCase() + label.slice(1);
+    if (dayOffset === 0) return 'Aujourd\'hui · ' + formatted;
     if (dayOffset === 1) return 'Demain · ' + formatted;
     return formatted;
   }
@@ -230,7 +231,7 @@
 
   function renderNav(route) {
     const tabs = [
-      { id: 'today', hash: '#/', label: "Aujourd'hui", icon: '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>' },
+      { id: 'today', hash: '#/', label: 'Matchs à venir', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' },
       { id: 'team', hash: '#/team', label: 'Équipe', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' },
       { id: 'groups', hash: '#/groups', label: 'Poules', icon: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' },
     ];
@@ -249,23 +250,32 @@
   function renderToday() {
     const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
     const todayMatches = getMatchesForDateKey(todayKey);
-    let body = '<h2 class="wc-section-title">Matchs du jour</h2>';
+    let body =
+      '<section class="wc-day-block wc-day-block--today" aria-labelledby="wc-day-today">' +
+      '<h2 id="wc-day-today" class="wc-section-title wc-section-title--today">' +
+      esc(formatDaySectionTitle(todayKey, 0)) +
+      '</h2>';
 
     if (todayMatches.length) {
-      body += todayMatches.map((m) => renderMatchCard(m)).join('');
+      body += '<div class="wc-day-block__matches">' + todayMatches.map((m) => renderMatchCard(m)).join('') + '</div>';
     } else {
       body += '<p class="wc-day-empty">Aucun match prévu aujourd\'hui.</p>';
     }
+    body += '</section>';
 
     for (let offset = 1; offset <= 5; offset += 1) {
       const dayKey = addDaysToParisDateKey(todayKey, offset);
       const dayMatches = getMatchesForDateKey(dayKey);
       if (!dayMatches.length) continue;
+      const sectionId = 'wc-day-' + dayKey;
       body +=
-        '<h2 class="wc-section-title wc-section-title--day">' +
+        '<section class="wc-day-block wc-day-block--later" aria-labelledby="' + sectionId + '">' +
+        '<h2 id="' + sectionId + '" class="wc-section-title wc-section-title--day">' +
         esc(formatDaySectionTitle(dayKey, offset)) +
-        '</h2>';
-      body += dayMatches.map((m) => renderMatchCard(m)).join('');
+        '</h2>' +
+        '<div class="wc-day-block__matches">' +
+        dayMatches.map((m) => renderMatchCard(m)).join('') +
+        '</div></section>';
     }
 
     if (!todayMatches.length && body.indexOf('wc-match') < 0) {
