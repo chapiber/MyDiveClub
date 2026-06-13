@@ -23,7 +23,7 @@ function portailClubMaterielPersonMergeMap(): array
     return [
         'Julien C.' => ['COURTAUDIERE', 'COUTAUDIERE', 'COURDAUDIERE', 'COURTAIDIERE', 'CPUTAUDIERE'],
         'Marie M.' => ['MESNIER'],
-        'Eric D.' => ['PETIT', 'DELMAS'],
+        'Eric D.' => ['PETIT', 'DELMAS', 'ENJALBERT', 'VIDAL', 'ROYNARD', 'LE PROVOST', 'LEPROVOST', 'JEREMIE GEORGES'],
         'Julie L.' => ['LACOTE'],
         'Nicolas C.' => ['coffin nicolas', 'coffin', 'nicolas'],
         'Jérôme C.' => ['CHAUMETON'],

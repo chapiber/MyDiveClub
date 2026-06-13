@@ -662,6 +662,12 @@ def normalize_tech_name(name: str) -> str:
         "mesnier": "Marie M.",
         "petit": "Eric D.",
         "delmas": "Eric D.",
+        "enjalbert": "Eric D.",
+        "vidal": "Eric D.",
+        "roynard": "Eric D.",
+        "le provost": "Eric D.",
+        "leprovost": "Eric D.",
+        "jeremie georges": "Eric D.",
         "lacote": "Julie L.",
         "chaumeton": "Jérôme C.",
     }
