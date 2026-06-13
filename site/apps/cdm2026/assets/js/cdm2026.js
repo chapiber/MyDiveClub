@@ -251,7 +251,7 @@
     const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
     const todayMatches = getMatchesForDateKey(todayKey);
     let body =
-      '<section class="wc-day-block wc-day-block--today" aria-labelledby="wc-day-today">' +
+      '<section class="wc-day-block wc-day-block--today wc-day-block--d0" aria-labelledby="wc-day-today">' +
       '<h2 id="wc-day-today" class="wc-section-title wc-section-title--today">' +
       esc(formatDaySectionTitle(todayKey, 0)) +
       '</h2>';
@@ -269,8 +269,8 @@
       if (!dayMatches.length) continue;
       const sectionId = 'wc-day-' + dayKey;
       body +=
-        '<section class="wc-day-block wc-day-block--later" aria-labelledby="' + sectionId + '">' +
-        '<h2 id="' + sectionId + '" class="wc-section-title wc-section-title--day">' +
+        '<section class="wc-day-block wc-day-block--later wc-day-block--d' + offset + '" aria-labelledby="' + sectionId + '">' +
+        '<h2 id="' + sectionId + '" class="wc-section-title wc-section-title--day wc-section-title--d' + offset + '">' +
         esc(formatDaySectionTitle(dayKey, offset)) +
         '</h2>' +
         '<div class="wc-day-block__matches">' +

@@ -26,8 +26,8 @@ Actualiser **scores**, **statuts** (`scheduled` / `live` / `finished`), **grille
 | Élément | Comportement |
 |---------|--------------|
 | Onglet navigation | **Matchs à venir** (`#/`, vue interne `today`) |
-| Bloc du jour | **Aujourd'hui · {date}** — section en surbrillance (bordure dorée, cartes accentuées) |
-| Jours suivants | Jusqu'à **5 jours** : `Demain · …` puis date seule, style atténué |
+| Bloc du jour | **Aujourd'hui · {date}** — surbrillance or (d0), le plus visible |
+| Jours suivants | Jusqu'à **5 jours** avec code couleur : d1 bleu (Demain), d2 vert, d3 rouge, d4 violet, d5 ardoise |
 | Match terminé | `score: { home, away, status: "finished" }` → score affiché + badge **Terminé** |
 | Match en cours | `status: "live"` → badge **En direct** |
 | Match à venir | `status: "scheduled"` ou absent → **vs** + horaire |
