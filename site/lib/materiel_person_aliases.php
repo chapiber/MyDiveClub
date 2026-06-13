@@ -13,6 +13,7 @@ function portailClubMaterielPersonRenames(): array
     return [
         'coffin nicolas' => 'Nicolas C.',
         'julie (juju)' => 'Julie L.',
+        'chaumeton' => 'Jérôme C.',
     ];
 }
 
@@ -22,9 +23,10 @@ function portailClubMaterielPersonMergeMap(): array
     return [
         'Julien C.' => ['COURTAUDIERE', 'COUTAUDIERE', 'COURDAUDIERE', 'COURTAIDIERE', 'CPUTAUDIERE'],
         'Marie M.' => ['MESNIER'],
-        'Eric D.' => ['PETIT'],
+        'Eric D.' => ['PETIT', 'DELMAS'],
         'Julie L.' => ['LACOTE'],
         'Nicolas C.' => ['coffin nicolas', 'coffin', 'nicolas'],
+        'Jérôme C.' => ['CHAUMETON'],
     ];
 }
 

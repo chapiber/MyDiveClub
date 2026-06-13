@@ -656,9 +656,14 @@ def normalize_tech_name(name: str) -> str:
     aliases = {
         "courtaudiere": "Julien C.",
         "coutaudiere": "Julien C.",
+        "courdaudiere": "Julien C.",
+        "courtaidiere": "Julien C.",
+        "cputaudiere": "Julien C.",
         "mesnier": "Marie M.",
         "petit": "Eric D.",
+        "delmas": "Eric D.",
         "lacote": "Julie L.",
+        "chaumeton": "Jérôme C.",
     }
     key = name.strip().lower()
     return aliases.get(key, name.strip())
@@ -671,7 +676,7 @@ def print_report(items: dict[str, EquipmentItem]) -> None:
     checks_count = 0
     unknown_techs: set[str] = set()
     known = {
-        "julien c.", "marie m.", "eric d.", "julie l.", "nicolas c.",
+        "julien c.", "marie m.", "eric d.", "julie l.", "nicolas c.", "jérôme c.", "jerome c.",
         "import aquablue", "import réderis", "import rederis",
     }
 
