@@ -1,155 +1,109 @@
-# AQUABLUE — racine (déjà importé en prod, conservé pour compléments)
-GILETS AQB:
+# Mapping import EPI — structure 2026 (1 fichier .xlsx par équipement)
+# Dossiers _Archives et _Referentiels exclus par le scanner.
+
+"EPI-AQUABLUE/GILETS AQB":
   structure_slug: aquablue
   type_slug: bcd
-  file: "GILETS *.xlsm"
-  parser: fiche_epi
+  parser: fiche_epi_glob
 
-MASQUES AQB:
+"EPI-AQUABLUE/MASQUES AQB":
   structure_slug: aquablue
   type_slug: mask
-  file: "MASQUES *.xlsm"
-  parser: fiche_epi
+  parser: fiche_epi_glob
 
-DETENDEURS AQB:
+"EPI-AQUABLUE/COMBI ENFANTS AQB":
   structure_slug: aquablue
-  type_slug: regulator
-  sources:
-    - path: "DET Révision/*.xls"
-      parser: detendeur_form
-    - path: "DET Réparation/*.xlsx"
-      parser: detendeur_repair
+  type_slug: combi_enfant
+  parser: fiche_epi_glob
 
-# RÉDERIS — EPI
-EPI/GILET RED:
-  structure_slug: rederis
-  type_slug: bcd
-  file: "GILETS *.xlsm"
-  parser: fiche_epi
-
-EPI/MASQUES RED:
-  structure_slug: rederis
-  type_slug: mask
-  file: "MASQUES *.xlsm"
-  parser: fiche_epi
-
-EPI/DETENDEURS RED:
-  structure_slug: rederis
-  type_slug: regulator
-  sources:
-    - path: "DET Révision/*.xls"
-      parser: detendeur_form
-    - path: "DET Réparation/*.xlsx"
-      parser: detendeur_repair
-
-EPI/COMBI HOMME RED:
-  structure_slug: rederis
-  type_slug: combi_homme
-  file: "COMBI HOMME *.xlsm"
-  parser: fiche_epi
-
-EPI/COMBI FEMME RED:
-  structure_slug: rederis
+"EPI-AQUABLUE/COMBI FEMME AQB":
+  structure_slug: aquablue
   type_slug: combi_femme
-  file: "COMBI FEMME *.xlsm"
-  parser: fiche_epi
+  parser: fiche_epi_glob
 
-EPI/COMBI ENFANTS RED:
+"EPI-AQUABLUE/COMBI HOMME AQB":
+  structure_slug: aquablue
+  type_slug: combi_homme
+  parser: fiche_epi_glob
+
+"EPI-AQUABLUE/SHORTY ENFANTS AQB":
+  structure_slug: aquablue
+  type_slug: shorty_enfant
+  parser: fiche_epi_glob
+
+"EPI-AQUABLUE/SHORTY FEMME AQB":
+  structure_slug: aquablue
+  type_slug: shorty_femme
+  parser: fiche_epi_glob
+
+"EPI-AQUABLUE/SHORTY HOMME AQB":
+  structure_slug: aquablue
+  type_slug: shorty_homme
+  parser: fiche_epi_glob
+
+"EPI-AQUABLUE/DETENDEURS AQB":
+  structure_slug: aquablue
+  type_slug: regulator
+  parser: detendeur_glob
+
+"EPI-AQUABLUE/ORDI COMPAS AQB":
+  structure_slug: aquablue
+  type_slug: computer
+  parser: fiche_epi_glob
+  glob: "**/*.xlsx"
+
+"EPI-REDERIS/GILET RED":
+  structure_slug: rederis
+  type_slug: bcd
+  parser: fiche_epi_glob
+
+"EPI-REDERIS/MASQUES RED":
+  structure_slug: rederis
+  type_slug: mask
+  parser: fiche_epi_glob
+
+"EPI-REDERIS/COMBI ENFANTS RED":
   structure_slug: rederis
   type_slug: combi_enfant
-  file: "COMBI ENFANTS *.xlsm"
-  parser: fiche_epi
+  parser: fiche_epi_glob
 
-EPI/SHORTY HOMME RED:
+"EPI-REDERIS/COMBI FEMME RED":
   structure_slug: rederis
-  type_slug: shorty_homme
-  file: "SHORTY HOMME *.xlsm"
-  parser: fiche_epi
+  type_slug: combi_femme
+  parser: fiche_epi_glob
 
-EPI/SHORTY FEMME RED:
+"EPI-REDERIS/COMBI HOMME RED":
   structure_slug: rederis
-  type_slug: shorty_femme
-  file: "SHORTY FEMME *.xlsm"
-  parser: fiche_epi
+  type_slug: combi_homme
+  parser: fiche_epi_glob
 
-EPI/SHORTY ENFANTS RED:
+"EPI-REDERIS/SHORTY ENFANTS RED":
   structure_slug: rederis
   type_slug: shorty_enfant
-  file: "SHORTY ENFANTS *.xlsm"
-  parser: fiche_epi
+  parser: fiche_epi_glob
 
-EPI/COMPAS RED:
+"EPI-REDERIS/SHORTY FEMME RED":
+  structure_slug: rederis
+  type_slug: shorty_femme
+  parser: fiche_epi_glob
+
+"EPI-REDERIS/SHORTY HOMME RED":
+  structure_slug: rederis
+  type_slug: shorty_homme
+  parser: fiche_epi_glob
+
+"EPI-REDERIS/DETENDEURS RED":
+  structure_slug: rederis
+  type_slug: regulator
+  parser: detendeur_glob
+
+"EPI-REDERIS/ORDINATEUR":
+  structure_slug: rederis
+  type_slug: computer
+  parser: fiche_epi_glob
+
+"EPI-REDERIS/COMPAS RED":
   structure_slug: rederis
   type_slug: compass
-  file: "COMPAS *.xlsx"
   parser: liste_epi
-
-EPI/ORDINATEUR:
-  structure_slug: rederis
-  type_slug: computer
-  file: "ORDINATEUR *.xlsm"
-  parser: fiche_epi
-
-# AQUABLUE — compléments 2026
-EPI - 2026/GILETS AQB:
-  structure_slug: aquablue
-  type_slug: bcd
-  file: "GILETS *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/MASQUES AQB:
-  structure_slug: aquablue
-  type_slug: mask
-  file: "MASQUES *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/DETENDEURS AQB:
-  structure_slug: aquablue
-  type_slug: regulator
-  sources:
-    - path: "DET Révision/*.xls"
-      parser: detendeur_form
-    - path: "DET Réparation/*.xlsx"
-      parser: detendeur_repair
-
-EPI - 2026/COMBI HOMME AQB:
-  structure_slug: aquablue
-  type_slug: combi_homme
-  file: "COMBI HOMME *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/COMBI FEMME AQB:
-  structure_slug: aquablue
-  type_slug: combi_femme
-  file: "COMBI FEMME *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/COMBI ENFANTS AQB:
-  structure_slug: aquablue
-  type_slug: combi_enfant
-  file: "COMBI ENFANTS *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/SHORTY HOMME AQB:
-  structure_slug: aquablue
-  type_slug: shorty_homme
-  file: "SHORTY HOMME *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/SHORTY FEMME AQB:
-  structure_slug: aquablue
-  type_slug: shorty_femme
-  file: "SHORTY FEMME *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/SHORTY ENFANTS AQB:
-  structure_slug: aquablue
-  type_slug: shorty_enfant
-  file: "SHORTY ENFANTS *.xlsm"
-  parser: fiche_epi
-
-EPI - 2026/ORDI COMPAS AQB:
-  structure_slug: aquablue
-  type_slug: computer
-  file: "*.xls*"
-  parser: fiche_epi
+  file: "**/*.xlsx"

@@ -58,9 +58,12 @@ STATE_PRIORITY: dict[str, int] = {
 FOLDER_STATE_RULES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"rebut|scrap|definit", re.I), "scrapped"),
     (re.compile(r"repar", re.I), "in_repair"),
-    (re.compile(r"vente", re.I), "for_sale"),
+    (re.compile(r"vendu|vente", re.I), "for_sale"),
+    (re.compile(r"operationnel|operational", re.I), "operational"),
     (re.compile(r"revis", re.I), "operational"),
 ]
+
+SKIP_PATH_PARTS = {"_archives", "_referentiels"}
 
 
 @dataclass
@@ -388,12 +391,44 @@ def find_intervention_columns(header_row: list[Any]) -> tuple[int, int]:
     return tech_col, date_col if date_col is not None else 5
 
 
-def should_skip_sheet(name: str) -> bool:
+def should_skip_sheet(name: str, *, allow_generic: bool = False) -> bool:
     upper = name.strip().upper()
     if upper in SKIP_SHEETS:
         return True
     low = name.strip().lower()
+    if allow_generic and re.fullmatch(r"feuil\d*", low):
+        return False
     return any(s in low for s in SKIP_SHEET_SUBSTR)
+
+
+def should_skip_source_path(path: Path) -> bool:
+    return any(norm_folder_part(part) in SKIP_PATH_PARTS for part in path.parts)
+
+
+def filename_fallback_id(path: Path) -> str:
+    stem = path.stem.strip()
+    cleaned = re.sub(
+        r"^(GILET|GILETS|MASQUE|MASQUES|VETEMENT|SHORTY|ORDI|COMBI|DETENDEUR|DETENDEURS)\s+",
+        "",
+        stem,
+        flags=re.I,
+    ).strip()
+    if not cleaned:
+        cleaned = stem
+    if " " in cleaned:
+        pid = norm_id(cleaned.split()[-1])
+        if is_valid_public_id(pid):
+            return pid
+    pid = norm_id(cleaned)
+    return pid if is_valid_public_id(pid) else ""
+
+
+def sheet_label_for_parse(sheet_name: str, wb_path: Path) -> str:
+    if re.fullmatch(r"feuil\d*", sheet_name.strip(), re.I):
+        fallback = filename_fallback_id(wb_path)
+        if fallback:
+            return fallback
+    return sheet_name
 
 
 def is_valid_public_id(public_id: str) -> bool:
@@ -455,6 +490,9 @@ def parse_fiche_epi_rows(
     if not public_id:
         public_id = sheet_fallback_id(sheet_name)
 
+    if not is_valid_public_id(public_id) and source:
+        public_id = filename_fallback_id(Path(source))
+
     if not is_valid_public_id(public_id):
         return None
 
@@ -507,11 +545,15 @@ def parse_fiche_epi_rows(
 def parse_fiche_epi_workbook(wb_path: Path, structure_slug: str, type_slug: str) -> list[EquipmentItem]:
     wb = openpyxl.load_workbook(wb_path, read_only=True, data_only=True)
     items: list[EquipmentItem] = []
+    allow_generic = len(wb.sheetnames) == 1
     for name in wb.sheetnames:
-        if should_skip_sheet(name):
+        if should_skip_sheet(name, allow_generic=allow_generic):
             continue
         ws = wb[name]
-        item = parse_fiche_epi_rows(rows_from_openpyxl(ws), name, structure_slug, type_slug, str(wb_path.name))
+        label = sheet_label_for_parse(name, wb_path)
+        item = parse_fiche_epi_rows(
+            rows_from_openpyxl(ws), label, structure_slug, type_slug, str(wb_path.name)
+        )
         if item:
             items.append(item)
     wb.close()
@@ -947,10 +989,12 @@ def load_mapping() -> dict[str, Any]:
 def collect_items() -> dict[str, EquipmentItem]:
     mapping = load_mapping()
     merged: dict[str, EquipmentItem] = {}
+    merge_events: list[tuple[str, str, str]] = []
 
     def add_item(item: EquipmentItem) -> None:
         key = equipment_merge_key(item)
         if key in merged:
+            merge_events.append((key, merged[key].source, item.source))
             merged[key].merge(item)
         else:
             merged[key] = item
@@ -968,7 +1012,15 @@ def collect_items() -> dict[str, EquipmentItem]:
             file_name = cfg["file"]
             matches = list(folder.glob(file_name))
             for fp in matches:
-                if fp.suffix.lower() == ".pdf":
+                if fp.suffix.lower() == ".pdf" or should_skip_source_path(fp):
+                    continue
+                for item in parse_fiche_epi_workbook(fp, structure_slug, type_slug):
+                    apply_folder_state(item, fp)
+                    add_item(item)
+        elif parser == "fiche_epi_glob":
+            glob_pattern = cfg.get("glob", "**/*.xlsx")
+            for fp in folder.glob(glob_pattern):
+                if should_skip_source_path(fp):
                     continue
                 for item in parse_fiche_epi_workbook(fp, structure_slug, type_slug):
                     apply_folder_state(item, fp)
@@ -976,7 +1028,22 @@ def collect_items() -> dict[str, EquipmentItem]:
         elif parser == "liste_epi":
             file_name = cfg["file"]
             for fp in folder.glob(file_name):
+                if should_skip_source_path(fp):
+                    continue
                 for item in parse_liste_epi_workbook(fp, structure_slug, type_slug):
+                    apply_folder_state(item, fp)
+                    add_item(item)
+        elif parser == "detendeur_glob":
+            glob_pattern = cfg.get("glob", "**/*.xlsx")
+            for fp in folder.glob(glob_pattern):
+                if should_skip_source_path(fp):
+                    continue
+                form_kind = (
+                    "repair"
+                    if re.search(r"repar", norm_folder_part(str(fp)))
+                    else "form"
+                )
+                for item in parse_detendeur_xlsx(fp, structure_slug, type_slug, form_kind=form_kind):
                     apply_folder_state(item, fp)
                     add_item(item)
         elif cfg.get("sources"):
@@ -984,6 +1051,8 @@ def collect_items() -> dict[str, EquipmentItem]:
                 rel = src["path"]
                 src_parser = src["parser"]
                 for fp in folder.glob(rel):
+                    if should_skip_source_path(fp):
+                        continue
                     if src_parser == "detendeur_form" and fp.suffix.lower() == ".xls":
                         items = parse_detendeur_xls(fp, structure_slug, type_slug)
                     elif src_parser == "detendeur_form":
@@ -996,6 +1065,7 @@ def collect_items() -> dict[str, EquipmentItem]:
                         apply_folder_state(item, fp)
                         add_item(item)
 
+    collect_items.last_merge_events = merge_events  # type: ignore[attr-defined]
     return merged
 
 
@@ -1138,6 +1208,47 @@ def normalize_tech_name(name: str) -> str:
     return aliases.get(key, name.strip())
 
 
+def print_coherence_report(items: dict[str, EquipmentItem]) -> list[str]:
+    """Rapport doublons / collisions — retourne les erreurs bloquantes."""
+    errors: list[str] = []
+    merge_events: list[tuple[str, str, str]] = getattr(collect_items, "last_merge_events", [])
+
+    if merge_events:
+        print(f"\nFusions internes (même structure/type/id) : {len(merge_events)}")
+        for key, src_a, src_b in merge_events[:15]:
+            print(f"  {key} <- {src_a} + {src_b}")
+        if len(merge_events) > 15:
+            print(f"  … et {len(merge_events) - 15} autres")
+
+    by_type_id: dict[str, EquipmentItem] = {}
+    cross: list[tuple[str, str, str]] = []
+    for it in items.values():
+        k = f"{it.type_slug}:{it.public_id}"
+        if k in by_type_id and by_type_id[k].structure_slug != it.structure_slug:
+            cross.append((k, by_type_id[k].structure_slug, it.structure_slug))
+        else:
+            by_type_id[k] = it
+
+    if cross:
+        print(f"\nCollisions cross-structure (contrainte BDD type+public_id) : {len(cross)}")
+        for k, s1, s2 in cross[:20]:
+            print(f"  {k} : {s1} vs {s2} (le second echouera a la creation si le premier existe)")
+        if len(cross) > 20:
+            print(f"  … et {len(cross) - 20} autres")
+
+    suspicious = [it for it in items.values() if re.match(r"^FEUIL\d*$", it.public_id, re.I)]
+    if suspicious:
+        print(f"\nIDs suspects (Feuil*) : {len(suspicious)}")
+        for it in suspicious[:10]:
+            print(f"  {it.public_id} [{it.structure_slug}/{it.type_slug}] — {it.source}")
+
+    no_folder_state = sum(1 for it in items.values() if not it.state_from_folder)
+    if no_folder_state:
+        print(f"\nAvertissement : {no_folder_state} item(s) sans état dossier explicite")
+
+    return errors
+
+
 def print_report(items: dict[str, EquipmentItem]) -> None:
     by_type: dict[str, int] = {}
     by_structure: dict[str, int] = {}
@@ -1191,12 +1302,15 @@ def run_apply(
     update_states: bool = True,
     sync_states_only: bool = False,
     sync_regulators_only: bool = False,
+    sync_from_sources: bool = False,
 ) -> int:
     if not APPLY_PHP.is_file():
         print(f"Script PHP introuvable : {APPLY_PHP}", file=sys.stderr)
         return 1
     cmd = ["php", str(APPLY_PHP)]
-    if sync_regulators_only:
+    if sync_from_sources:
+        cmd.append("--sync-from-sources")
+    elif sync_regulators_only:
         cmd.append("--sync-regulators-only")
     elif sync_states_only:
         cmd.append("--sync-states-only")
@@ -1230,6 +1344,11 @@ def main() -> int:
         "--sync-regulators",
         action="store_true",
         help="Backfill détendeurs existants (specs_json, meta, état, interventions) — Excel fait foi",
+    )
+    parser.add_argument(
+        "--sync-from-sources",
+        action="store_true",
+        help="Sync complète depuis sources (upsert champs + interventions) — Excel fait foi",
     )
     args = parser.parse_args()
 
@@ -1277,12 +1396,21 @@ def main() -> int:
         return 0
 
     print_report(items)
+    blocking = print_coherence_report(items)
+    if blocking and (args.apply or args.sync_from_sources):
+        print("\nApply bloqué — collisions cross-structure à résoudre.", file=sys.stderr)
+        return 1
+
     payload = payload_from_items(items)
 
     if args.export:
         out = Path(args.export)
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"\nPayload exporté : {out}")
+
+    if args.sync_from_sources and args.apply:
+        print("\nApplication sync-from-sources en base…")
+        return run_apply(payload, sync_from_sources=True)
 
     if args.apply:
         print("\nApplication en base…")

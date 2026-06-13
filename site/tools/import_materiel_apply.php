@@ -7,6 +7,7 @@ declare(strict_types=1);
  *             /usr/local/bin/php82 .../import_materiel_apply.php --update-states payload.json
  *             /usr/local/bin/php82 .../import_materiel_apply.php --sync-states-only states.json
  *             /usr/local/bin/php82 .../import_materiel_apply.php --sync-regulators-only regulators.json
+ *             /usr/local/bin/php82 .../import_materiel_apply.php --sync-from-sources payload.json
  */
 require_once __DIR__ . '/../lib/db.inc.php';
 require_once __DIR__ . '/../lib/materiel.inc.php';
@@ -16,6 +17,7 @@ $inputFile = null;
 $updateStates = false;
 $syncStatesOnly = false;
 $syncRegulatorsOnly = false;
+$syncFromSources = false;
 foreach (array_slice($argv, 1) as $arg) {
     if ($arg === '--update-states') {
         $updateStates = true;
@@ -27,6 +29,10 @@ foreach (array_slice($argv, 1) as $arg) {
     }
     if ($arg === '--sync-regulators-only') {
         $syncRegulatorsOnly = true;
+        continue;
+    }
+    if ($arg === '--sync-from-sources') {
+        $syncFromSources = true;
         continue;
     }
     if ($inputFile === null && !str_starts_with($arg, '--')) {
@@ -296,6 +302,123 @@ function importMaterielInsertIntervention(PDO $pdo, int $equipmentId, array $int
             $stCheck->execute([$interventionId, $fieldKey, $value]);
         }
     }
+}
+
+function importMaterielResolveEquipmentIdByStructure(
+    PDO $pdo,
+    string $structureSlug,
+    string $typeSlug,
+    string $publicId
+): ?int {
+    $typeId = importMaterielResolveTypeId($pdo, $typeSlug);
+    $st = $pdo->prepare(
+        'SELECT e.id FROM PORTAIL_CLUB_materiel_equipment e
+         INNER JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
+         WHERE e.public_id = ? AND e.type_id = ? AND s.slug = ?
+         LIMIT 1'
+    );
+    $st->execute([$publicId, $typeId, $structureSlug]);
+    $id = $st->fetchColumn();
+    return $id ? (int)$id : null;
+}
+
+function importMaterielDeleteEquipmentInterventions(PDO $pdo, int $equipmentId): void
+{
+    $stIds = $pdo->prepare(
+        'SELECT id FROM PORTAIL_CLUB_materiel_interventions WHERE equipment_id = ?'
+    );
+    $stIds->execute([$equipmentId]);
+    $ids = array_map('intval', $stIds->fetchAll(PDO::FETCH_COLUMN));
+    if ($ids === []) {
+        return;
+    }
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $pdo->prepare(
+        "DELETE FROM PORTAIL_CLUB_materiel_intervention_check_values WHERE intervention_id IN ({$placeholders})"
+    )->execute($ids);
+    $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_interventions WHERE equipment_id = ?')
+        ->execute([$equipmentId]);
+}
+
+if ($syncFromSources) {
+    $stats = [
+        'created' => 0,
+        'updated' => 0,
+        'interventions' => 0,
+        'health_recomputed' => 0,
+        'errors' => [],
+    ];
+
+    foreach ($payload['items'] as $item) {
+        $publicId = strtoupper(trim((string)($item['public_id'] ?? '')));
+        if ($publicId === '') {
+            $stats['errors'][] = 'public_id vide';
+            continue;
+        }
+        try {
+            $structureSlug = (string)($item['structure_slug'] ?? '');
+            $typeSlug = (string)($item['type_slug'] ?? '');
+            $structureId = importMaterielResolveStructureId($pdo, $structureSlug);
+            $typeId = importMaterielResolveTypeId($pdo, $typeSlug);
+            $state = in_array($item['state'] ?? 'operational', PORTAIL_CLUB_MATERIEL_STATES, true)
+                ? $item['state'] : 'operational';
+
+            $equipmentId = importMaterielResolveEquipmentIdByStructure(
+                $pdo,
+                $structureSlug,
+                $typeSlug,
+                $publicId
+            );
+
+            if ($equipmentId === null) {
+                $created = portailClubMaterielCreateEquipment($pdo, [
+                    'public_id' => $publicId,
+                    'structure_id' => $structureId,
+                    'type_id' => $typeId,
+                    'brand' => $item['brand'] ?? '',
+                    'model' => $item['model'] ?? '',
+                    'serial' => $item['serial'] ?? '',
+                    'purchase_year' => $item['purchase_year'] ?? null,
+                    'notes' => $item['notes'] ?? '',
+                ]);
+                $equipmentId = (int)$created['id'];
+                $stats['created']++;
+            } else {
+                $stats['updated']++;
+            }
+
+            $patchBody = [
+                'structure_id' => $structureId,
+                'brand' => $item['brand'] ?? '',
+                'model' => $item['model'] ?? '',
+                'serial' => $item['serial'] ?? '',
+                'purchase_year' => $item['purchase_year'] ?? null,
+                'notes' => $item['notes'] ?? '',
+                'state' => $state,
+            ];
+            if (!empty($item['specs_json']) && is_array($item['specs_json'])) {
+                $patchBody['specs_json'] = $item['specs_json'];
+            }
+            portailClubMaterielPatchEquipment($pdo, $equipmentId, $patchBody);
+
+            importMaterielDeleteEquipmentInterventions($pdo, $equipmentId);
+            foreach ($item['interventions'] ?? [] as $int) {
+                if (empty($int['done_on'])) {
+                    continue;
+                }
+                importMaterielInsertIntervention($pdo, $equipmentId, $int);
+                $stats['interventions']++;
+            }
+
+            portailClubMaterielRecomputeHealthScore($pdo, $equipmentId);
+            $stats['health_recomputed']++;
+        } catch (Throwable $e) {
+            $stats['errors'][] = $publicId . ': ' . $e->getMessage();
+        }
+    }
+
+    echo json_encode($stats, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
+    exit(empty($stats['errors']) ? 0 : 1);
 }
 
 foreach ($payload['items'] as $item) {

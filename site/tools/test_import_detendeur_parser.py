@@ -17,8 +17,8 @@ from import_materiel_sources import (  # noqa: E402
 )
 
 SOURCES = ROOT / "_sourcesMatos"
-A15 = SOURCES / "EPI - 2026/DETENDEURS AQB/DET Réparation/A15.xlsx"
-XLS_REV = SOURCES / "EPI - 2026/DETENDEURS AQB/DET Révision/Detendeur AQUABLUE 2026.xls"
+A15 = SOURCES / "EPI-AQUABLUE/DETENDEURS AQB/02-Reparation/A15.xlsx"
+XLS_REV = SOURCES / "EPI-AQUABLUE/_Archives/EPI - 2026/DETENDEURS AQB/DET Révision/Detendeur AQUABLUE 2026.xls"
 
 
 class TestDetendeurParser(unittest.TestCase):
