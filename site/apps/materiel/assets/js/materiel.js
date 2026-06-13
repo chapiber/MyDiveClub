@@ -721,10 +721,26 @@
     );
   }
 
-  function renderParam(section) {
+  function trimStructureLabel(raw) {
+    const label = String(raw || '').trim();
+    if (!label) throw new Error('Libellé structure requis.');
+    return label;
+  }
+
+  async function loadParamStructures() {
+    const res = await api('/structures.php');
+    return res.structures;
+  }
+
+  async function renderParam(section) {
     state.paramSection = section;
     state.paramMenuOpen = false;
     let body = '';
+    let paramStructures = state.structures;
+
+    if (section === 'structures') {
+      paramStructures = await loadParamStructures();
+    }
 
     if (section === 'settings') {
       body = `<form id="sm-settings-form">
@@ -740,13 +756,13 @@
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>`;
     } else if (section === 'structures') {
-      body = state.structures.map((s) => `
+      body = paramStructures.map((s) => `
         <form class="sm-card sm-struct-card" data-struct-id="${s.id}">
           <div class="sm-field"><label class="sm-label">Libellé</label>
-            <input class="sm-input" name="label" value="${esc(s.label)}" required></div>
+            <input class="sm-input" name="label" value="${esc(s.label)}" required autocomplete="off"></div>
           <div class="sm-field"><label class="sm-label">Préfixe ID</label>
             <input class="sm-input" name="id_prefix" value="${esc(s.id_prefix || '')}" placeholder="${esc(state.settings.id_prefix)}"></div>
-          <p class="sm-card__meta">${esc(s.slug)}${s.active ? '' : ' · inactif'}</p>
+          <p class="sm-card__meta">Identifiant : ${esc(s.slug)}${s.active ? '' : ' · inactif'}</p>
           <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
         </form>`).join('') +
         `<form id="sm-struct-form" class="sm-card">
@@ -826,16 +842,15 @@
         const fd = new FormData(form);
         const id = parseInt(form.dataset.structId, 10);
         try {
+          const label = trimStructureLabel(fd.get('label'));
+          const idPrefix = String(fd.get('id_prefix') || '').trim() || null;
           await api('/structures.php?id=' + id, {
             method: 'PATCH',
-            body: JSON.stringify({
-              label: fd.get('label'),
-              id_prefix: fd.get('id_prefix') || null,
-            }),
+            body: JSON.stringify({ label, id_prefix: idPrefix }),
           });
-          state.structures = (await api('/structures.php')).structures;
+          state.structures = (await api('/structures.php?active=1')).structures;
           showToast('Structure enregistrée');
-          renderParam('structures');
+          await renderParam('structures');
         } catch (err) { showToast(err.message); }
       });
     });
@@ -846,16 +861,15 @@
         ev.preventDefault();
         const fd = new FormData(ev.target);
         try {
+          const label = trimStructureLabel(fd.get('label'));
+          const idPrefix = String(fd.get('id_prefix') || '').trim() || null;
           await api('/structures.php', {
             method: 'POST',
-            body: JSON.stringify({
-              label: fd.get('label'),
-              id_prefix: fd.get('id_prefix') || null,
-            }),
+            body: JSON.stringify({ label, id_prefix: idPrefix }),
           });
-          state.structures = (await api('/structures.php')).structures;
+          state.structures = (await api('/structures.php?active=1')).structures;
           showToast('Structure ajoutée');
-          renderParam('structures');
+          await renderParam('structures');
         } catch (err) { showToast(err.message); }
       });
     }
@@ -1006,7 +1020,7 @@
         await loadStats();
         renderStats();
       } else if (route.tab === 'param') {
-        renderParam(route.paramSection);
+        await renderParam(route.paramSection);
       } else {
         await loadEquipmentList();
         renderParc();
