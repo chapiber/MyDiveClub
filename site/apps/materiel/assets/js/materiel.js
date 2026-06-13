@@ -180,23 +180,59 @@
     });
   }
 
-  function renderTabs(activeTab) {
-    const tabs = [
-      { id: 'parc', label: 'Parc', icon: '<path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/>' },
-      { id: 'stats', label: 'Stats', icon: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 17V11"/><path d="M12 17V7"/><path d="M16 17v-4"/>' },
-      { id: 'param', label: 'Param', icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
-    ];
-    return `<nav class="sm-tabs" aria-label="Navigation">${tabs.map((t) =>
-      `<button type="button" class="sm-tab${t.id === activeTab ? ' sm-tab--active' : ''}" data-tab="${t.id}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">${t.icon}</svg>
-        ${esc(t.label)}
+  const NAV_TABS = [
+    { id: 'parc', label: 'Parc', icon: '<path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/>' },
+    { id: 'stats', label: 'Stats', icon: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 17V11"/><path d="M12 17V7"/><path d="M16 17v-4"/>' },
+    { id: 'param', label: 'Param', icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
+  ];
+
+  function renderNavFab(activeTab) {
+    const menuItems = NAV_TABS.map((t) =>
+      `<button type="button" class="sm-nav-fab__item${t.id === activeTab ? ' sm-nav-fab__item--active' : ''}" data-tab="${t.id}" role="menuitem"${t.id === activeTab ? ' aria-current="page"' : ''}>
+        <span class="sm-nav-fab__item-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">${t.icon}</svg>
+        </span>
+        <span class="sm-nav-fab__item-label">${esc(t.label)}</span>
       </button>`
-    ).join('')}</nav>`;
+    ).join('');
+    return `<div class="sm-nav-fab" data-nav-fab>
+      <div class="sm-nav-fab__backdrop" data-nav-fab-backdrop hidden aria-hidden="true"></div>
+      <div class="sm-nav-fab__menu" data-nav-fab-menu aria-hidden="true" role="menu" aria-label="Sections">
+        ${menuItems}
+      </div>
+      <button type="button" class="sm-nav-fab__trigger" data-nav-fab-trigger aria-label="Navigation" aria-expanded="false" aria-haspopup="menu">
+        <svg class="sm-nav-fab__trigger-icon sm-nav-fab__trigger-icon--menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <svg class="sm-nav-fab__trigger-icon sm-nav-fab__trigger-icon--close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>`;
   }
 
-  function bindTabs(container) {
-    container.querySelectorAll('[data-tab]').forEach((btn) => {
+  function bindNavFab(container) {
+    const wrap = (container || root).querySelector('[data-nav-fab]');
+    if (!wrap) return;
+    const trigger = wrap.querySelector('[data-nav-fab-trigger]');
+    const menu = wrap.querySelector('[data-nav-fab-menu]');
+    const backdrop = wrap.querySelector('[data-nav-fab-backdrop]');
+
+    function setOpen(open) {
+      wrap.classList.toggle('sm-nav-fab--open', open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+      backdrop.hidden = !open;
+      backdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    trigger.addEventListener('click', () => setOpen(!wrap.classList.contains('sm-nav-fab--open')));
+    backdrop.addEventListener('click', () => setOpen(false));
+
+    wrap.querySelectorAll('[data-tab]').forEach((btn) => {
       btn.addEventListener('click', () => {
+        setOpen(false);
         const tab = btn.dataset.tab;
         if (tab === 'param') {
           nav('#/param/' + (state.paramSection || 'settings'));
@@ -365,12 +401,12 @@
       </div>
       <h2 class="sm-section-title">Parc <span class="sm-count">${state.equipment.length}</span></h2>
       ${list}
-      ${renderTabs('parc')}
+      ${renderNavFab('parc')}
       ${fab}`;
 
     bindNav(root);
     bindStructureFilter(root);
-    bindTabs(root);
+    bindNavFab(root);
     root.querySelector('#sm-user').addEventListener('change', (e) => setUser(e.target.value));
     root.querySelector('#sm-search').addEventListener('input', (e) => { state.filters.q = e.target.value; debounceLoadParc(); });
     root.querySelector('#sm-filter-state').addEventListener('change', (e) => { state.filters.state = e.target.value; loadEquipmentList().then(renderParc); });
@@ -452,9 +488,9 @@
       <div class="sm-actions"><button type="button" class="sm-btn sm-btn--primary" id="sm-new-intervention">+ Intervention</button></div>
       <h2 class="sm-section-title">Interventions</h2>${interventions}
       <h2 class="sm-section-title">Historique états</h2>${stateLog || '<p class="sm-empty sm-empty--inline">—</p>'}
-      ${renderTabs('parc')}`;
+      ${renderNavFab('parc')}`;
     bindNav(root);
-    bindTabs(root);
+    bindNavFab(root);
     root.querySelector('#sm-new-intervention').addEventListener('click', () => nav('#/intervention/' + id));
     root.querySelector('#sm-state-form').addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -532,10 +568,10 @@
         ${nfcOpt}
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Créer</button>
       </form>
-      ${renderTabs('parc')}`;
+      ${renderNavFab('parc')}`;
 
     bindNav(root);
-    bindTabs(root);
+    bindNavFab(root);
     const structSelect = root.querySelector('[name=structure_id]');
     const publicIdInput = root.querySelector('[name=public_id]');
     structSelect.addEventListener('change', async () => {
@@ -589,10 +625,10 @@
           <textarea class="sm-textarea" name="summary"></textarea></div>
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Enregistrer</button>
       </form>
-      ${renderTabs('parc')}`;
+      ${renderNavFab('parc')}`;
 
     bindNav(root);
-    bindTabs(root);
+    bindNavFab(root);
     const subtypeEl = root.querySelector('[name=subtype]');
     const checkWrap = root.querySelector('#sm-check-fields');
     const summaryField = root.querySelector('#sm-summary-field');
@@ -667,11 +703,11 @@
       <div class="sm-chart-wrap"><canvas id="chart-type" height="200"></canvas></div>
       <div class="sm-chart-wrap"><canvas id="chart-age" height="180"></canvas></div>
       ${alerts ? '<h2 class="sm-section-title">Alertes stock</h2>' + alerts : ''}
-      ${renderTabs('stats')}`;
+      ${renderNavFab('stats')}`;
 
     bindNav(root);
     bindStructureFilter(root);
-    bindTabs(root);
+    bindNavFab(root);
 
     MaterielCharts.drawBarChart(
       root.querySelector('#chart-state'),
@@ -776,10 +812,10 @@
       ${renderTopbar('Paramétrage', null, { subtitle: paramSectionLabel(section) })}
       ${renderParamSegments(section)}
       ${body}
-      ${renderTabs('param')}`;
+      ${renderNavFab('param')}`;
 
     bindNav(root);
-    bindTabs(root);
+    bindNavFab(root);
     bindParamSegments(root);
 
     root.querySelectorAll('.sm-type-card').forEach((el) => {
@@ -917,10 +953,10 @@
           <select class="sm-select" name="input_type">${inputTypeOpts}</select></div>
         <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter</button>
       </form>
-      ${renderTabs('param')}`;
+      ${renderNavFab('param')}`;
 
     bindNav(root);
-    bindTabs(root);
+    bindNavFab(root);
     bindParamSegments(root);
 
     root.querySelectorAll('.sm-check-card').forEach((form) => {
