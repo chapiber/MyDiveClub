@@ -32,13 +32,24 @@
     return 'Écriture NFC indisponible sur cet appareil.';
   }
 
+  function normalizeIds(data) {
+    const ids = [];
+    if (Array.isArray(data.ids)) {
+      data.ids.forEach((raw) => {
+        const id = String(raw || '').trim().toUpperCase();
+        if (id && !ids.includes(id)) ids.push(id);
+      });
+    }
+    const primary = String(data.id || '').trim().toUpperCase();
+    if (primary && !ids.includes(primary)) ids.unshift(primary);
+    return ids;
+  }
+
   const MaterielNfc = {
-    /** Lecture (scan) */
     get supported() {
       return hasNdefReader();
     },
 
-    /** Gravure badge vierge */
     get writeSupported() {
       return hasNdefWriteApi() && global.isSecureContext;
     },
@@ -56,9 +67,16 @@
       };
     },
 
-    buildPayload(equipment) {
+    /** @param {object} equipment équipement principal
+     *  @param {object[]} [members] autres items du même badge */
+    buildPayload(equipment, members) {
+      members = members || [];
+      const all = [equipment].concat(members.filter((m) => m && m.public_id !== equipment.public_id));
+      const ids = all.map((e) => String(e.public_id).trim().toUpperCase());
       return JSON.stringify({
-        id: equipment.public_id,
+        v: 2,
+        id: ids[0],
+        ids,
         type: equipment.type_slug,
         brand: equipment.brand || '',
         year: equipment.purchase_year || null,
@@ -73,10 +91,14 @@
         const jsonStr = raw.includes('{') ? raw.slice(raw.indexOf('{')) : raw;
         try {
           const data = JSON.parse(jsonStr);
-          if (data && data.id) return String(data.id).trim().toUpperCase();
+          if (!data) continue;
+          const ids = normalizeIds(data);
+          if (ids.length) {
+            return { id: ids[0], ids, multi: ids.length > 1 };
+          }
         } catch (_) { /* ignore */ }
       }
-      return null;
+      return { id: null, ids: [], multi: false };
     },
 
     async scan(onTag) {
@@ -84,14 +106,13 @@
       if (result.blank) {
         throw new Error('Badge vierge — créez le matériel via « Nouveau matériel » pour le gravier.');
       }
-      if (!result.id) {
+      if (!result.ids.length) {
         throw new Error('Badge NFC illisible (JSON attendu).');
       }
-      if (typeof onTag === 'function') onTag(result.id);
-      return result.id;
+      if (typeof onTag === 'function') onTag(result.id, result);
+      return result;
     },
 
-    /** Lecture brute : id connu sur badge, ou blank si tag vierge. */
     async scanRaw() {
       if (!this.supported) {
         throw new Error('NFC non disponible sur cet appareil (Android Chrome requis).');
@@ -110,16 +131,18 @@
         }, 30000);
         reader.onreading = (event) => {
           clearTimeout(timeout);
-          const id = this.parseScanMessage(event.message);
+          const parsed = this.parseScanMessage(event.message);
           const recordCount = (event.message.records || []).length;
-          if (id) {
-            if (global.MaterielLog) MaterielLog.info('nfc', 'scan_id', { id, recordCount });
-            resolve({ id, blank: false });
+          if (parsed.ids.length) {
+            if (global.MaterielLog) {
+              MaterielLog.info('nfc', 'scan_ids', { ids: parsed.ids, recordCount });
+            }
+            resolve({ id: parsed.id, ids: parsed.ids, multi: parsed.multi, blank: false });
             return;
           }
           if (!recordCount) {
             if (global.MaterielLog) MaterielLog.info('nfc', 'scan_blank', null);
-            resolve({ id: null, blank: true });
+            resolve({ id: null, ids: [], multi: false, blank: true });
             return;
           }
           if (global.MaterielLog) MaterielLog.warn('nfc', 'scan_unreadable', { recordCount });

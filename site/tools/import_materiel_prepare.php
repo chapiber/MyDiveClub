@@ -11,35 +11,24 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/db.inc.php';
 require_once __DIR__ . '/../lib/materiel.inc.php';
 
-$apply = in_array('--apply', $argv ?? [], true);
-
 /** @return list<array{field_key:string,label:string,input_type:string}> */
 function importMaterielCheckProfile(string $profile): array
 {
     $profiles = [
         'bcd' => [
-            ['field_key' => 'flex_ds_devise', 'label' => 'Flexible DS — si dévisés', 'input_type' => 'checkbox'],
-            ['field_key' => 'flex_ds_coupe', 'label' => 'Flexible DS — si coupés', 'input_type' => 'checkbox'],
-            ['field_key' => 'flex_ds_hernie', 'label' => 'Flexible DS — si hernie', 'input_type' => 'checkbox'],
-            ['field_key' => 'flex_ds_5ans', 'label' => 'Flexible DS — si + de 5 ans', 'input_type' => 'checkbox'],
-            ['field_key' => 'ras', 'label' => 'RAS', 'input_type' => 'select_ok_ko'],
-            ['field_key' => 'mineure', 'label' => 'Réparation mineure', 'input_type' => 'checkbox'],
-            ['field_key' => 'majeure', 'label' => 'Réparation majeure', 'input_type' => 'checkbox'],
+            ['field_key' => 'sangles', 'label' => 'État des sangles', 'input_type' => 'select_grading'],
+            ['field_key' => 'boucles', 'label' => 'État des boucles', 'input_type' => 'select_grading'],
+            ['field_key' => 'confort', 'label' => 'État des éléments de confort', 'input_type' => 'select_grading'],
         ],
         'mask' => [
-            ['field_key' => 'jupe_trou', 'label' => 'Jupe — trou/déchirure', 'input_type' => 'checkbox'],
-            ['field_key' => 'jupe_desolidarisee', 'label' => 'Jupe — désolidarisée du cerclage', 'input_type' => 'checkbox'],
-            ['field_key' => 'verres_rayures', 'label' => 'Verres — rayures/impact', 'input_type' => 'checkbox'],
-            ['field_key' => 'ras', 'label' => 'RAS', 'input_type' => 'select_ok_ko'],
-            ['field_key' => 'mineure', 'label' => 'Réparation mineure', 'input_type' => 'checkbox'],
-            ['field_key' => 'majeure', 'label' => 'Réparation majeure', 'input_type' => 'checkbox'],
+            ['field_key' => 'jupe', 'label' => 'État de la jupe', 'input_type' => 'select_grading'],
+            ['field_key' => 'sangle_boucles', 'label' => 'État de la sangle + boucles', 'input_type' => 'select_grading'],
+            ['field_key' => 'verres', 'label' => 'État des verres', 'input_type' => 'select_grading'],
         ],
         'wetsuit' => [
-            ['field_key' => 'fermeture_dents', 'label' => 'Fermeture — dents manquantes', 'input_type' => 'checkbox'],
-            ['field_key' => 'fermeture_curseur', 'label' => 'Fermeture — curseur HS', 'input_type' => 'checkbox'],
-            ['field_key' => 'ras', 'label' => 'RAS', 'input_type' => 'select_ok_ko'],
-            ['field_key' => 'mineure', 'label' => 'Réparation mineure', 'input_type' => 'checkbox'],
-            ['field_key' => 'majeure', 'label' => 'Réparation majeure', 'input_type' => 'checkbox'],
+            ['field_key' => 'coutures', 'label' => 'État des coutures', 'input_type' => 'select_grading'],
+            ['field_key' => 'fermeture', 'label' => 'État de(s) fermeture(s) à glissière', 'input_type' => 'select_grading'],
+            ['field_key' => 'revetement', 'label' => 'État du revêtement extérieur', 'input_type' => 'select_grading'],
         ],
         'computer' => [
             ['field_key' => 'batterie_boutons', 'label' => 'Batterie + boutons', 'input_type' => 'checkbox'],
@@ -83,6 +72,12 @@ function importMaterielResolveTypeIdBySlug(PDO $pdo, string $slug): ?int
     $id = $st->fetchColumn();
     return $id ? (int)$id : null;
 }
+
+if (PHP_SAPI !== 'cli' || !isset($argv[0]) || !str_contains(str_replace('\\', '/', $argv[0]), 'import_materiel_prepare.php')) {
+    return;
+}
+
+$apply = in_array('--apply', $argv, true);
 
 $stats = [
     'dry_run' => !$apply,

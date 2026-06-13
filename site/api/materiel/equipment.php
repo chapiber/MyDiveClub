@@ -55,7 +55,21 @@ try {
             'state' => $_GET['state'] ?? '',
             'type_id' => $_GET['type_id'] ?? 0,
             'q' => $_GET['q'] ?? '',
+            'nfc_linked' => $_GET['nfc_linked'] ?? '',
+            'compliance' => $_GET['compliance'] ?? '',
         ];
+        if (!empty($_GET['unpaired'])) {
+            $filters['unpaired'] = true;
+        }
+        if (isset($_GET['limit']) || !isset($_GET['all'])) {
+            $filters['page'] = max(1, (int)($_GET['page'] ?? 1));
+            $filters['limit'] = PORTAIL_CLUB_MATERIEL_LIST_PAGE_SIZE;
+            $result = portailClubMaterielListEquipment($pdo, $filters);
+            portailClubJsonOk([
+                'equipment' => $result['items'],
+                'pagination' => $result['pagination'],
+            ]);
+        }
         portailClubJsonOk(['equipment' => portailClubMaterielListEquipment($pdo, $filters)]);
     }
 
@@ -69,11 +83,35 @@ try {
         }
         if ($action === 'link_nfc') {
             $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
-            portailClubJsonOk(['equipment' => portailClubMaterielSetNfcLinked($pdo, $id, true)]);
+            $memberIds = is_array($body['member_ids'] ?? null) ? $body['member_ids'] : [];
+            portailClubJsonOk(['equipment' => portailClubMaterielLinkNfc($pdo, $id, $memberIds)]);
+        }
+        if ($action === 'add_to_nfc_group') {
+            $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
+            $addId = portailClubIntParam($body['add_equipment_id'] ?? null, 'add_equipment_id');
+            portailClubJsonOk(['equipment' => portailClubMaterielAddToNfcGroup($pdo, $id, $addId)]);
+        }
+        if ($action === 'remove_from_nfc_group') {
+            $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
+            portailClubJsonOk(['equipment' => portailClubMaterielRemoveFromNfcGroup($pdo, $id)]);
         }
         if ($action === 'unlink_nfc') {
             $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
-            portailClubJsonOk(['equipment' => portailClubMaterielSetNfcLinked($pdo, $id, false)]);
+            portailClubJsonOk(['equipment' => portailClubMaterielUnlinkNfc($pdo, $id)]);
+        }
+        if ($action === 'link_pair') {
+            $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
+            $partnerId = portailClubIntParam($body['partner_equipment_id'] ?? null, 'partner_equipment_id');
+            portailClubJsonOk(['equipment' => portailClubMaterielLinkPair($pdo, $id, $partnerId)]);
+        }
+        if ($action === 'unlink_pair') {
+            $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
+            portailClubJsonOk(['equipment' => portailClubMaterielUnlinkPair($pdo, $id)]);
+        }
+        if ($action === 'set_renewal_flag') {
+            $id = portailClubIntParam($body['equipment_id'] ?? null, 'equipment_id');
+            $flagged = !empty($body['flagged']);
+            portailClubJsonOk(['equipment' => portailClubMaterielSetRenewalFlag($pdo, $id, $flagged)]);
         }
 
         portailClubJsonOk(['equipment' => portailClubMaterielCreateEquipment($pdo, $body)]);

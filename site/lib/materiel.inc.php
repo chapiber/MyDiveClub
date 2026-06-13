@@ -2,10 +2,167 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/api.inc.php';
+require_once __DIR__ . '/materiel_manufacturer_renewal.inc.php';
 
 const PORTAIL_CLUB_MATERIEL_STATES = ['operational', 'in_repair', 'scrapped', 'for_sale'];
 const PORTAIL_CLUB_MATERIEL_INTERVENTION_SUBTYPES = ['revision', 'repair'];
-const PORTAIL_CLUB_MATERIEL_CHECK_INPUT_TYPES = ['text', 'select_ok_ko', 'select_ok_ko_na'];
+const PORTAIL_CLUB_MATERIEL_CHECK_INPUT_TYPES = ['text', 'select_ok_ko', 'select_ok_ko_na', 'select_grading'];
+const PORTAIL_CLUB_MATERIEL_GRADING_VALUES = ['ras', 'mineure', 'majeure', 'definitive'];
+const PORTAIL_CLUB_MATERIEL_RENEWAL_POLICIES = ['manufacturer', 'health_score', 'manual'];
+const PORTAIL_CLUB_MATERIEL_REVISION_POLICIES = ['annual_anniversary', 'annual_season', 'none'];
+const PORTAIL_CLUB_MATERIEL_LIST_PAGE_SIZE = 100;
+const PORTAIL_CLUB_MATERIEL_HEALTH_PENALTY_MINEURE = 5;
+const PORTAIL_CLUB_MATERIEL_HEALTH_PENALTY_MAJEURE = 15;
+const PORTAIL_CLUB_MATERIEL_HEALTH_PENALTY_REPAIR = 10;
+
+function portailClubMaterielGradingLabel(string $value): string
+{
+    return match (portailClubMaterielNormalizeGradingValue($value)) {
+        'ras' => 'RAS',
+        'mineure' => 'Mineure',
+        'majeure' => 'Majeure',
+        'definitive' => 'Définitive',
+        default => $value,
+    };
+}
+
+function portailClubMaterielNormalizeGradingValue(mixed $value): string
+{
+    $v = strtolower(trim((string)$value));
+    $map = [
+        'ok' => 'ras',
+        'ras' => 'ras',
+        'mineure' => 'mineure',
+        'majeure' => 'majeure',
+        'definitive' => 'definitive',
+        'définitive' => 'definitive',
+    ];
+    if (!isset($map[$v])) {
+        portailClubJsonFail('Valeur de critère invalide (RAS / Mineure / Majeure / Définitive).');
+    }
+    return $map[$v];
+}
+
+/** @return array<string, mixed> */
+function portailClubMaterielEmptyRegulatorSpecs(): array
+{
+    return [
+        'model_hp' => '',
+        'model_mp' => '',
+        'model_octopus' => '',
+        'serial_hp' => '',
+        'serial_mp' => '',
+        'serial_octopus' => '',
+        'accessories' => '',
+        'product_label' => '',
+        'configuration' => '',
+    ];
+}
+
+/** @return array<string, mixed> */
+function portailClubMaterielEmptyRegulatorDetail(): array
+{
+    return [
+        'tasks' => [
+            'maint_hp' => false,
+            'maint_mp' => false,
+            'maint_octopus' => false,
+            'maint_gauge' => false,
+            'maint_hose' => false,
+            'direct_system' => false,
+            'hose_replaced' => false,
+            'nipple_replaced' => false,
+        ],
+        'tasks_other' => [],
+        'observations' => '',
+        'parts_changed' => [],
+        'test_values' => [
+            'hp_test' => null,
+            'mp_hp' => null,
+            'mp_open_effort' => null,
+            'mp_flow_effort' => null,
+            'oct_open_effort' => null,
+            'oct_flow_effort' => null,
+            'gauge_precision' => null,
+            'leak_test_ok' => null,
+        ],
+        'kits' => [
+            'kit_hp_cpn' => '',
+            'kit_hp_lot' => '',
+            'kit_mp_cpn' => '',
+            'kit_mp_lot' => '',
+        ],
+    ];
+}
+
+/** @param array<string, mixed> $raw */
+function portailClubMaterielDecodeJsonColumn(mixed $raw): ?array
+{
+    if ($raw === null || $raw === '') {
+        return null;
+    }
+    if (is_array($raw)) {
+        return $raw;
+    }
+    $decoded = json_decode((string)$raw, true);
+    return is_array($decoded) ? $decoded : null;
+}
+
+/** @param array<string, mixed> $detail */
+function portailClubMaterielValidateRegulatorDetail(array $detail): array
+{
+    $base = portailClubMaterielEmptyRegulatorDetail();
+    $tasks = is_array($detail['tasks'] ?? null) ? $detail['tasks'] : [];
+    foreach ($base['tasks'] as $key => $default) {
+        $base['tasks'][$key] = !empty($tasks[$key]);
+    }
+    $other = $detail['tasks_other'] ?? [];
+    $base['tasks_other'] = is_array($other)
+        ? array_values(array_filter(array_map(static fn($v) => portailClubTrimOptionalName($v, 200), $other)))
+        : [];
+    $base['observations'] = portailClubTrimOptionalName($detail['observations'] ?? '', 2000);
+    $parts = $detail['parts_changed'] ?? [];
+    $base['parts_changed'] = is_array($parts)
+        ? array_values(array_filter(array_map(static fn($v) => portailClubTrimOptionalName($v, 200), $parts)))
+        : [];
+    $tests = is_array($detail['test_values'] ?? null) ? $detail['test_values'] : [];
+    foreach ($base['test_values'] as $key => $default) {
+        if ($key === 'leak_test_ok') {
+            $base['test_values'][$key] = array_key_exists($key, $tests)
+                ? (bool)$tests[$key]
+                : null;
+            continue;
+        }
+        $raw = $tests[$key] ?? null;
+        $base['test_values'][$key] = ($raw === null || $raw === '') ? null : (float)$raw;
+    }
+    $kits = is_array($detail['kits'] ?? null) ? $detail['kits'] : [];
+    foreach ($base['kits'] as $key => $default) {
+        $base['kits'][$key] = portailClubTrimOptionalName($kits[$key] ?? '', 80);
+    }
+    if (isset($detail['legacy_checks']) && is_array($detail['legacy_checks'])) {
+        $base['legacy_checks'] = $detail['legacy_checks'];
+    }
+    return $base;
+}
+
+/** @param array<string, mixed> $raw */
+function portailClubMaterielNormalizeRegulatorSpecs(array $raw): array
+{
+    $base = portailClubMaterielEmptyRegulatorSpecs();
+    foreach ($base as $key => $default) {
+        $base[$key] = portailClubTrimOptionalName($raw[$key] ?? '', $key === 'accessories' || $key === 'configuration' ? 500 : 120);
+    }
+    return $base;
+}
+
+function portailClubMaterielNormalizeCheckValue(string $inputType, mixed $value): string
+{
+    if ($inputType === 'select_grading') {
+        return portailClubMaterielNormalizeGradingValue($value);
+    }
+    return trim((string)$value);
+}
 
 function portailClubMaterielStateLabel(string $state): string
 {
@@ -532,10 +689,55 @@ function portailClubMaterielPatchPerson(PDO $pdo, int $id, array $body): array
     return portailClubMaterielGetPerson($pdo, $id);
 }
 
+function portailClubMaterielNormalizeRenewalPolicy(mixed $value): string
+{
+    $v = strtolower(trim((string)$value));
+    if (!in_array($v, PORTAIL_CLUB_MATERIEL_RENEWAL_POLICIES, true)) {
+        portailClubJsonFail('Politique de renouvellement invalide.');
+    }
+    return $v;
+}
+
+function portailClubMaterielNormalizeRevisionPolicy(mixed $value): string
+{
+    $v = strtolower(trim((string)$value));
+    if (!in_array($v, PORTAIL_CLUB_MATERIEL_REVISION_POLICIES, true)) {
+        portailClubJsonFail('Politique de révision invalide.');
+    }
+    return $v;
+}
+
+/** @param array<string, mixed> $t */
+function portailClubMaterielFormatEquipmentTypeRow(array $t, array $checks = []): array
+{
+    $slug = (string)$t['slug'];
+    $revisionPolicy = (string)($t['revision_policy'] ?? 'annual_season');
+    $trackable = $revisionPolicy !== 'none';
+    return [
+        'id' => (int)$t['id'],
+        'slug' => $slug,
+        'label' => $t['label'],
+        'renewal_years' => $t['renewal_years'] !== null ? (int)$t['renewal_years'] : null,
+        'renewal_policy' => (string)($t['renewal_policy'] ?? 'manufacturer'),
+        'renewal_health_threshold' => (int)($t['renewal_health_threshold'] ?? 40),
+        'manufacturer_renewal_years' => portailClubMaterielManufacturerRenewalYears($slug),
+        'revision_policy' => $revisionPolicy,
+        'revision_season_month' => isset($t['revision_season_month']) && $t['revision_season_month'] !== null
+            ? (int)$t['revision_season_month'] : null,
+        'min_stock_alert' => $t['min_stock_alert'] !== null ? (int)$t['min_stock_alert'] : null,
+        'trackable' => $trackable,
+        'allows_pairing' => (bool)($t['allows_pairing'] ?? false),
+        'sort_order' => (int)$t['sort_order'],
+        'checks' => $checks,
+    ];
+}
+
 function portailClubMaterielGetCatalog(PDO $pdo): array
 {
     $types = $pdo->query(
-        'SELECT id, slug, label, renewal_years, min_stock_alert, trackable, sort_order
+        'SELECT id, slug, label, renewal_years, renewal_policy, renewal_health_threshold,
+                revision_policy, revision_season_month,
+                min_stock_alert, trackable, allows_pairing, sort_order
          FROM PORTAIL_CLUB_materiel_equipment_types ORDER BY sort_order, label'
     )->fetchAll();
     $checks = $pdo->query(
@@ -556,16 +758,7 @@ function portailClubMaterielGetCatalog(PDO $pdo): array
     $out = [];
     foreach ($types as $t) {
         $tid = (int)$t['id'];
-        $out[] = [
-            'id' => $tid,
-            'slug' => $t['slug'],
-            'label' => $t['label'],
-            'renewal_years' => $t['renewal_years'] !== null ? (int)$t['renewal_years'] : null,
-            'min_stock_alert' => $t['min_stock_alert'] !== null ? (int)$t['min_stock_alert'] : null,
-            'trackable' => (bool)$t['trackable'],
-            'sort_order' => (int)$t['sort_order'],
-            'checks' => $checksByType[$tid] ?? [],
-        ];
+        $out[] = portailClubMaterielFormatEquipmentTypeRow($t, $checksByType[$tid] ?? []);
     }
     return ['types' => $out];
 }
@@ -593,17 +786,38 @@ function portailClubMaterielCreateEquipmentType(PDO $pdo, array $body): array
     if ($dup->fetchColumn()) {
         portailClubJsonFail('Ce code type (slug) existe déjà.');
     }
+    $renewalPolicy = isset($body['renewal_policy'])
+        ? portailClubMaterielNormalizeRenewalPolicy($body['renewal_policy'])
+        : 'manufacturer';
+    $revisionPolicy = isset($body['revision_policy'])
+        ? portailClubMaterielNormalizeRevisionPolicy($body['revision_policy'])
+        : 'annual_season';
+    $seasonMonth = null;
+    if ($revisionPolicy === 'annual_season') {
+        $seasonMonth = isset($body['revision_season_month']) && $body['revision_season_month'] !== ''
+            ? max(1, min(12, (int)$body['revision_season_month'])) : 1;
+    }
+    $healthThreshold = isset($body['renewal_health_threshold']) && $body['renewal_health_threshold'] !== ''
+        ? max(0, min(100, (int)$body['renewal_health_threshold'])) : 40;
+    $trackable = $revisionPolicy !== 'none' ? 1 : 0;
     $st = $pdo->prepare(
         'INSERT INTO PORTAIL_CLUB_materiel_equipment_types
-         (slug, label, renewal_years, min_stock_alert, trackable, sort_order)
-         VALUES (?, ?, ?, ?, ?, ?)'
+         (slug, label, renewal_years, renewal_policy, renewal_health_threshold,
+          revision_policy, revision_season_month,
+          min_stock_alert, trackable, allows_pairing, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $st->execute([
         $slug,
         $label,
         isset($body['renewal_years']) && $body['renewal_years'] !== '' ? (int)$body['renewal_years'] : null,
+        $renewalPolicy,
+        $healthThreshold,
+        $revisionPolicy,
+        $seasonMonth,
         isset($body['min_stock_alert']) && $body['min_stock_alert'] !== '' ? (int)$body['min_stock_alert'] : null,
-        !isset($body['trackable']) || (bool)$body['trackable'] ? 1 : 0,
+        $trackable,
+        !empty($body['allows_pairing']) ? 1 : 0,
         (int)($body['sort_order'] ?? 0),
     ]);
     $typeId = (int)$pdo->lastInsertId();
@@ -659,15 +873,46 @@ function portailClubMaterielPatchEquipmentType(PDO $pdo, int $id, array $body): 
             $params[] = portailClubTrimName($body[$f], 'Libellé type');
         }
     }
-    foreach (['renewal_years', 'min_stock_alert', 'sort_order'] as $f) {
+    foreach (['renewal_years', 'min_stock_alert', 'sort_order', 'renewal_health_threshold'] as $f) {
         if (array_key_exists($f, $body)) {
             $sets[] = "{$f} = ?";
             $params[] = $body[$f] !== '' && $body[$f] !== null ? (int)$body[$f] : null;
         }
     }
-    if (array_key_exists('trackable', $body)) {
+    if (array_key_exists('renewal_policy', $body)) {
+        $sets[] = 'renewal_policy = ?';
+        $params[] = portailClubMaterielNormalizeRenewalPolicy($body['renewal_policy']);
+    }
+    if (array_key_exists('revision_policy', $body)) {
+        $revPol = portailClubMaterielNormalizeRevisionPolicy($body['revision_policy']);
+        $sets[] = 'revision_policy = ?';
+        $params[] = $revPol;
         $sets[] = 'trackable = ?';
-        $params[] = (bool)$body['trackable'] ? 1 : 0;
+        $params[] = $revPol !== 'none' ? 1 : 0;
+        if ($revPol === 'annual_season') {
+            $sets[] = 'revision_season_month = ?';
+            $params[] = isset($body['revision_season_month']) && $body['revision_season_month'] !== ''
+                ? max(1, min(12, (int)$body['revision_season_month'])) : 1;
+        } else {
+            $sets[] = 'revision_season_month = NULL';
+        }
+    } elseif (array_key_exists('revision_season_month', $body)) {
+        $sets[] = 'revision_season_month = ?';
+        $params[] = max(1, min(12, (int)$body['revision_season_month']));
+    }
+    if (array_key_exists('trackable', $body)) {
+        $trackable = (bool)$body['trackable'];
+        $sets[] = 'trackable = ?';
+        $params[] = $trackable ? 1 : 0;
+        if (!array_key_exists('revision_policy', $body)) {
+            $sets[] = 'revision_policy = ?';
+            $params[] = $trackable ? 'annual_season' : 'none';
+            $sets[] = $trackable ? 'revision_season_month = COALESCE(revision_season_month, 1)' : 'revision_season_month = NULL';
+        }
+    }
+    if (array_key_exists('allows_pairing', $body)) {
+        $sets[] = 'allows_pairing = ?';
+        $params[] = (bool)$body['allows_pairing'] ? 1 : 0;
     }
     if (array_key_exists('slug', $body)) {
         $newSlug = strtolower(trim((string)$body['slug']));
@@ -804,13 +1049,18 @@ function portailClubMaterielDeleteTypeCheck(PDO $pdo, int $checkId): void
 
 function portailClubMaterielFormatEquipmentRow(array $r): array
 {
+    $typeSlug = $r['type_slug'] ?? null;
+    $specs = portailClubMaterielDecodeJsonColumn($r['specs_json'] ?? null);
+    if ($typeSlug === 'regulator' && $specs === null) {
+        $specs = portailClubMaterielEmptyRegulatorSpecs();
+    }
     return [
         'id' => (int)$r['id'],
         'public_id' => $r['public_id'],
         'structure_id' => $r['structure_id'] !== null ? (int)$r['structure_id'] : null,
         'structure_label' => $r['structure_label'] ?? null,
         'type_id' => (int)$r['type_id'],
-        'type_slug' => $r['type_slug'] ?? null,
+        'type_slug' => $typeSlug,
         'type_label' => $r['type_label'] ?? null,
         'brand' => $r['brand'],
         'purchase_year' => $r['purchase_year'] !== null ? (int)$r['purchase_year'] : null,
@@ -820,23 +1070,208 @@ function portailClubMaterielFormatEquipmentRow(array $r): array
         'state_label' => portailClubMaterielStateLabel($r['state']),
         'nfc_linked' => (bool)$r['nfc_linked'],
         'nfc_linked_at' => $r['nfc_linked_at'],
+        'nfc_group_id' => isset($r['nfc_group_id']) && $r['nfc_group_id'] !== null ? (int)$r['nfc_group_id'] : null,
+        'nfc_group_size' => isset($r['nfc_group_size']) ? (int)$r['nfc_group_size'] : null,
+        'pair_id' => isset($r['pair_id']) && $r['pair_id'] !== null ? (int)$r['pair_id'] : null,
         'notes' => $r['notes'],
+        'renewal_flagged' => !empty($r['renewal_flagged']),
+        'renewal_flagged_at' => $r['renewal_flagged_at'] ?? null,
+        'health_score' => isset($r['health_score']) && $r['health_score'] !== null ? (int)$r['health_score'] : null,
+        'specs_json' => $specs,
         'created_at' => $r['created_at'],
         'updated_at' => $r['updated_at'],
     ];
 }
 
-function portailClubMaterielEquipmentSelectSql(): string
+/** @return array{id:int,public_id:string,type_label:?string,state:string,state_label:string}|null */
+function portailClubMaterielFormatPairPartnerFromRow(array $r): ?array
 {
-    return 'SELECT e.*, s.label AS structure_label, t.slug AS type_slug, t.label AS type_label
-            FROM PORTAIL_CLUB_materiel_equipment e
-            LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
-            JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id';
+    if (empty($r['pair_partner_id'])) {
+        return null;
+    }
+    $state = (string)($r['pair_partner_state'] ?? 'operational');
+    return [
+        'id' => (int)$r['pair_partner_id'],
+        'public_id' => (string)$r['pair_partner_public_id'],
+        'type_label' => $r['type_label'] ?? null,
+        'state' => $state,
+        'state_label' => portailClubMaterielStateLabel($state),
+    ];
 }
 
-function portailClubMaterielListEquipment(PDO $pdo, array $filters = []): array
+function portailClubMaterielFormatEquipmentRowWithPair(array $r): array
 {
-    $sql = portailClubMaterielEquipmentSelectSql() . ' WHERE 1=1';
+    $item = portailClubMaterielFormatEquipmentRow($r);
+    $item['type_allows_pairing'] = !empty($r['type_allows_pairing']);
+    $item['pair_partner'] = portailClubMaterielFormatPairPartnerFromRow($r);
+    return portailClubMaterielAttachComplianceToItem($item, $r);
+}
+
+/** @return array{last_revision_on:?string,revision_due:bool,renewal_due:bool,renewal_soon:bool,health_score:?int} */
+function portailClubMaterielComputeRevisionDueFromRow(array $r): bool
+{
+    $policy = (string)($r['type_revision_policy'] ?? 'annual_season');
+    if ($policy === 'none') {
+        return false;
+    }
+    $lastRev = isset($r['last_revision_on']) && $r['last_revision_on'] !== null && $r['last_revision_on'] !== ''
+        ? (string)$r['last_revision_on']
+        : null;
+    if ($policy === 'annual_anniversary') {
+        if ($lastRev === null) {
+            return true;
+        }
+        $due = (new DateTimeImmutable($lastRev))->modify('+12 months');
+        return $due <= new DateTimeImmutable('today');
+    }
+    // annual_season
+    $month = (int)($r['type_revision_season_month'] ?? 1);
+    $currentMonth = (int)date('n');
+    if ($currentMonth < $month) {
+        return false;
+    }
+    if ($lastRev === null) {
+        return true;
+    }
+    return (int)substr($lastRev, 0, 4) < (int)date('Y');
+}
+
+/** @return array{renewal_due:bool,renewal_soon:bool} */
+function portailClubMaterielComputeRenewalFromRow(array $r): array
+{
+    if (!empty($r['renewal_flagged'])) {
+        return ['renewal_due' => true, 'renewal_soon' => false];
+    }
+    $policy = (string)($r['type_renewal_policy'] ?? 'manufacturer');
+    $currentYear = (int)date('Y');
+    if ($policy === 'manual') {
+        return ['renewal_due' => false, 'renewal_soon' => false];
+    }
+    if ($policy === 'health_score') {
+        $threshold = (int)($r['type_renewal_health_threshold'] ?? 40);
+        $score = isset($r['health_score']) && $r['health_score'] !== null ? (int)$r['health_score'] : 100;
+        return ['renewal_due' => $score < $threshold, 'renewal_soon' => false];
+    }
+    $purchaseYear = $r['purchase_year'] !== null ? (int)$r['purchase_year'] : null;
+    if ($purchaseYear === null) {
+        return ['renewal_due' => false, 'renewal_soon' => false];
+    }
+    $years = portailClubMaterielManufacturerRenewalYears((string)($r['type_slug'] ?? ''));
+    $dueYear = $purchaseYear + $years;
+    return [
+        'renewal_due' => $dueYear <= $currentYear,
+        'renewal_soon' => $dueYear > $currentYear && $dueYear <= $currentYear + 1,
+    ];
+}
+
+/** @return array{last_revision_on:?string,revision_due:bool,renewal_due:bool,renewal_soon:bool,health_score:?int} */
+function portailClubMaterielComputeComplianceFlags(array $r): array
+{
+    $lastRev = isset($r['last_revision_on']) && $r['last_revision_on'] !== null && $r['last_revision_on'] !== ''
+        ? (string)$r['last_revision_on']
+        : null;
+    $renewal = portailClubMaterielComputeRenewalFromRow($r);
+    $healthScore = isset($r['health_score']) && $r['health_score'] !== null ? (int)$r['health_score'] : null;
+
+    return [
+        'last_revision_on' => $lastRev,
+        'revision_due' => portailClubMaterielComputeRevisionDueFromRow($r),
+        'renewal_due' => $renewal['renewal_due'],
+        'renewal_soon' => $renewal['renewal_soon'],
+        'health_score' => $healthScore,
+    ];
+}
+
+/** @param array<string, mixed> $item */
+function portailClubMaterielAttachComplianceToItem(array $item, array $r): array
+{
+    $merged = array_merge($item, portailClubMaterielComputeComplianceFlags($r));
+    $slug = (string)($item['type_slug'] ?? $r['type_slug'] ?? '');
+    $merged['type_renewal_policy'] = (string)($r['type_renewal_policy'] ?? 'manufacturer');
+    $merged['type_revision_policy'] = (string)($r['type_revision_policy'] ?? 'annual_season');
+    $merged['type_revision_season_month'] = isset($r['type_revision_season_month']) && $r['type_revision_season_month'] !== null
+        ? (int)$r['type_revision_season_month'] : null;
+    $merged['type_renewal_health_threshold'] = (int)($r['type_renewal_health_threshold'] ?? 40);
+    $merged['manufacturer_renewal_years'] = portailClubMaterielManufacturerRenewalYears($slug);
+    return $merged;
+}
+
+function portailClubMaterielRevisionDueSql(): string
+{
+    return '('
+        . '(t.revision_policy = \'annual_anniversary\' AND (rev.last_revision_on IS NULL OR rev.last_revision_on < DATE_SUB(CURDATE(), INTERVAL 12 MONTH)))'
+        . ' OR (t.revision_policy = \'annual_season\' AND MONTH(CURDATE()) >= COALESCE(t.revision_season_month, 1)'
+        . '     AND (rev.last_revision_on IS NULL OR YEAR(rev.last_revision_on) < YEAR(CURDATE())))'
+        . ')';
+}
+
+function portailClubMaterielRenewalDueSql(): string
+{
+    $mfgYears = portailClubMaterielManufacturerRenewalYearsSql();
+    return '('
+        . 'e.renewal_flagged = 1'
+        . ' OR (t.renewal_policy = \'manufacturer\' AND e.purchase_year IS NOT NULL'
+        . "     AND (e.purchase_year + ({$mfgYears})) <= YEAR(CURDATE()))"
+        . ' OR (t.renewal_policy = \'health_score\' AND e.health_score IS NOT NULL'
+        . '     AND e.health_score < t.renewal_health_threshold)'
+        . ')';
+}
+
+function portailClubMaterielRenewalSoonSql(): string
+{
+    $mfgYears = portailClubMaterielManufacturerRenewalYearsSql();
+    return '('
+        . 'e.renewal_flagged = 0'
+        . ' AND t.renewal_policy = \'manufacturer\' AND e.purchase_year IS NOT NULL'
+        . " AND (e.purchase_year + ({$mfgYears})) = YEAR(CURDATE()) + 1"
+        . ')';
+}
+
+function portailClubMaterielComplianceFilterSql(string $compliance): string
+{
+    $compliance = strtolower(trim($compliance));
+    return match ($compliance) {
+        'revision_due' => ' AND ' . portailClubMaterielRevisionDueSql(),
+        'renewal_due' => ' AND ' . portailClubMaterielRenewalDueSql(),
+        'renewal_soon' => ' AND ' . portailClubMaterielRenewalSoonSql(),
+        'any' => ' AND (' . portailClubMaterielRevisionDueSql()
+            . ' OR ' . portailClubMaterielRenewalDueSql()
+            . ' OR ' . portailClubMaterielRenewalSoonSql() . ')',
+        default => '',
+    };
+}
+
+function portailClubMaterielEquipmentSelectSql(): string
+{
+    return 'SELECT e.*, s.label AS structure_label, t.slug AS type_slug, t.label AS type_label,
+            t.trackable AS type_trackable, t.renewal_years AS type_renewal_years,
+            t.renewal_policy AS type_renewal_policy, t.renewal_health_threshold AS type_renewal_health_threshold,
+            t.revision_policy AS type_revision_policy, t.revision_season_month AS type_revision_season_month,
+            t.allows_pairing AS type_allows_pairing,
+            rev.last_revision_on,
+            (SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment g
+             WHERE g.nfc_group_id = e.nfc_group_id AND e.nfc_group_id IS NOT NULL) AS nfc_group_size,
+            (SELECT p.id FROM PORTAIL_CLUB_materiel_equipment p
+             WHERE p.pair_id = e.pair_id AND p.id != e.id AND e.pair_id IS NOT NULL LIMIT 1) AS pair_partner_id,
+            (SELECT p.public_id FROM PORTAIL_CLUB_materiel_equipment p
+             WHERE p.pair_id = e.pair_id AND p.id != e.id AND e.pair_id IS NOT NULL LIMIT 1) AS pair_partner_public_id,
+            (SELECT p.state FROM PORTAIL_CLUB_materiel_equipment p
+             WHERE p.pair_id = e.pair_id AND p.id != e.id AND e.pair_id IS NOT NULL LIMIT 1) AS pair_partner_state
+            FROM PORTAIL_CLUB_materiel_equipment e
+            LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
+            JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id
+            LEFT JOIN (
+                SELECT equipment_id, MAX(done_on) AS last_revision_on
+                FROM PORTAIL_CLUB_materiel_interventions
+                WHERE subtype = \'revision\'
+                GROUP BY equipment_id
+            ) rev ON rev.equipment_id = e.id';
+}
+
+/** @return array{0:string,1:list<mixed>} */
+function portailClubMaterielListEquipmentFilterParts(array $filters): array
+{
+    $sql = '';
     $params = [];
 
     $structureIds = portailClubMaterielParseStructureIds($filters['structure_ids'] ?? null);
@@ -863,10 +1298,68 @@ function portailClubMaterielListEquipment(PDO $pdo, array $filters = []): array
         $params = array_merge($params, [$like, $like, $like, $like]);
     }
 
-    $sql .= ' ORDER BY e.public_id';
+    $nfcLinked = trim((string)($filters['nfc_linked'] ?? ''));
+    if ($nfcLinked === '1' || $nfcLinked === 'linked') {
+        $sql .= ' AND e.nfc_linked = 1';
+    } elseif ($nfcLinked === '0' || $nfcLinked === 'unlinked') {
+        $sql .= ' AND e.nfc_linked = 0';
+    }
+
+    if (!empty($filters['unpaired'])) {
+        $sql .= ' AND e.pair_id IS NULL';
+    }
+
+    $compliance = trim((string)($filters['compliance'] ?? ''));
+    if ($compliance !== '') {
+        $sql .= portailClubMaterielComplianceFilterSql($compliance);
+    }
+
+    return [$sql, $params];
+}
+
+function portailClubMaterielListEquipment(PDO $pdo, array $filters = []): array
+{
+    [$filterSql, $params] = portailClubMaterielListEquipmentFilterParts($filters);
+    $baseSql = portailClubMaterielEquipmentSelectSql() . ' WHERE 1=1' . $filterSql;
+    $limit = isset($filters['limit']) ? max(1, min(PORTAIL_CLUB_MATERIEL_LIST_PAGE_SIZE, (int)$filters['limit'])) : 0;
+    $page = max(1, (int)($filters['page'] ?? 1));
+
+    if ($limit > 0) {
+        $countSt = $pdo->prepare(
+            'SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment e
+             JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id
+             LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
+             LEFT JOIN (
+                 SELECT equipment_id, MAX(done_on) AS last_revision_on
+                 FROM PORTAIL_CLUB_materiel_interventions
+                 WHERE subtype = \'revision\'
+                 GROUP BY equipment_id
+             ) rev ON rev.equipment_id = e.id
+             WHERE 1=1' . $filterSql
+        );
+        $countSt->execute($params);
+        $total = (int)$countSt->fetchColumn();
+        $offset = ($page - 1) * $limit;
+        $sql = $baseSql . ' ORDER BY e.public_id LIMIT ' . $limit . ' OFFSET ' . $offset;
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+        $items = array_map('portailClubMaterielFormatEquipmentRowWithPair', $st->fetchAll());
+        $totalPages = $total > 0 ? (int)ceil($total / $limit) : 1;
+        return [
+            'items' => $items,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'total_pages' => $totalPages,
+            ],
+        ];
+    }
+
+    $sql = $baseSql . ' ORDER BY e.public_id';
     $st = $pdo->prepare($sql);
     $st->execute($params);
-    return array_map('portailClubMaterielFormatEquipmentRow', $st->fetchAll());
+    return array_map('portailClubMaterielFormatEquipmentRowWithPair', $st->fetchAll());
 }
 
 function portailClubMaterielGetEquipment(PDO $pdo, int $id): array
@@ -877,10 +1370,222 @@ function portailClubMaterielGetEquipment(PDO $pdo, int $id): array
     if (!$r) {
         portailClubJsonFail('Matériel introuvable.', 404);
     }
-    $item = portailClubMaterielFormatEquipmentRow($r);
+    $item = portailClubMaterielFormatEquipmentRowWithPair($r);
     $item['state_log'] = portailClubMaterielListStateLog($pdo, $id);
     $item['interventions'] = portailClubMaterielListInterventions($pdo, $id);
+    $item['nfc_group_members'] = portailClubMaterielListNfcGroupMembers($pdo, $item['nfc_group_id']);
     return $item;
+}
+
+/** @return list<array<string, mixed>> */
+function portailClubMaterielListNfcGroupMembers(PDO $pdo, ?int $groupId): array
+{
+    if ($groupId === null || $groupId <= 0) {
+        return [];
+    }
+    $st = $pdo->prepare(
+        portailClubMaterielEquipmentSelectSql() . ' WHERE e.nfc_group_id = ? ORDER BY e.public_id'
+    );
+    $st->execute([$groupId]);
+    return array_map(static function (array $row): array {
+        $item = portailClubMaterielFormatEquipmentRow($row);
+        return [
+            'id' => $item['id'],
+            'public_id' => $item['public_id'],
+            'type_label' => $item['type_label'],
+            'type_slug' => $item['type_slug'],
+            'brand' => $item['brand'],
+            'state' => $item['state'],
+            'state_label' => $item['state_label'],
+        ];
+    }, $st->fetchAll());
+}
+
+/** @param list<int> $equipmentIds */
+function portailClubMaterielAssignNfcGroup(PDO $pdo, array $equipmentIds): int
+{
+    $equipmentIds = array_values(array_unique(array_filter(array_map('intval', $equipmentIds))));
+    if ($equipmentIds === []) {
+        portailClubJsonFail('Aucun équipement pour le groupe NFC.');
+    }
+    foreach ($equipmentIds as $eid) {
+        portailClubMaterielGetEquipment($pdo, $eid);
+    }
+
+    $existingGroupId = null;
+    foreach ($equipmentIds as $eid) {
+        $st = $pdo->prepare('SELECT nfc_group_id FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?');
+        $st->execute([$eid]);
+        $gid = $st->fetchColumn();
+        if ($gid !== false && $gid !== null && (int)$gid > 0) {
+            if ($existingGroupId === null) {
+                $existingGroupId = (int)$gid;
+            } elseif ($existingGroupId !== (int)$gid) {
+                portailClubJsonFail('Ces équipements appartiennent déjà à des badges différents.');
+            }
+        }
+    }
+
+    if ($existingGroupId === null) {
+        $pdo->exec('INSERT INTO PORTAIL_CLUB_materiel_nfc_groups () VALUES ()');
+        $existingGroupId = (int)$pdo->lastInsertId();
+    }
+
+    $ph = implode(',', array_fill(0, count($equipmentIds), '?'));
+    $st = $pdo->prepare(
+        "UPDATE PORTAIL_CLUB_materiel_equipment SET nfc_group_id = ? WHERE id IN ({$ph})"
+    );
+    $st->execute(array_merge([$existingGroupId], $equipmentIds));
+
+    return $existingGroupId;
+}
+
+/** @param list<int> $memberIds IDs additionnels (hors équipement principal) */
+function portailClubMaterielLinkNfc(PDO $pdo, int $id, array $memberIds = []): array
+{
+    $allIds = array_merge([$id], $memberIds);
+    portailClubMaterielAssignNfcGroup($pdo, $allIds);
+
+    $ph = implode(',', array_fill(0, count($allIds), '?'));
+    $pdo->prepare(
+        "UPDATE PORTAIL_CLUB_materiel_equipment
+         SET nfc_linked = 1, nfc_linked_at = NOW()
+         WHERE id IN ({$ph})"
+    )->execute($allIds);
+
+    error_log('[materiel] nfc_link group ids=' . implode(',', $allIds));
+    return portailClubMaterielGetEquipment($pdo, $id);
+}
+
+function portailClubMaterielUnlinkNfc(PDO $pdo, int $id): array
+{
+    $item = portailClubMaterielGetEquipment($pdo, $id);
+    $groupId = $item['nfc_group_id'];
+    error_log('[materiel] nfc_unlink id=' . $id . ' public_id=' . $item['public_id'] . ' group=' . ($groupId ?? 'null'));
+
+    if ($groupId !== null && $groupId > 0) {
+        $pdo->prepare(
+            'UPDATE PORTAIL_CLUB_materiel_equipment
+             SET nfc_linked = 0, nfc_linked_at = NULL, nfc_group_id = NULL
+             WHERE nfc_group_id = ?'
+        )->execute([$groupId]);
+        $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_nfc_groups WHERE id = ?')->execute([$groupId]);
+    } else {
+        $pdo->prepare(
+            'UPDATE PORTAIL_CLUB_materiel_equipment
+             SET nfc_linked = 0, nfc_linked_at = NULL, nfc_group_id = NULL
+             WHERE id = ?'
+        )->execute([$id]);
+    }
+    return portailClubMaterielGetEquipment($pdo, $id);
+}
+
+function portailClubMaterielSetNfcLinked(PDO $pdo, int $id, bool $linked): array
+{
+    if (!$linked) {
+        return portailClubMaterielUnlinkNfc($pdo, $id);
+    }
+    return portailClubMaterielLinkNfc($pdo, $id, []);
+}
+
+function portailClubMaterielAddToNfcGroup(PDO $pdo, int $id, int $addId): array
+{
+    if ($id === $addId) {
+        portailClubJsonFail('Impossible d\'associer un équipement à lui-même.');
+    }
+    $item = portailClubMaterielGetEquipment($pdo, $id);
+    portailClubMaterielGetEquipment($pdo, $addId);
+    if (!$item['nfc_linked']) {
+        portailClubJsonFail('L\'équipement principal n\'a pas encore de badge associé.');
+    }
+    portailClubMaterielLinkNfc($pdo, $id, [$addId]);
+    return portailClubMaterielGetEquipment($pdo, $id);
+}
+
+function portailClubMaterielRemoveFromNfcGroup(PDO $pdo, int $id): array
+{
+    $item = portailClubMaterielGetEquipment($pdo, $id);
+    $groupId = $item['nfc_group_id'];
+    if ($groupId === null || $groupId <= 0) {
+        return portailClubMaterielUnlinkNfc($pdo, $id);
+    }
+    $members = portailClubMaterielListNfcGroupMembers($pdo, $groupId);
+    if (count($members) <= 1) {
+        return portailClubMaterielUnlinkNfc($pdo, $id);
+    }
+
+    $pdo->prepare(
+        'UPDATE PORTAIL_CLUB_materiel_equipment
+         SET nfc_linked = 0, nfc_linked_at = NULL, nfc_group_id = NULL
+         WHERE id = ?'
+    )->execute([$id]);
+
+    $remaining = array_values(array_filter($members, static fn (array $m): bool => $m['id'] !== $id));
+    if (count($remaining) === 1) {
+        $pdo->prepare(
+            'UPDATE PORTAIL_CLUB_materiel_equipment SET nfc_group_id = NULL WHERE id = ?'
+        )->execute([(int)$remaining[0]['id']]);
+        $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_nfc_groups WHERE id = ?')->execute([$groupId]);
+    }
+
+    return portailClubMaterielGetEquipment($pdo, $id);
+}
+
+function portailClubMaterielAssertTypeAllowsPairing(PDO $pdo, int $typeId): void
+{
+    $st = $pdo->prepare(
+        'SELECT allows_pairing FROM PORTAIL_CLUB_materiel_equipment_types WHERE id = ? LIMIT 1'
+    );
+    $st->execute([$typeId]);
+    if (!(bool)$st->fetchColumn()) {
+        portailClubJsonFail('Ce type d\'équipement ne permet pas de former une paire.');
+    }
+}
+
+function portailClubMaterielLinkPair(PDO $pdo, int $id, int $partnerId): array
+{
+    if ($id === $partnerId) {
+        portailClubJsonFail('Impossible de former une paire avec le même équipement.');
+    }
+    $item = portailClubMaterielGetEquipment($pdo, $id);
+    $partner = portailClubMaterielGetEquipment($pdo, $partnerId);
+
+    if ((int)$item['type_id'] !== (int)$partner['type_id']) {
+        portailClubJsonFail('Les deux équipements doivent être du même type.');
+    }
+    portailClubMaterielAssertTypeAllowsPairing($pdo, (int)$item['type_id']);
+
+    if ($item['pair_id'] !== null && $item['pair_id'] > 0) {
+        portailClubJsonFail('Cet équipement fait déjà partie d\'une paire.');
+    }
+    if ($partner['pair_id'] !== null && $partner['pair_id'] > 0) {
+        portailClubJsonFail('L\'équipement sélectionné fait déjà partie d\'une paire.');
+    }
+
+    $pdo->exec('INSERT INTO PORTAIL_CLUB_materiel_pairs () VALUES ()');
+    $pairId = (int)$pdo->lastInsertId();
+    $st = $pdo->prepare('UPDATE PORTAIL_CLUB_materiel_equipment SET pair_id = ? WHERE id IN (?, ?)');
+    $st->execute([$pairId, $id, $partnerId]);
+
+    error_log('[materiel] pair_link ids=' . $id . ',' . $partnerId . ' pair_id=' . $pairId);
+    return portailClubMaterielGetEquipment($pdo, $id);
+}
+
+function portailClubMaterielUnlinkPair(PDO $pdo, int $id): array
+{
+    $item = portailClubMaterielGetEquipment($pdo, $id);
+    $pairId = $item['pair_id'];
+    if ($pairId === null || $pairId <= 0) {
+        return $item;
+    }
+
+    $pdo->prepare(
+        'UPDATE PORTAIL_CLUB_materiel_equipment SET pair_id = NULL WHERE pair_id = ?'
+    )->execute([$pairId]);
+    $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_pairs WHERE id = ?')->execute([$pairId]);
+
+    error_log('[materiel] pair_unlink id=' . $id . ' pair_id=' . $pairId);
+    return portailClubMaterielGetEquipment($pdo, $id);
 }
 
 function portailClubMaterielListEquipmentByPublicId(PDO $pdo, string $publicId, ?int $typeId = null): array
@@ -896,7 +1601,7 @@ function portailClubMaterielListEquipmentByPublicId(PDO $pdo, string $publicId, 
     $st = $pdo->prepare($sql);
     $st->execute($params);
     $rows = $st->fetchAll();
-    return array_map('portailClubMaterielFormatEquipmentRow', $rows);
+    return array_map('portailClubMaterielFormatEquipmentRowWithPair', $rows);
 }
 
 function portailClubMaterielGetEquipmentByPublicId(PDO $pdo, string $publicId, ?int $typeId = null): array
@@ -1001,6 +1706,71 @@ function portailClubMaterielCreateEquipment(PDO $pdo, array $body): array
     return portailClubMaterielGetEquipment($pdo, $id);
 }
 
+function portailClubMaterielApplyHealthGradingPenalty(int $score, string $grading): int
+{
+    return match (strtolower(trim($grading))) {
+        'mineure' => max(0, $score - PORTAIL_CLUB_MATERIEL_HEALTH_PENALTY_MINEURE),
+        'majeure' => max(0, $score - PORTAIL_CLUB_MATERIEL_HEALTH_PENALTY_MAJEURE),
+        'definitive' => 0,
+        default => $score,
+    };
+}
+
+function portailClubMaterielComputeHealthScoreFromInterventions(array $interventions): int
+{
+    $score = 100;
+    usort($interventions, static function (array $a, array $b): int {
+        return strcmp((string)($a['done_on'] ?? ''), (string)($b['done_on'] ?? ''));
+    });
+    foreach ($interventions as $intv) {
+        if ($score <= 0) {
+            break;
+        }
+        if (($intv['subtype'] ?? '') === 'repair') {
+            $score = max(0, $score - PORTAIL_CLUB_MATERIEL_HEALTH_PENALTY_REPAIR);
+            continue;
+        }
+        if (($intv['subtype'] ?? '') !== 'revision') {
+            continue;
+        }
+        $checks = is_array($intv['check_values'] ?? null) ? $intv['check_values'] : [];
+        foreach ($checks as $value) {
+            if ($score <= 0) {
+                break 2;
+            }
+            $v = strtolower(trim((string)$value));
+            if (!in_array($v, PORTAIL_CLUB_MATERIEL_GRADING_VALUES, true)) {
+                continue;
+            }
+            $score = portailClubMaterielApplyHealthGradingPenalty($score, $v);
+        }
+    }
+    return max(0, min(100, $score));
+}
+
+function portailClubMaterielRecomputeHealthScore(PDO $pdo, int $equipmentId): int
+{
+    $interventions = portailClubMaterielListInterventions($pdo, $equipmentId);
+    $score = portailClubMaterielComputeHealthScoreFromInterventions($interventions);
+    $pdo->prepare(
+        'UPDATE PORTAIL_CLUB_materiel_equipment SET health_score = ?, health_score_at = NOW() WHERE id = ?'
+    )->execute([$score, $equipmentId]);
+    return $score;
+}
+
+function portailClubMaterielSetRenewalFlag(PDO $pdo, int $equipmentId, bool $flagged): array
+{
+    portailClubMaterielGetEquipment($pdo, $equipmentId);
+    $pdo->prepare(
+        'UPDATE PORTAIL_CLUB_materiel_equipment SET renewal_flagged = ?, renewal_flagged_at = ? WHERE id = ?'
+    )->execute([
+        $flagged ? 1 : 0,
+        $flagged ? date('Y-m-d H:i:s') : null,
+        $equipmentId,
+    ]);
+    return portailClubMaterielGetEquipment($pdo, $equipmentId);
+}
+
 function portailClubMaterielPatchEquipment(PDO $pdo, int $id, array $body): array
 {
     $current = portailClubMaterielGetEquipment($pdo, $id);
@@ -1053,6 +1823,13 @@ function portailClubMaterielPatchEquipment(PDO $pdo, int $id, array $body): arra
         $sets[] = 'purchase_year = ?';
         $params[] = $body['purchase_year'] !== '' && $body['purchase_year'] !== null ? (int)$body['purchase_year'] : null;
     }
+    if (array_key_exists('specs_json', $body) && ($current['type_slug'] ?? '') === 'regulator') {
+        $specs = portailClubMaterielNormalizeRegulatorSpecs(
+            is_array($body['specs_json']) ? $body['specs_json'] : []
+        );
+        $sets[] = 'specs_json = ?';
+        $params[] = json_encode($specs, JSON_UNESCAPED_UNICODE);
+    }
 
     if ($sets !== []) {
         $params[] = $id;
@@ -1100,18 +1877,6 @@ function portailClubMaterielChangeEquipmentState(PDO $pdo, int $id, array $body)
     $pdo->prepare('UPDATE PORTAIL_CLUB_materiel_equipment SET state = ? WHERE id = ?')
         ->execute([$newState, $id]);
     portailClubMaterielLogStateChange($pdo, $id, $item['state'], $newState, $personId, $free);
-    return portailClubMaterielGetEquipment($pdo, $id);
-}
-
-function portailClubMaterielSetNfcLinked(PDO $pdo, int $id, bool $linked): array
-{
-    $item = portailClubMaterielGetEquipment($pdo, $id);
-    error_log('[materiel] nfc_' . ($linked ? 'link' : 'unlink') . ' id=' . $id . ' public_id=' . $item['public_id']);
-    $pdo->prepare(
-        'UPDATE PORTAIL_CLUB_materiel_equipment
-         SET nfc_linked = ?, nfc_linked_at = CASE WHEN ? = 1 THEN NOW() ELSE NULL END
-         WHERE id = ?'
-    )->execute([$linked ? 1 : 0, $linked ? 1 : 0, $id]);
     return portailClubMaterielGetEquipment($pdo, $id);
 }
 
@@ -1167,6 +1932,7 @@ function portailClubMaterielListInterventions(PDO $pdo, ?int $equipmentId = null
             'responsible_free' => $r['responsible_free'],
             'summary' => $r['summary'],
             'check_values' => portailClubMaterielFetchInterventionChecks($pdo, $iid),
+            'detail_json' => portailClubMaterielDecodeJsonColumn($r['detail_json'] ?? null),
             'created_at' => $r['created_at'],
         ];
     }
@@ -1213,15 +1979,30 @@ function portailClubMaterielCreateIntervention(PDO $pdo, array $body): array
         portailClubJsonFail('Résumé obligatoire pour une réparation.');
     }
 
+    $typeSlug = $equipment['type_slug'] ?? '';
+    $detailJson = null;
+    if ($typeSlug === 'regulator' && isset($body['detail_json']) && is_array($body['detail_json'])) {
+        $detailJson = portailClubMaterielValidateRegulatorDetail($body['detail_json']);
+        $subtype = 'revision';
+    }
+
     $st = $pdo->prepare(
         'INSERT INTO PORTAIL_CLUB_materiel_interventions
-         (equipment_id, subtype, done_on, person_id, responsible_free, summary)
-         VALUES (?, ?, ?, ?, ?, ?)'
+         (equipment_id, subtype, done_on, person_id, responsible_free, summary, detail_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
-    $st->execute([$equipmentId, $subtype, $doneOn, $personId, $free !== '' ? $free : null, $summary !== '' ? $summary : null]);
+    $st->execute([
+        $equipmentId,
+        $subtype,
+        $doneOn,
+        $personId,
+        $free !== '' ? $free : null,
+        $summary !== '' ? $summary : null,
+        $detailJson !== null ? json_encode($detailJson, JSON_UNESCAPED_UNICODE) : null,
+    ]);
     $interventionId = (int)$pdo->lastInsertId();
 
-    if ($subtype === 'revision') {
+    if ($subtype === 'revision' && $detailJson === null) {
         $type = portailClubMaterielGetEquipmentType($pdo, $equipment['type_id']);
         $checks = is_array($body['check_values'] ?? null) ? $body['check_values'] : [];
         $stCheck = $pdo->prepare(
@@ -1233,12 +2014,17 @@ function portailClubMaterielCreateIntervention(PDO $pdo, array $body): array
             if (!array_key_exists($key, $checks)) {
                 portailClubJsonFail("Critère « {$def['label']} » requis.");
             }
-            $stCheck->execute([$interventionId, $key, trim((string)$checks[$key])]);
+            $normalized = portailClubMaterielNormalizeCheckValue(
+                $def['input_type'],
+                $checks[$key]
+            );
+            $stCheck->execute([$interventionId, $key, $normalized]);
         }
     }
 
     foreach (portailClubMaterielListInterventions($pdo, $equipmentId) as $row) {
         if ($row['id'] === $interventionId) {
+            portailClubMaterielRecomputeHealthScore($pdo, $equipmentId);
             return $row;
         }
     }
@@ -1320,6 +2106,20 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
         $byAgeOut[] = ['bucket' => $bucket, 'count' => $cnt];
     }
 
+    $nfcLinked = 0;
+    $nfcUnlinked = 0;
+    $st = $pdo->prepare(
+        'SELECT e.nfc_linked, COUNT(*) AS cnt FROM PORTAIL_CLUB_materiel_equipment e' . $where . ' GROUP BY e.nfc_linked'
+    );
+    $st->execute($params);
+    foreach ($st->fetchAll() as $r) {
+        if ((int)$r['nfc_linked'] === 1) {
+            $nfcLinked = (int)$r['cnt'];
+        } else {
+            $nfcUnlinked += (int)$r['cnt'];
+        }
+    }
+
     $stockAlerts = [];
     $types = portailClubMaterielGetCatalog($pdo)['types'];
     foreach ($types as $type) {
@@ -1346,13 +2146,153 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
         }
     }
 
+    $byTypeModel = portailClubMaterielGetAvailabilityByTypeModel($pdo, $structureIds);
+    $compliance = portailClubMaterielGetComplianceSummary($pdo, $structureIds);
+
     return [
         'by_state' => $byState,
         'by_type' => $byType,
         'by_structure' => $byStructure,
         'by_age' => $byAgeOut,
+        'by_nfc' => [
+            'linked' => $nfcLinked,
+            'unlinked' => $nfcUnlinked,
+        ],
         'stock_alerts' => $stockAlerts,
+        'by_type_model' => $byTypeModel,
+        'compliance' => $compliance['counts'],
         'total' => array_sum(array_column($byState, 'count')),
+    ];
+}
+
+/** @return list<array<string, mixed>> */
+function portailClubMaterielGetAvailabilityByTypeModel(PDO $pdo, array $structureIds = []): array
+{
+    [$structSql, $structParams] = portailClubMaterielStructureFilterParts($structureIds);
+    $where = $structSql !== '' ? ' WHERE 1=1' . $structSql : '';
+    $st = $pdo->prepare(
+        'SELECT t.slug AS type_slug, t.label AS type_label, t.min_stock_alert,
+                COALESCE(NULLIF(TRIM(e.model), \'\'), \'—\') AS model_label,
+                e.state, COUNT(*) AS cnt
+         FROM PORTAIL_CLUB_materiel_equipment e
+         JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id' . $where . '
+         GROUP BY t.id, t.slug, t.label, t.min_stock_alert, model_label, e.state
+         ORDER BY t.sort_order, t.label, model_label, e.state'
+    );
+    $st->execute($structParams);
+    $buckets = [];
+    foreach ($st->fetchAll() as $r) {
+        $key = $r['type_slug'] . '|' . $r['model_label'];
+        if (!isset($buckets[$key])) {
+            $buckets[$key] = [
+                'type_slug' => $r['type_slug'],
+                'type_label' => $r['type_label'],
+                'model' => $r['model_label'],
+                'operational' => 0,
+                'in_repair' => 0,
+                'scrapped' => 0,
+                'for_sale' => 0,
+                'total' => 0,
+                'min_stock_alert' => $r['min_stock_alert'] !== null ? (int)$r['min_stock_alert'] : null,
+            ];
+        }
+        $state = (string)$r['state'];
+        $cnt = (int)$r['cnt'];
+        if (isset($buckets[$key][$state])) {
+            $buckets[$key][$state] += $cnt;
+        }
+        $buckets[$key]['total'] += $cnt;
+    }
+    $out = [];
+    foreach ($buckets as $row) {
+        $row['below_threshold'] = $row['min_stock_alert'] !== null
+            && $row['operational'] < $row['min_stock_alert'];
+        $out[] = $row;
+    }
+    return $out;
+}
+
+/** @return array{counts: array{revision_due:int,renewal_due:int,renewal_soon:int}, items: list<array<string,mixed>>} */
+function portailClubMaterielGetComplianceSummary(PDO $pdo, array $structureIds = []): array
+{
+    [$structSql, $structParams] = portailClubMaterielStructureFilterParts($structureIds);
+    $where = $structSql !== '' ? ' WHERE 1=1' . $structSql : '';
+    $revSql = portailClubMaterielRevisionDueSql();
+    $renDueSql = portailClubMaterielRenewalDueSql();
+    $renSoonSql = portailClubMaterielRenewalSoonSql();
+
+    $baseFrom = ' FROM PORTAIL_CLUB_materiel_equipment e
+         JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id
+         LEFT JOIN (
+             SELECT equipment_id, MAX(done_on) AS last_revision_on
+             FROM PORTAIL_CLUB_materiel_interventions
+             WHERE subtype = \'revision\'
+             GROUP BY equipment_id
+         ) rev ON rev.equipment_id = e.id';
+
+    $st = $pdo->prepare('SELECT COUNT(*)' . $baseFrom . $where . ' AND ' . $revSql);
+    $st->execute($structParams);
+    $revisionDue = (int)$st->fetchColumn();
+
+    $st = $pdo->prepare('SELECT COUNT(*)' . $baseFrom . $where . ' AND ' . $renDueSql);
+    $st->execute($structParams);
+    $renewalDue = (int)$st->fetchColumn();
+
+    $st = $pdo->prepare('SELECT COUNT(*)' . $baseFrom . $where . ' AND ' . $renSoonSql);
+    $st->execute($structParams);
+    $renewalSoon = (int)$st->fetchColumn();
+
+    $items = portailClubMaterielListEquipment($pdo, [
+        'structure_ids' => $structureIds,
+        'compliance' => 'any',
+    ]);
+    $urgent = [];
+    foreach ($items as $item) {
+        $flags = [];
+        if (!empty($item['revision_due'])) {
+            $flags[] = 'revision_due';
+        }
+        if (!empty($item['renewal_due'])) {
+            $flags[] = 'renewal_due';
+        }
+        if (!empty($item['renewal_soon'])) {
+            $flags[] = 'renewal_soon';
+        }
+        if ($flags === []) {
+            continue;
+        }
+        $priority = in_array('revision_due', $flags, true) ? 0
+            : (in_array('renewal_due', $flags, true) ? 1 : 2);
+        $urgent[] = [
+            'id' => $item['id'],
+            'public_id' => $item['public_id'],
+            'type_id' => $item['type_id'],
+            'type_label' => $item['type_label'],
+            'type_slug' => $item['type_slug'],
+            'model' => $item['model'],
+            'state' => $item['state'],
+            'state_label' => $item['state_label'],
+            'last_revision_on' => $item['last_revision_on'],
+            'flags' => $flags,
+            '_priority' => $priority,
+        ];
+    }
+    usort($urgent, static function (array $a, array $b): int {
+        $cmp = $a['_priority'] <=> $b['_priority'];
+        return $cmp !== 0 ? $cmp : strcmp($a['public_id'], $b['public_id']);
+    });
+    foreach ($urgent as &$row) {
+        unset($row['_priority']);
+    }
+    unset($row);
+
+    return [
+        'counts' => [
+            'revision_due' => $revisionDue,
+            'renewal_due' => $renewalDue,
+            'renewal_soon' => $renewalSoon,
+        ],
+        'items' => array_slice($urgent, 0, 50),
     ];
 }
 
