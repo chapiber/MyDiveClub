@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" role="img" aria-label="Coupe du Monde 2026">
+  <defs>
+    <linearGradient id="wc26" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#002868"/>
+      <stop offset="45%" stop-color="#006847"/>
+      <stop offset="100%" stop-color="#C8102E"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="80" rx="12" fill="#0a0a12"/>
+  <text x="60" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="42" font-weight="800" fill="url(#wc26)">26</text>
+  <ellipse cx="60" cy="28" rx="10" ry="14" fill="#C9A227"/>
+  <rect x="38" y="62" width="44" height="8" rx="2" fill="#fff" opacity="0.9"/>
+</svg>

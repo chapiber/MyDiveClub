@@ -1,0 +1,552 @@
+/* Coupe du Monde 2026 — SPA festive, mobile-first */
+.wc-app {
+  --wc-usa-blue: #002868;
+  --wc-mex-green: #006847;
+  --wc-can-red: #c8102e;
+  --wc-gold: #c9a227;
+  --wc-bg: #f8fafc;
+  --wc-surface: #ffffff;
+  --wc-text: #14212e;
+  --wc-muted: #5a6d7d;
+  --wc-border: #d8e3ec;
+  --wc-m6: #e85d04;
+  --wc-bein: #5c2d91;
+  --wc-nav-h: calc(4.5rem + var(--safe-bottom));
+
+  min-height: 100dvh;
+  padding: calc(0.5rem + var(--safe-top)) 1rem var(--wc-nav-h);
+  max-width: 28rem;
+  margin: 0 auto;
+  background: var(--wc-bg);
+  color: var(--wc-text);
+}
+
+@media (min-width: 640px) {
+  .wc-app {
+    max-width: 42rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+.wc-header {
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 1rem 1rem 1.1rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--wc-usa-blue) 0%, var(--wc-mex-green) 50%, var(--wc-can-red) 100%);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 40, 104, 0.25);
+}
+
+.wc-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(201, 162, 39, 0.2) 0%, transparent 35%);
+  pointer-events: none;
+}
+
+.wc-header__inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.wc-header__emblem {
+  width: 3.5rem;
+  height: 2.35rem;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.wc-header__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wc-header__eyebrow {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.wc-header__title {
+  margin: 0.1rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.wc-header__sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.wc-back-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--wc-usa-blue);
+  text-decoration: none;
+  min-height: 2.5rem;
+}
+
+.wc-back-portal:active {
+  opacity: 0.7;
+}
+
+.wc-meta {
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  color: var(--wc-muted);
+  text-align: center;
+}
+
+.wc-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.wc-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--wc-muted);
+  font-size: 0.95rem;
+  background: var(--wc-surface);
+  border-radius: 16px;
+  border: 2px dashed var(--wc-border);
+}
+
+.wc-match {
+  margin-bottom: 0.85rem;
+  border-radius: 18px;
+  background: var(--wc-surface);
+  border: 2px solid var(--wc-border);
+  box-shadow: 0 4px 16px rgba(0, 40, 104, 0.08);
+  overflow: hidden;
+}
+
+.wc-match--fra {
+  border-color: var(--wc-gold);
+  box-shadow: 0 4px 20px rgba(201, 162, 39, 0.2);
+}
+
+.wc-match--live {
+  border-color: var(--wc-can-red);
+}
+
+.wc-match__time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(90deg, rgba(0, 40, 104, 0.06), rgba(0, 104, 71, 0.06));
+  border-bottom: 1px solid var(--wc-border);
+}
+
+.wc-match__datetime {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--wc-usa-blue);
+}
+
+.wc-match__stage {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--wc-muted);
+}
+
+.wc-match__tv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.wc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.wc-badge--m6 {
+  background: #fff3e6;
+  color: var(--wc-m6);
+  border: 1px solid rgba(232, 93, 4, 0.35);
+}
+
+.wc-badge--bein {
+  background: #f3ecfa;
+  color: var(--wc-bein);
+  border: 1px solid rgba(92, 45, 145, 0.3);
+}
+
+.wc-badge--free {
+  background: #e8f5e9;
+  color: var(--wc-mex-green);
+  border: 1px solid rgba(0, 104, 71, 0.3);
+}
+
+.wc-badge--fra {
+  background: linear-gradient(90deg, #1e3a8a, #c9a227);
+  color: #fff;
+}
+
+.wc-badge--live {
+  background: var(--wc-can-red);
+  color: #fff;
+  animation: wc-pulse 1.5s ease infinite;
+}
+
+@keyframes wc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.wc-match__body {
+  padding: 1rem;
+}
+
+.wc-match__teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wc-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.wc-team__flag {
+  width: 2.5rem;
+  height: 1.65rem;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.wc-team__name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.wc-match__score {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--wc-usa-blue);
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+.wc-match__score--vs {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--wc-muted);
+}
+
+.wc-match__label {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+.wc-match__venue {
+  margin-top: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--wc-muted);
+  text-align: center;
+}
+
+.wc-team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.wc-team-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  border: 2px solid var(--wc-border);
+  border-radius: 12px;
+  background: var(--wc-surface);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--wc-text);
+  min-height: 4.5rem;
+}
+
+.wc-team-chip--active {
+  border-color: var(--wc-usa-blue);
+  background: rgba(0, 40, 104, 0.06);
+}
+
+.wc-team-chip__flag {
+  width: 1.75rem;
+  height: 1.15rem;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.wc-groups-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.wc-group-tab {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.65rem;
+  border: 2px solid var(--wc-border);
+  border-radius: 10px;
+  background: var(--wc-surface);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--wc-text);
+  cursor: pointer;
+}
+
+.wc-group-tab--active {
+  background: var(--wc-usa-blue);
+  border-color: var(--wc-usa-blue);
+  color: #fff;
+}
+
+.wc-group-panel {
+  background: var(--wc-surface);
+  border: 2px solid var(--wc-border);
+  border-radius: 18px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 40, 104, 0.06);
+}
+
+.wc-group-panel__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--wc-usa-blue);
+}
+
+.wc-standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-bottom: 1rem;
+}
+
+.wc-standings th,
+.wc-standings td {
+  padding: 0.45rem 0.35rem;
+  text-align: center;
+  border-bottom: 1px solid var(--wc-border);
+}
+
+.wc-standings th {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--wc-muted);
+}
+
+.wc-standings td:first-child,
+.wc-standings th:first-child {
+  text-align: left;
+}
+
+.wc-standings__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.wc-standings__flag {
+  width: 1.25rem;
+  height: 0.85rem;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.wc-standings tr.wc-standings__qualify td {
+  background: rgba(0, 104, 71, 0.06);
+}
+
+.wc-group-matches__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--wc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wc-mini-match {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--wc-border);
+  font-size: 0.8rem;
+}
+
+.wc-mini-match:last-child {
+  border-bottom: none;
+}
+
+.wc-mini-match__teams {
+  flex: 1;
+  font-weight: 600;
+}
+
+.wc-mini-match__result {
+  font-weight: 800;
+  color: var(--wc-usa-blue);
+  white-space: nowrap;
+}
+
+.wc-mini-match__date {
+  font-size: 0.7rem;
+  color: var(--wc-muted);
+  white-space: nowrap;
+}
+
+.wc-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem calc(0.5rem + var(--safe-bottom));
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 2px solid var(--wc-border);
+  backdrop-filter: blur(8px);
+}
+
+.wc-nav__inner {
+  display: flex;
+  width: 100%;
+  max-width: 28rem;
+  gap: 0.35rem;
+}
+
+@media (min-width: 640px) {
+  .wc-nav__inner {
+    max-width: 42rem;
+  }
+}
+
+.wc-nav__btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: var(--pc-tap-min);
+  padding: 0.35rem;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--wc-muted);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.wc-nav__btn--active {
+  background: rgba(0, 40, 104, 0.08);
+  color: var(--wc-usa-blue);
+}
+
+.wc-nav__btn svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.wc-nav__btn:active {
+  transform: scale(0.97);
+}
+
+.wc-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--wc-nav-h) + 0.5rem);
+  transform: translateX(-50%) translateY(120%);
+  z-index: 60;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  background: var(--wc-text);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: transform 0.25s, opacity 0.25s;
+  pointer-events: none;
+  max-width: calc(100% - 2rem);
+  text-align: center;
+}
+
+.wc-toast--show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.app-tile--cdm2026 {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--pc-surface), var(--pc-surface)) padding-box,
+    linear-gradient(135deg, #002868, #006847, #c8102e) border-box;
+}
+
+.app-tile--cdm2026 .app-tile__icon {
+  background: linear-gradient(135deg, rgba(0, 40, 104, 0.12), rgba(201, 162, 39, 0.15));
+  color: #002868;
+}
+
+.wc-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--wc-muted);
+}

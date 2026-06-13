@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CDM2026Data",
+  "type": "object",
+  "required": ["meta", "teams", "groups", "matches"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["updatedAt", "sources", "tournament"],
+      "properties": {
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "tournament": {
+          "type": "object",
+          "required": ["start", "end", "timezone"],
+          "properties": {
+            "start": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            "end": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            "timezone": { "const": "Europe/Paris" }
+          }
+        }
+      }
+    },
+    "teams": {
+      "type": "array",
+      "minItems": 48,
+      "maxItems": 48,
+      "items": {
+        "type": "object",
+        "required": ["code", "name", "flagIso", "group"],
+        "properties": {
+          "code": { "type": "string", "pattern": "^[A-Z]{3}$" },
+          "name": { "type": "string" },
+          "flagIso": { "type": "string" },
+          "group": { "type": "string", "pattern": "^[A-L]$" }
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["id", "teams", "standings"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-L]$" },
+          "teams": { "type": "array", "items": { "type": "string" }, "minItems": 4, "maxItems": 4 },
+          "standings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["team", "played", "won", "drawn", "lost", "gf", "ga", "pts"],
+              "properties": {
+                "team": { "type": "string" },
+                "played": { "type": "integer", "minimum": 0 },
+                "won": { "type": "integer", "minimum": 0 },
+                "drawn": { "type": "integer", "minimum": 0 },
+                "lost": { "type": "integer", "minimum": 0 },
+                "gf": { "type": "integer", "minimum": 0 },
+                "ga": { "type": "integer", "minimum": 0 },
+                "pts": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "matches": {
+      "type": "array",
+      "minItems": 104,
+      "maxItems": 104,
+      "items": {
+        "type": "object",
+        "required": ["id", "stage", "kickoffParis", "venue", "city", "tv", "score"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^M\\d{3}$" },
+          "stage": {
+            "enum": ["group", "round32", "round16", "quarter", "semi", "third", "final"]
+          },
+          "group": { "type": "string", "pattern": "^[A-L]$" },
+          "home": { "type": ["string", "null"] },
+          "away": { "type": ["string", "null"] },
+          "label": { "type": "string" },
+          "kickoffParis": { "type": "string" },
+          "venue": { "type": "string" },
+          "city": { "type": "string" },
+          "tv": {
+            "type": "object",
+            "required": ["channels", "freeToAir"],
+            "properties": {
+              "channels": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "freeToAir": { "type": "boolean" }
+            }
+          },
+          "score": {
+            "type": "object",
+            "required": ["home", "away", "status"],
+            "properties": {
+              "home": { "type": ["integer", "null"] },
+              "away": { "type": ["integer", "null"] },
+              "status": { "enum": ["scheduled", "live", "finished"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

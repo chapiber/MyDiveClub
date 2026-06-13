@@ -1,0 +1,3070 @@
+{
+  "meta": {
+    "updatedAt": "2026-06-13T14:26:13.480Z",
+    "sources": [
+      "matchcalendar.football",
+      "fwctimes.com",
+      "franceinfo"
+    ],
+    "tournament": {
+      "start": "2026-06-11",
+      "end": "2026-07-19",
+      "timezone": "Europe/Paris"
+    }
+  },
+  "teams": [
+    {
+      "code": "MEX",
+      "name": "Mexique",
+      "flagIso": "mx",
+      "group": "A"
+    },
+    {
+      "code": "KOR",
+      "name": "Corée du Sud",
+      "flagIso": "kr",
+      "group": "A"
+    },
+    {
+      "code": "RSA",
+      "name": "Afrique du Sud",
+      "flagIso": "za",
+      "group": "A"
+    },
+    {
+      "code": "CZE",
+      "name": "République tchèque",
+      "flagIso": "cz",
+      "group": "A"
+    },
+    {
+      "code": "CAN",
+      "name": "Canada",
+      "flagIso": "ca",
+      "group": "B"
+    },
+    {
+      "code": "BIH",
+      "name": "Bosnie-Herzégovine",
+      "flagIso": "ba",
+      "group": "B"
+    },
+    {
+      "code": "SUI",
+      "name": "Suisse",
+      "flagIso": "ch",
+      "group": "B"
+    },
+    {
+      "code": "QAT",
+      "name": "Qatar",
+      "flagIso": "qa",
+      "group": "B"
+    },
+    {
+      "code": "BRA",
+      "name": "Brésil",
+      "flagIso": "br",
+      "group": "C"
+    },
+    {
+      "code": "MAR",
+      "name": "Maroc",
+      "flagIso": "ma",
+      "group": "C"
+    },
+    {
+      "code": "SCO",
+      "name": "Écosse",
+      "flagIso": "gb-sct",
+      "group": "C"
+    },
+    {
+      "code": "HTI",
+      "name": "Haïti",
+      "flagIso": "ht",
+      "group": "C"
+    },
+    {
+      "code": "USA",
+      "name": "États-Unis",
+      "flagIso": "us",
+      "group": "D"
+    },
+    {
+      "code": "AUS",
+      "name": "Australie",
+      "flagIso": "au",
+      "group": "D"
+    },
+    {
+      "code": "PAR",
+      "name": "Paraguay",
+      "flagIso": "py",
+      "group": "D"
+    },
+    {
+      "code": "TUR",
+      "name": "Turquie",
+      "flagIso": "tr",
+      "group": "D"
+    },
+    {
+      "code": "GER",
+      "name": "Allemagne",
+      "flagIso": "de",
+      "group": "E"
+    },
+    {
+      "code": "ECU",
+      "name": "Équateur",
+      "flagIso": "ec",
+      "group": "E"
+    },
+    {
+      "code": "CIV",
+      "name": "Côte d'Ivoire",
+      "flagIso": "ci",
+      "group": "E"
+    },
+    {
+      "code": "CUW",
+      "name": "Curaçao",
+      "flagIso": "cw",
+      "group": "E"
+    },
+    {
+      "code": "NED",
+      "name": "Pays-Bas",
+      "flagIso": "nl",
+      "group": "F"
+    },
+    {
+      "code": "JPN",
+      "name": "Japon",
+      "flagIso": "jp",
+      "group": "F"
+    },
+    {
+      "code": "TUN",
+      "name": "Tunisie",
+      "flagIso": "tn",
+      "group": "F"
+    },
+    {
+      "code": "SWE",
+      "name": "Suède",
+      "flagIso": "se",
+      "group": "F"
+    },
+    {
+      "code": "BEL",
+      "name": "Belgique",
+      "flagIso": "be",
+      "group": "G"
+    },
+    {
+      "code": "IRN",
+      "name": "Iran",
+      "flagIso": "ir",
+      "group": "G"
+    },
+    {
+      "code": "EGY",
+      "name": "Égypte",
+      "flagIso": "eg",
+      "group": "G"
+    },
+    {
+      "code": "NZL",
+      "name": "Nouvelle-Zélande",
+      "flagIso": "nz",
+      "group": "G"
+    },
+    {
+      "code": "ESP",
+      "name": "Espagne",
+      "flagIso": "es",
+      "group": "H"
+    },
+    {
+      "code": "URU",
+      "name": "Uruguay",
+      "flagIso": "uy",
+      "group": "H"
+    },
+    {
+      "code": "KSA",
+      "name": "Arabie saoudite",
+      "flagIso": "sa",
+      "group": "H"
+    },
+    {
+      "code": "CPV",
+      "name": "Cap-Vert",
+      "flagIso": "cv",
+      "group": "H"
+    },
+    {
+      "code": "FRA",
+      "name": "France",
+      "flagIso": "fr",
+      "group": "I"
+    },
+    {
+      "code": "SEN",
+      "name": "Sénégal",
+      "flagIso": "sn",
+      "group": "I"
+    },
+    {
+      "code": "NOR",
+      "name": "Norvège",
+      "flagIso": "no",
+      "group": "I"
+    },
+    {
+      "code": "IRQ",
+      "name": "Irak",
+      "flagIso": "iq",
+      "group": "I"
+    },
+    {
+      "code": "ARG",
+      "name": "Argentine",
+      "flagIso": "ar",
+      "group": "J"
+    },
+    {
+      "code": "AUT",
+      "name": "Autriche",
+      "flagIso": "at",
+      "group": "J"
+    },
+    {
+      "code": "ALG",
+      "name": "Algérie",
+      "flagIso": "dz",
+      "group": "J"
+    },
+    {
+      "code": "JOR",
+      "name": "Jordanie",
+      "flagIso": "jo",
+      "group": "J"
+    },
+    {
+      "code": "POR",
+      "name": "Portugal",
+      "flagIso": "pt",
+      "group": "K"
+    },
+    {
+      "code": "COL",
+      "name": "Colombie",
+      "flagIso": "co",
+      "group": "K"
+    },
+    {
+      "code": "UZB",
+      "name": "Ouzbékistan",
+      "flagIso": "uz",
+      "group": "K"
+    },
+    {
+      "code": "COD",
+      "name": "RD Congo",
+      "flagIso": "cd",
+      "group": "K"
+    },
+    {
+      "code": "ENG",
+      "name": "Angleterre",
+      "flagIso": "gb-eng",
+      "group": "L"
+    },
+    {
+      "code": "CRO",
+      "name": "Croatie",
+      "flagIso": "hr",
+      "group": "L"
+    },
+    {
+      "code": "PAN",
+      "name": "Panama",
+      "flagIso": "pa",
+      "group": "L"
+    },
+    {
+      "code": "GHA",
+      "name": "Ghana",
+      "flagIso": "gh",
+      "group": "L"
+    }
+  ],
+  "groups": [
+    {
+      "id": "A",
+      "teams": [
+        "MEX",
+        "KOR",
+        "RSA",
+        "CZE"
+      ],
+      "standings": [
+        {
+          "team": "MEX",
+          "played": 1,
+          "won": 1,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 2,
+          "ga": 0,
+          "pts": 3
+        },
+        {
+          "team": "KOR",
+          "played": 1,
+          "won": 1,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 2,
+          "ga": 1,
+          "pts": 3
+        },
+        {
+          "team": "CZE",
+          "played": 1,
+          "won": 0,
+          "drawn": 0,
+          "lost": 1,
+          "gf": 1,
+          "ga": 2,
+          "pts": 0
+        },
+        {
+          "team": "RSA",
+          "played": 1,
+          "won": 0,
+          "drawn": 0,
+          "lost": 1,
+          "gf": 0,
+          "ga": 2,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "teams": [
+        "CAN",
+        "BIH",
+        "SUI",
+        "QAT"
+      ],
+      "standings": [
+        {
+          "team": "CAN",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "BIH",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "SUI",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "QAT",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "teams": [
+        "BRA",
+        "MAR",
+        "SCO",
+        "HTI"
+      ],
+      "standings": [
+        {
+          "team": "BRA",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "MAR",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "SCO",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "HTI",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "teams": [
+        "USA",
+        "PAR",
+        "AUS",
+        "TUR"
+      ],
+      "standings": [
+        {
+          "team": "USA",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "PAR",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "AUS",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "TUR",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "teams": [
+        "GER",
+        "ECU",
+        "CIV",
+        "CUW"
+      ],
+      "standings": [
+        {
+          "team": "GER",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "ECU",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "CIV",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "CUW",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "teams": [
+        "NED",
+        "JPN",
+        "SWE",
+        "TUN"
+      ],
+      "standings": [
+        {
+          "team": "NED",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "JPN",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "SWE",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "TUN",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "teams": [
+        "BEL",
+        "IRN",
+        "EGY",
+        "NZL"
+      ],
+      "standings": [
+        {
+          "team": "BEL",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "IRN",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "EGY",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "NZL",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "teams": [
+        "ESP",
+        "URU",
+        "KSA",
+        "CPV"
+      ],
+      "standings": [
+        {
+          "team": "ESP",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "URU",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "KSA",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "CPV",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "teams": [
+        "FRA",
+        "SEN",
+        "NOR",
+        "IRQ"
+      ],
+      "standings": [
+        {
+          "team": "FRA",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "SEN",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "NOR",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "IRQ",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "J",
+      "teams": [
+        "ARG",
+        "AUT",
+        "ALG",
+        "JOR"
+      ],
+      "standings": [
+        {
+          "team": "ARG",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "AUT",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "ALG",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "JOR",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "K",
+      "teams": [
+        "POR",
+        "COL",
+        "UZB",
+        "COD"
+      ],
+      "standings": [
+        {
+          "team": "POR",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "COL",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "UZB",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "COD",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "id": "L",
+      "teams": [
+        "ENG",
+        "CRO",
+        "PAN",
+        "GHA"
+      ],
+      "standings": [
+        {
+          "team": "ENG",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "CRO",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "PAN",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "GHA",
+          "played": 0,
+          "won": 0,
+          "drawn": 0,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 0
+        }
+      ]
+    }
+  ],
+  "matches": [
+    {
+      "id": "M001",
+      "stage": "group",
+      "group": "A",
+      "home": "MEX",
+      "away": "RSA",
+      "kickoffParis": "2026-06-11T21:00:00+02:00",
+      "venue": "Estadio Azteca",
+      "city": "Mexico City",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": 2,
+        "away": 0,
+        "status": "finished"
+      }
+    },
+    {
+      "id": "M002",
+      "stage": "group",
+      "group": "A",
+      "home": "KOR",
+      "away": "CZE",
+      "kickoffParis": "2026-06-12T04:00:00+02:00",
+      "venue": "Estadio Akron",
+      "city": "Guadalajara",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": 2,
+        "away": 1,
+        "status": "finished"
+      }
+    },
+    {
+      "id": "M003",
+      "stage": "group",
+      "group": "B",
+      "home": "CAN",
+      "away": "BIH",
+      "kickoffParis": "2026-06-12T21:00:00+02:00",
+      "venue": "BMO Field",
+      "city": "Toronto",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M004",
+      "stage": "group",
+      "group": "D",
+      "home": "USA",
+      "away": "PAR",
+      "kickoffParis": "2026-06-13T03:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M005",
+      "stage": "group",
+      "group": "C",
+      "home": "HTI",
+      "away": "SCO",
+      "kickoffParis": "2026-06-14T03:00:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M006",
+      "stage": "group",
+      "group": "D",
+      "home": "AUS",
+      "away": "TUR",
+      "kickoffParis": "2026-06-14T06:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M007",
+      "stage": "group",
+      "group": "C",
+      "home": "BRA",
+      "away": "MAR",
+      "kickoffParis": "2026-06-14T00:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M008",
+      "stage": "group",
+      "group": "B",
+      "home": "QAT",
+      "away": "SUI",
+      "kickoffParis": "2026-06-13T21:00:00+02:00",
+      "venue": "Levi's Stadium",
+      "city": "San Francisco",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M009",
+      "stage": "group",
+      "group": "E",
+      "home": "CIV",
+      "away": "ECU",
+      "kickoffParis": "2026-06-15T01:00:00+02:00",
+      "venue": "Lincoln Financial Field",
+      "city": "Philadelphia",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M010",
+      "stage": "group",
+      "group": "E",
+      "home": "GER",
+      "away": "CUW",
+      "kickoffParis": "2026-06-14T19:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M011",
+      "stage": "group",
+      "group": "F",
+      "home": "NED",
+      "away": "JPN",
+      "kickoffParis": "2026-06-14T22:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M012",
+      "stage": "group",
+      "group": "F",
+      "home": "SWE",
+      "away": "TUN",
+      "kickoffParis": "2026-06-15T04:00:00+02:00",
+      "venue": "Estadio BBVA",
+      "city": "Monterrey",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M013",
+      "stage": "group",
+      "group": "H",
+      "home": "KSA",
+      "away": "URU",
+      "kickoffParis": "2026-06-16T00:00:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M014",
+      "stage": "group",
+      "group": "H",
+      "home": "ESP",
+      "away": "CPV",
+      "kickoffParis": "2026-06-15T18:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M015",
+      "stage": "group",
+      "group": "G",
+      "home": "IRN",
+      "away": "NZL",
+      "kickoffParis": "2026-06-16T03:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M016",
+      "stage": "group",
+      "group": "G",
+      "home": "BEL",
+      "away": "EGY",
+      "kickoffParis": "2026-06-15T21:00:00+02:00",
+      "venue": "Lumen Field",
+      "city": "Seattle",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M017",
+      "stage": "group",
+      "group": "I",
+      "home": "FRA",
+      "away": "SEN",
+      "kickoffParis": "2026-06-16T21:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M018",
+      "stage": "group",
+      "group": "I",
+      "home": "IRQ",
+      "away": "NOR",
+      "kickoffParis": "2026-06-17T00:00:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M019",
+      "stage": "group",
+      "group": "J",
+      "home": "ARG",
+      "away": "ALG",
+      "kickoffParis": "2026-06-17T03:00:00+02:00",
+      "venue": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M020",
+      "stage": "group",
+      "group": "J",
+      "home": "AUT",
+      "away": "JOR",
+      "kickoffParis": "2026-06-17T06:00:00+02:00",
+      "venue": "Levi's Stadium",
+      "city": "San Francisco",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M021",
+      "stage": "group",
+      "group": "L",
+      "home": "GHA",
+      "away": "PAN",
+      "kickoffParis": "2026-06-18T01:00:00+02:00",
+      "venue": "BMO Field",
+      "city": "Toronto",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M022",
+      "stage": "group",
+      "group": "L",
+      "home": "ENG",
+      "away": "CRO",
+      "kickoffParis": "2026-06-17T22:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M023",
+      "stage": "group",
+      "group": "K",
+      "home": "POR",
+      "away": "COD",
+      "kickoffParis": "2026-06-17T19:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M024",
+      "stage": "group",
+      "group": "K",
+      "home": "UZB",
+      "away": "COL",
+      "kickoffParis": "2026-06-18T04:00:00+02:00",
+      "venue": "Estadio Azteca",
+      "city": "Mexico City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M025",
+      "stage": "group",
+      "group": "A",
+      "home": "CZE",
+      "away": "RSA",
+      "kickoffParis": "2026-06-18T18:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M026",
+      "stage": "group",
+      "group": "B",
+      "home": "SUI",
+      "away": "BIH",
+      "kickoffParis": "2026-06-18T21:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M027",
+      "stage": "group",
+      "group": "B",
+      "home": "CAN",
+      "away": "QAT",
+      "kickoffParis": "2026-06-19T00:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M028",
+      "stage": "group",
+      "group": "A",
+      "home": "MEX",
+      "away": "KOR",
+      "kickoffParis": "2026-06-19T03:00:00+02:00",
+      "venue": "Estadio Akron",
+      "city": "Guadalajara",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M029",
+      "stage": "group",
+      "group": "C",
+      "home": "BRA",
+      "away": "HTI",
+      "kickoffParis": "2026-06-20T02:30:00+02:00",
+      "venue": "Lincoln Financial Field",
+      "city": "Philadelphia",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M030",
+      "stage": "group",
+      "group": "C",
+      "home": "SCO",
+      "away": "MAR",
+      "kickoffParis": "2026-06-20T00:00:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M031",
+      "stage": "group",
+      "group": "D",
+      "home": "TUR",
+      "away": "PAR",
+      "kickoffParis": "2026-06-20T05:00:00+02:00",
+      "venue": "Levi's Stadium",
+      "city": "San Francisco",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M032",
+      "stage": "group",
+      "group": "D",
+      "home": "USA",
+      "away": "AUS",
+      "kickoffParis": "2026-06-19T21:00:00+02:00",
+      "venue": "Lumen Field",
+      "city": "Seattle",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M033",
+      "stage": "group",
+      "group": "E",
+      "home": "GER",
+      "away": "CIV",
+      "kickoffParis": "2026-06-20T22:00:00+02:00",
+      "venue": "BMO Field",
+      "city": "Toronto",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M034",
+      "stage": "group",
+      "group": "E",
+      "home": "ECU",
+      "away": "CUW",
+      "kickoffParis": "2026-06-21T02:00:00+02:00",
+      "venue": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M035",
+      "stage": "group",
+      "group": "F",
+      "home": "NED",
+      "away": "SWE",
+      "kickoffParis": "2026-06-20T19:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M036",
+      "stage": "group",
+      "group": "F",
+      "home": "TUN",
+      "away": "JPN",
+      "kickoffParis": "2026-06-21T06:00:00+02:00",
+      "venue": "Estadio BBVA",
+      "city": "Monterrey",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M037",
+      "stage": "group",
+      "group": "H",
+      "home": "URU",
+      "away": "CPV",
+      "kickoffParis": "2026-06-22T00:00:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M038",
+      "stage": "group",
+      "group": "H",
+      "home": "ESP",
+      "away": "KSA",
+      "kickoffParis": "2026-06-21T18:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M039",
+      "stage": "group",
+      "group": "G",
+      "home": "BEL",
+      "away": "IRN",
+      "kickoffParis": "2026-06-21T21:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M040",
+      "stage": "group",
+      "group": "G",
+      "home": "NZL",
+      "away": "EGY",
+      "kickoffParis": "2026-06-22T03:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M041",
+      "stage": "group",
+      "group": "I",
+      "home": "NOR",
+      "away": "SEN",
+      "kickoffParis": "2026-06-23T02:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M042",
+      "stage": "group",
+      "group": "I",
+      "home": "FRA",
+      "away": "IRQ",
+      "kickoffParis": "2026-06-22T23:00:00+02:00",
+      "venue": "Lincoln Financial Field",
+      "city": "Philadelphia",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M043",
+      "stage": "group",
+      "group": "J",
+      "home": "ARG",
+      "away": "AUT",
+      "kickoffParis": "2026-06-22T19:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M044",
+      "stage": "group",
+      "group": "J",
+      "home": "JOR",
+      "away": "ALG",
+      "kickoffParis": "2026-06-23T05:00:00+02:00",
+      "venue": "Levi's Stadium",
+      "city": "San Francisco",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M045",
+      "stage": "group",
+      "group": "L",
+      "home": "ENG",
+      "away": "GHA",
+      "kickoffParis": "2026-06-23T22:00:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M046",
+      "stage": "group",
+      "group": "L",
+      "home": "PAN",
+      "away": "CRO",
+      "kickoffParis": "2026-06-24T01:00:00+02:00",
+      "venue": "BMO Field",
+      "city": "Toronto",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M047",
+      "stage": "group",
+      "group": "K",
+      "home": "POR",
+      "away": "UZB",
+      "kickoffParis": "2026-06-23T19:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M048",
+      "stage": "group",
+      "group": "K",
+      "home": "COL",
+      "away": "COD",
+      "kickoffParis": "2026-06-24T04:00:00+02:00",
+      "venue": "Estadio Akron",
+      "city": "Guadalajara",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M049",
+      "stage": "group",
+      "group": "C",
+      "home": "SCO",
+      "away": "BRA",
+      "kickoffParis": "2026-06-25T00:00:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M050",
+      "stage": "group",
+      "group": "C",
+      "home": "MAR",
+      "away": "HTI",
+      "kickoffParis": "2026-06-25T00:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M051",
+      "stage": "group",
+      "group": "B",
+      "home": "SUI",
+      "away": "CAN",
+      "kickoffParis": "2026-06-24T21:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M052",
+      "stage": "group",
+      "group": "B",
+      "home": "BIH",
+      "away": "QAT",
+      "kickoffParis": "2026-06-24T21:00:00+02:00",
+      "venue": "Lumen Field",
+      "city": "Seattle",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M053",
+      "stage": "group",
+      "group": "A",
+      "home": "CZE",
+      "away": "MEX",
+      "kickoffParis": "2026-06-25T03:00:00+02:00",
+      "venue": "Estadio Azteca",
+      "city": "Mexico City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M054",
+      "stage": "group",
+      "group": "A",
+      "home": "RSA",
+      "away": "KOR",
+      "kickoffParis": "2026-06-25T03:00:00+02:00",
+      "venue": "Estadio BBVA",
+      "city": "Monterrey",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M055",
+      "stage": "group",
+      "group": "E",
+      "home": "CUW",
+      "away": "CIV",
+      "kickoffParis": "2026-06-25T22:00:00+02:00",
+      "venue": "Lincoln Financial Field",
+      "city": "Philadelphia",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M056",
+      "stage": "group",
+      "group": "E",
+      "home": "ECU",
+      "away": "GER",
+      "kickoffParis": "2026-06-25T22:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M057",
+      "stage": "group",
+      "group": "F",
+      "home": "JPN",
+      "away": "SWE",
+      "kickoffParis": "2026-06-26T01:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M058",
+      "stage": "group",
+      "group": "F",
+      "home": "TUN",
+      "away": "NED",
+      "kickoffParis": "2026-06-26T01:00:00+02:00",
+      "venue": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M059",
+      "stage": "group",
+      "group": "D",
+      "home": "TUR",
+      "away": "USA",
+      "kickoffParis": "2026-06-26T04:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M060",
+      "stage": "group",
+      "group": "D",
+      "home": "PAR",
+      "away": "AUS",
+      "kickoffParis": "2026-06-26T04:00:00+02:00",
+      "venue": "Levi's Stadium",
+      "city": "San Francisco",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M061",
+      "stage": "group",
+      "group": "I",
+      "home": "NOR",
+      "away": "FRA",
+      "kickoffParis": "2026-06-26T21:00:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M062",
+      "stage": "group",
+      "group": "I",
+      "home": "SEN",
+      "away": "IRQ",
+      "kickoffParis": "2026-06-26T21:00:00+02:00",
+      "venue": "BMO Field",
+      "city": "Toronto",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M063",
+      "stage": "group",
+      "group": "G",
+      "home": "EGY",
+      "away": "IRN",
+      "kickoffParis": "2026-06-27T05:00:00+02:00",
+      "venue": "Lumen Field",
+      "city": "Seattle",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M064",
+      "stage": "group",
+      "group": "G",
+      "home": "NZL",
+      "away": "BEL",
+      "kickoffParis": "2026-06-27T05:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M065",
+      "stage": "group",
+      "group": "H",
+      "home": "CPV",
+      "away": "KSA",
+      "kickoffParis": "2026-06-27T02:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M066",
+      "stage": "group",
+      "group": "H",
+      "home": "URU",
+      "away": "ESP",
+      "kickoffParis": "2026-06-27T02:00:00+02:00",
+      "venue": "Estadio Akron",
+      "city": "Guadalajara",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M067",
+      "stage": "group",
+      "group": "L",
+      "home": "PAN",
+      "away": "ENG",
+      "kickoffParis": "2026-06-27T23:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M068",
+      "stage": "group",
+      "group": "L",
+      "home": "CRO",
+      "away": "GHA",
+      "kickoffParis": "2026-06-27T23:00:00+02:00",
+      "venue": "Lincoln Financial Field",
+      "city": "Philadelphia",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M069",
+      "stage": "group",
+      "group": "J",
+      "home": "ALG",
+      "away": "AUT",
+      "kickoffParis": "2026-06-28T04:00:00+02:00",
+      "venue": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M070",
+      "stage": "group",
+      "group": "J",
+      "home": "JOR",
+      "away": "ARG",
+      "kickoffParis": "2026-06-28T04:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M071",
+      "stage": "group",
+      "group": "K",
+      "home": "COL",
+      "away": "POR",
+      "kickoffParis": "2026-06-28T01:30:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M072",
+      "stage": "group",
+      "group": "K",
+      "home": "COD",
+      "away": "UZB",
+      "kickoffParis": "2026-06-28T01:30:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M073",
+      "stage": "round32",
+      "label": "2e Groupe A vs 2e Groupe B",
+      "kickoffParis": "2026-06-28T21:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M074",
+      "stage": "round32",
+      "label": "1er Groupe E vs 3e (A/B/C/D/F)",
+      "kickoffParis": "2026-06-29T22:30:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M075",
+      "stage": "round32",
+      "label": "1er Groupe F vs 2e Groupe C",
+      "kickoffParis": "2026-06-30T01:00:00+02:00",
+      "venue": "Estadio BBVA",
+      "city": "Monterrey",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M076",
+      "stage": "round32",
+      "label": "1er Groupe C vs 2e Groupe F",
+      "kickoffParis": "2026-06-29T19:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M077",
+      "stage": "round32",
+      "label": "1er Groupe I vs 3e (C/D/F/G/H)",
+      "kickoffParis": "2026-06-30T21:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M078",
+      "stage": "round32",
+      "label": "2e Groupe E vs 2e Groupe I",
+      "kickoffParis": "2026-06-30T19:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M079",
+      "stage": "round32",
+      "label": "1er Groupe A vs 3e (C/E/F/H/I)",
+      "kickoffParis": "2026-07-01T01:00:00+02:00",
+      "venue": "Estadio Azteca",
+      "city": "Mexico City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M080",
+      "stage": "round32",
+      "label": "1er Groupe L vs 3e (E/H/I/J/K)",
+      "kickoffParis": "2026-07-01T18:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M081",
+      "stage": "round32",
+      "label": "1er Groupe D vs 3e (B/E/F/I/J)",
+      "kickoffParis": "2026-07-02T02:00:00+02:00",
+      "venue": "Levi's Stadium",
+      "city": "San Francisco",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M082",
+      "stage": "round32",
+      "label": "1er Groupe G vs 3e (A/E/H/I/J)",
+      "kickoffParis": "2026-07-01T22:00:00+02:00",
+      "venue": "Lumen Field",
+      "city": "Seattle",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M083",
+      "stage": "round32",
+      "label": "2e Groupe K vs 2e Groupe L",
+      "kickoffParis": "2026-07-02T23:00:00+02:00",
+      "venue": "BMO Field",
+      "city": "Toronto",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M084",
+      "stage": "round32",
+      "label": "1er Groupe H vs 2e Groupe J",
+      "kickoffParis": "2026-07-02T21:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M085",
+      "stage": "round32",
+      "label": "1er Groupe B vs 3e (E/F/G/I/J)",
+      "kickoffParis": "2026-07-03T05:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M086",
+      "stage": "round32",
+      "label": "1er Groupe J vs 2e Groupe H",
+      "kickoffParis": "2026-07-03T22:00:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M087",
+      "stage": "round32",
+      "label": "1er Groupe K vs 3e (D/E/I/J/L)",
+      "kickoffParis": "2026-07-04T01:30:00+02:00",
+      "venue": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M088",
+      "stage": "round32",
+      "label": "2e Groupe D vs 2e Groupe G",
+      "kickoffParis": "2026-07-03T20:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M089",
+      "stage": "round16",
+      "label": "Vainqueur M74 vs Vainqueur M77",
+      "kickoffParis": "2026-07-04T23:00:00+02:00",
+      "venue": "Lincoln Financial Field",
+      "city": "Philadelphia",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M090",
+      "stage": "round16",
+      "label": "Vainqueur M73 vs Vainqueur M75",
+      "kickoffParis": "2026-07-04T19:00:00+02:00",
+      "venue": "NRG Stadium",
+      "city": "Houston",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M091",
+      "stage": "round16",
+      "label": "Vainqueur M76 vs Vainqueur M78",
+      "kickoffParis": "2026-07-05T22:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M092",
+      "stage": "round16",
+      "label": "Vainqueur M79 vs Vainqueur M80",
+      "kickoffParis": "2026-07-06T02:00:00+02:00",
+      "venue": "Estadio Azteca",
+      "city": "Mexico City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M093",
+      "stage": "round16",
+      "label": "Vainqueur M83 vs Vainqueur M84",
+      "kickoffParis": "2026-07-06T21:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M094",
+      "stage": "round16",
+      "label": "Vainqueur M81 vs Vainqueur M82",
+      "kickoffParis": "2026-07-07T02:00:00+02:00",
+      "venue": "Lumen Field",
+      "city": "Seattle",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M095",
+      "stage": "round16",
+      "label": "Vainqueur M86 vs Vainqueur M88",
+      "kickoffParis": "2026-07-07T18:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M096",
+      "stage": "round16",
+      "label": "Vainqueur M85 vs Vainqueur M87",
+      "kickoffParis": "2026-07-07T22:00:00+02:00",
+      "venue": "BC Place",
+      "city": "Vancouver",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M097",
+      "stage": "quarter",
+      "label": "Vainqueur M89 vs Vainqueur M90",
+      "kickoffParis": "2026-07-09T22:00:00+02:00",
+      "venue": "Gillette Stadium",
+      "city": "Boston",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M098",
+      "stage": "quarter",
+      "label": "Vainqueur M93 vs Vainqueur M94",
+      "kickoffParis": "2026-07-10T21:00:00+02:00",
+      "venue": "SoFi Stadium",
+      "city": "Los Angeles",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M099",
+      "stage": "quarter",
+      "label": "Vainqueur M91 vs Vainqueur M92",
+      "kickoffParis": "2026-07-11T23:00:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M100",
+      "stage": "quarter",
+      "label": "Vainqueur M95 vs Vainqueur M96",
+      "kickoffParis": "2026-07-12T03:00:00+02:00",
+      "venue": "Arrowhead Stadium",
+      "city": "Kansas City",
+      "tv": {
+        "channels": [
+          "beIN Sports 1"
+        ],
+        "freeToAir": false
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M101",
+      "stage": "semi",
+      "label": "Vainqueur M97 vs Vainqueur M98",
+      "kickoffParis": "2026-07-14T21:00:00+02:00",
+      "venue": "AT&T Stadium",
+      "city": "Dallas",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M102",
+      "stage": "semi",
+      "label": "Vainqueur M99 vs Vainqueur M100",
+      "kickoffParis": "2026-07-15T21:00:00+02:00",
+      "venue": "Mercedes-Benz Stadium",
+      "city": "Atlanta",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M103",
+      "stage": "third",
+      "label": "Perdant M101 vs Perdant M102",
+      "kickoffParis": "2026-07-18T23:00:00+02:00",
+      "venue": "Hard Rock Stadium",
+      "city": "Miami",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    },
+    {
+      "id": "M104",
+      "stage": "final",
+      "label": "Vainqueur M101 vs Vainqueur M102",
+      "kickoffParis": "2026-07-19T21:00:00+02:00",
+      "venue": "MetLife Stadium",
+      "city": "New York",
+      "tv": {
+        "channels": [
+          "M6",
+          "beIN Sports 1"
+        ],
+        "freeToAir": true
+      },
+      "score": {
+        "home": null,
+        "away": null,
+        "status": "scheduled"
+      }
+    }
+  ]
+}
