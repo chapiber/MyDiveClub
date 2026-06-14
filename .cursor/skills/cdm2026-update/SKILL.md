@@ -100,6 +100,12 @@ Lors d'une exécution via NAS / SDK cloud, émettre **une ligne par étape majeure*
 [CDM_PROGRESS] Commit et push GitHub
 ```
 
+Dernière ligne obligatoire (compte-rendu automatisé n8n) :
+
+```
+[CDM_STATS] {"matches_updated": 8}
+```
+
 Ces lignes sont capturées par le runner NAS et visibles dans n8n (polling toutes les 30s).
 
 ### 6. Valider
