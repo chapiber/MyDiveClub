@@ -1,15 +1,16 @@
 {
   "meta": {
-    "updatedAt": "2026-06-13T18:40:37.256Z",
+    "updatedAt": "2026-06-14T05:01:26.336Z",
     "updatedBy": "cloud",
     "sources": [
       "franceinfo",
       "lequipe",
       "matchcalendar.football",
       "fwctimes.com",
-      "equipe-france.fr",
       "ouest-france.fr",
-      "footmercato.net"
+      "france24.com",
+      "skysports.com",
+      "espn.com"
     ],
     "tournament": {
       "start": "2026-06-11",
@@ -390,23 +391,23 @@
         },
         {
           "team": "SUI",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
         },
         {
           "team": "QAT",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
         }
       ]
     },
@@ -420,43 +421,43 @@
       ],
       "standings": [
         {
-          "team": "BRA",
-          "played": 0,
-          "won": 0,
+          "team": "SCO",
+          "played": 1,
+          "won": 1,
           "drawn": 0,
           "lost": 0,
-          "gf": 0,
+          "gf": 1,
           "ga": 0,
-          "pts": 0
+          "pts": 3
+        },
+        {
+          "team": "BRA",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
         },
         {
           "team": "MAR",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "SCO",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
         },
         {
           "team": "HTI",
-          "played": 0,
+          "played": 1,
           "won": 0,
           "drawn": 0,
-          "lost": 0,
+          "lost": 1,
           "gf": 0,
-          "ga": 0,
+          "ga": 1,
           "pts": 0
         }
       ]
@@ -1024,9 +1025,9 @@
         "freeToAir": false
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 0,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
@@ -1045,9 +1046,9 @@
         "freeToAir": false
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 1,
+        "away": 0,
+        "status": "live"
       }
     },
     {
@@ -1067,9 +1068,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 1,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
@@ -1089,9 +1090,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 1,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
