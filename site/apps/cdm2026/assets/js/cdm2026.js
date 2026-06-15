@@ -206,6 +206,7 @@
     return html + '</div>';
   }
 
+  function renderTv(tv) {
     if (!tv || !tv.channels || !tv.channels.length) return '';
     let html = '<div class="wc-match__tv">';
     tv.channels.forEach((ch) => {
