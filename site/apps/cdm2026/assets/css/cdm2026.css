@@ -92,6 +92,94 @@
   opacity: 0.85;
 }
 
+/* Bandeau installation PWA */
+.wc-install-banner {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 16px;
+  border: 1px solid var(--wc-border);
+  background: linear-gradient(135deg, #fff 0%, #eef4fb 100%);
+  box-shadow: 0 4px 16px rgba(0, 40, 104, 0.08);
+}
+
+.wc-install-banner__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.wc-install-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wc-install-banner__title {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--wc-usa-blue);
+}
+
+.wc-install-banner__lead {
+  margin: 0.25rem 0 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--wc-muted);
+}
+
+.wc-install-banner__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--wc-usa-blue);
+}
+
+.wc-install-banner__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: var(--pc-tap-min, 44px);
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--wc-usa-blue) 0%, #0047a8 100%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 40, 104, 0.28);
+}
+
+.wc-install-banner__btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.wc-install-banner__btn:active {
+  transform: scale(0.98);
+}
+
+.wc-install-banner__close {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wc-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wc-install-banner__close:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
 .wc-back-portal {
   display: inline-flex;
   align-items: center;

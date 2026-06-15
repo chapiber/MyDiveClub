@@ -1,0 +1,32 @@
+{
+  "name": "Coupe du Monde 2026",
+  "short_name": "CDM 2026",
+  "description": "Pronostics et calendrier — Coupe du Monde FIFA 2026",
+  "start_url": "/portailClub/apps/cdm2026/",
+  "scope": "/portailClub/apps/cdm2026/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#002868",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/portailClub/apps/cdm2026/assets/img/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/portailClub/apps/cdm2026/assets/img/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/portailClub/apps/cdm2026/assets/img/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

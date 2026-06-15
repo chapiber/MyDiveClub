@@ -6,6 +6,10 @@
   const TEAM_KEY = 'portailClub_cdm2026_team';
   const GROUP_KEY = 'portailClub_cdm2026_group';
   const MEMBER_TOKEN_KEY = 'portailClub_cdm2026_member_token';
+  const INSTALL_DISMISS_KEY = 'portailClub_cdm2026_install_dismissed';
+
+  let deferredInstallPrompt = null;
+  let installCanPrompt = false;
 
   const STAGE_LABELS = {
     group: 'Phase de poules',
@@ -156,6 +160,90 @@
 
   function markPredictScrollFocus() {
     state.predict.scrollToFocus = true;
+  }
+
+  function isStandalonePwa() {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    );
+  }
+
+  function isIosDevice() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
+  function shouldShowInstallBanner() {
+    if (isStandalonePwa()) return false;
+    if (localStorage.getItem(INSTALL_DISMISS_KEY) === '1') return false;
+    if (isIosDevice()) return true;
+    if (installCanPrompt) return true;
+    return /Android/i.test(navigator.userAgent);
+  }
+
+  function initPwaInstall() {
+    if (isStandalonePwa()) return;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      installCanPrompt = true;
+      render();
+    });
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      installCanPrompt = false;
+      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      render();
+    });
+  }
+
+  function renderInstallBanner() {
+    if (!shouldShowInstallBanner()) return '';
+
+    let actionHtml;
+    if (isIosDevice()) {
+      actionHtml =
+        '<p class="wc-install-banner__hint">Safari → Partager → Sur l\'écran d\'accueil</p>';
+    } else if (installCanPrompt) {
+      actionHtml =
+        '<button type="button" class="wc-install-banner__btn" data-action="pwa-install">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+        '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+        '<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
+        '</svg>Installer l\'app</button>';
+    } else {
+      actionHtml =
+        '<p class="wc-install-banner__hint">Chrome → menu ⋮ → Installer l\'application</p>';
+    }
+
+    return (
+      '<section class="wc-install-banner" aria-label="Installer l\'application">' +
+      '<div class="wc-install-banner__inner">' +
+      '<div class="wc-install-banner__text">' +
+      '<strong class="wc-install-banner__title">Accès rapide</strong>' +
+      '<p class="wc-install-banner__lead">Ajoutez CDM 2026 sur votre écran d\'accueil — ouverture directe, sans navigateur.</p>' +
+      actionHtml +
+      '</div>' +
+      '<button type="button" class="wc-install-banner__close" data-action="dismiss-install" aria-label="Masquer">×</button>' +
+      '</div></section>'
+    );
+  }
+
+  async function triggerPwaInstall() {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installCanPrompt = false;
+    if (outcome === 'accepted') {
+      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    }
+    render();
+  }
+
+  function dismissInstallBanner() {
+    localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    render();
   }
 
   function getSortedMatches() {
@@ -486,7 +574,7 @@
         '</div>';
     }
     return (
-      '<a href="../../index.html" class="wc-back-portal">← Portail Club</a>' +
+      (isStandalonePwa() ? '' : '<a href="../../index.html" class="wc-back-portal">← Portail Club</a>') +
       '<header class="wc-header">' +
       '<div class="wc-header__inner">' +
       '<img class="wc-header__emblem" src="assets/img/emblem-placeholder.svg" alt="CDM 2026" width="56" height="38">' +
@@ -837,6 +925,7 @@
     }
 
     let content = renderHeader();
+    content += renderInstallBanner();
     if (route.view === 'today') content += renderToday();
     else if (route.view === 'team') content += renderTeam(route);
     else if (route.view === 'groups') content += renderGroups(route);
@@ -1022,6 +1111,15 @@
       shareBtn.addEventListener('click', () => openShare());
     }
 
+    const installBtn = root.querySelector('[data-action="pwa-install"]');
+    if (installBtn) {
+      installBtn.addEventListener('click', () => triggerPwaInstall());
+    }
+
+    root.querySelectorAll('[data-action="dismiss-install"]').forEach((el) => {
+      el.addEventListener('click', () => dismissInstallBanner());
+    });
+
     root.querySelectorAll('[data-action="close-leaderboard"]').forEach((el) => {
       el.addEventListener('click', () => closeLeaderboard());
     });
@@ -1107,5 +1205,6 @@
     }
     render();
   });
+  initPwaInstall();
   loadData();
 })();
