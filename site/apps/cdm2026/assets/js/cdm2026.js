@@ -2,8 +2,10 @@
   'use strict';
 
   const DATA_URL = 'data/cdm2026.json';
+  const API = '../../api/cdm2026/';
   const TEAM_KEY = 'portailClub_cdm2026_team';
   const GROUP_KEY = 'portailClub_cdm2026_group';
+  const MEMBER_TOKEN_KEY = 'portailClub_cdm2026_member_token';
 
   const STAGE_LABELS = {
     group: 'Phase de poules',
@@ -22,7 +24,23 @@
     data: null,
     loading: true,
     error: null,
+    predict: {
+      member: null,
+      memberLoading: false,
+      memberChecked: false,
+      predictions: {},
+      matchPoints: {},
+      totalPoints: 0,
+      predictedCount: 0,
+      scoredCount: 0,
+      leaderboardOpen: false,
+      leaderboard: [],
+      myMemberId: null,
+      leaderboardLoading: false,
+    },
   };
+
+  const saveTimers = {};
 
   function showToast(msg) {
     if (!toastEl) return;
@@ -40,6 +58,34 @@
       .replace(/"/g, '&quot;');
   }
 
+  function formatPoints(pts) {
+    const n = Number(pts);
+    if (Number.isNaN(n)) return '0';
+    return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',');
+  }
+
+  function getMemberToken() {
+    return localStorage.getItem(MEMBER_TOKEN_KEY) || '';
+  }
+
+  function setMemberToken(token) {
+    if (token) localStorage.setItem(MEMBER_TOKEN_KEY, token);
+    else localStorage.removeItem(MEMBER_TOKEN_KEY);
+  }
+
+  async function api(path, options) {
+    const method = (options && options.method) || 'GET';
+    const res = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      ...options,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || 'Erreur réseau');
+    }
+    return data;
+  }
+
   function flagUrl(iso) {
     return 'https://flagcdn.com/w80/' + encodeURIComponent(iso) + '.png';
   }
@@ -55,6 +101,7 @@
     if (parts.length === 0 || parts[0] === 'today') return { view: 'today' };
     if (parts[0] === 'team') return { view: 'team', team: parts[1] || localStorage.getItem(TEAM_KEY) || 'FRA' };
     if (parts[0] === 'groups') return { view: 'groups', group: parts[1] || localStorage.getItem(GROUP_KEY) || 'A' };
+    if (parts[0] === 'predict') return { view: 'predict' };
     return { view: 'today' };
   }
 
@@ -78,11 +125,25 @@
     const minute = (parts.find((p) => p.type === 'minute')?.value || '00').padStart(2, '0');
     const time = hour + 'h' + minute;
     const dateKey = d.toLocaleDateString('fr-CA', { timeZone: tz });
-    return { date, time, dateKey };
+    return { date, time, dateKey, ts: d.getTime() };
   }
 
   function isFranceMatch(m) {
     return m.home === 'FRA' || m.away === 'FRA';
+  }
+
+  function matchHasTeams(m) {
+    return !!(m.home && m.away);
+  }
+
+  function isMatchLocked(m) {
+    return Date.now() >= formatKickoff(m.kickoffParis).ts;
+  }
+
+  function getSortedMatches() {
+    return [...state.data.matches].sort(
+      (a, b) => formatKickoff(a.kickoffParis).ts - formatKickoff(b.kickoffParis).ts
+    );
   }
 
   function renderTv(tv) {
@@ -178,9 +239,70 @@
     );
   }
 
-  function getTodayMatches() {
-    const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-    return getMatchesForDateKey(todayKey);
+  function renderPredictMatchCard(m) {
+    const { date, time } = formatKickoff(m.kickoffParis);
+    const fra = isFranceMatch(m);
+    const live = m.score && m.score.status === 'live';
+    const finished = m.score && m.score.status === 'finished';
+    const stageLabel = m.group ? 'Groupe ' + m.group : STAGE_LABELS[m.stage] || m.stage;
+    const hasTeams = matchHasTeams(m);
+    const locked = !hasTeams || isMatchLocked(m);
+    const pred = state.predict.predictions[m.id];
+    const pts = state.predict.matchPoints[m.id];
+    const predHome = pred ? pred.pred_home : '';
+    const predAway = pred ? pred.pred_away : '';
+
+    let cls = 'wc-match wc-match--predict';
+    if (fra) cls += ' wc-match--fra';
+    if (live) cls += ' wc-match--live';
+    if (finished) cls += ' wc-match--finished';
+    if (locked) cls += ' wc-match--locked';
+
+    let badges = '';
+    if (!hasTeams) {
+      badges += '<span class="wc-badge wc-badge--pending">Équipes à déterminer</span>';
+    } else if (locked) {
+      badges += '<span class="wc-badge wc-badge--locked">Verrouillé</span>';
+    } else if (pred) {
+      badges += '<span class="wc-badge wc-badge--predicted">Pronostic enregistré</span>';
+    } else {
+      badges += '<span class="wc-badge wc-badge--todo">À pronostiquer</span>';
+    }
+    if (finished && pred && pts != null) {
+      badges += '<span class="wc-badge wc-badge--pts">+' + esc(formatPoints(pts)) + ' pts</span>';
+    }
+
+    let teamsHtml;
+    if (!hasTeams) {
+      teamsHtml = '<div class="wc-match__label">' + esc(m.label || 'Match à déterminer') + '</div>';
+    } else {
+      teamsHtml =
+        '<div class="wc-match__teams">' +
+        renderTeamSide(m.home, 'home') +
+        '<div class="wc-match__predict-inputs">' +
+        '<input type="number" class="wc-predict-input" data-match="' + esc(m.id) + '" data-side="home" min="0" max="15" inputmode="numeric" value="' + esc(String(predHome)) + '"' + (locked ? ' disabled' : '') + ' aria-label="Score domicile">' +
+        '<span class="wc-predict-sep">–</span>' +
+        '<input type="number" class="wc-predict-input" data-match="' + esc(m.id) + '" data-side="away" min="0" max="15" inputmode="numeric" value="' + esc(String(predAway)) + '"' + (locked ? ' disabled' : '') + ' aria-label="Score extérieur">' +
+        '</div>' +
+        renderTeamSide(m.away, 'away') +
+        '</div>';
+    }
+
+    return (
+      '<article class="' + cls + '" data-match-id="' + esc(m.id) + '">' +
+      '<div class="wc-match__time">' +
+      '<div>' +
+      '<div class="wc-match__datetime">' + esc(date) + ' · ' + esc(time) + '</div>' +
+      '<div class="wc-match__stage">' + esc(stageLabel) + '</div>' +
+      '</div>' +
+      badges +
+      '</div>' +
+      '<div class="wc-match__body">' +
+      teamsHtml +
+      '<div class="wc-match__venue">' + esc(m.venue) + ', ' + esc(m.city) + '</div>' +
+      '</div>' +
+      '</article>'
+    );
   }
 
   function getMatchesForDateKey(dateKey) {
@@ -203,15 +325,20 @@
     return formatted;
   }
 
-  function getTeamMatches(code) {
-    return state.data.matches.filter(
-      (m) => m.home === code || m.away === code || (m.label && m.label.indexOf(code) >= 0)
-    );
-  }
-
   function formatUpdateSource(by) {
     if (by === 'cloud') return { label: 'Cloud', cls: 'wc-update-flag__badge--cloud' };
     return { label: 'Local', cls: 'wc-update-flag__badge--local' };
+  }
+
+  function renderCupButton() {
+    return (
+      '<button type="button" class="wc-cup-btn" data-action="leaderboard" aria-label="Synthèse du classement">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
+      '<path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4z"/>' +
+      '<path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/>' +
+      '<path d="M9 2h6l1 2H8l1-2z"/>' +
+      '</svg></button>'
+    );
   }
 
   function renderHeader() {
@@ -238,6 +365,7 @@
       '<h1 class="wc-header__title">Coupe du Monde 2026</h1>' +
       '<p class="wc-header__sub">Horaires heure de Paris · TV France</p>' +
       '</div>' +
+      renderCupButton() +
       '</div>' +
       '</header>' +
       metaHtml
@@ -246,9 +374,10 @@
 
   function renderNav(route) {
     const tabs = [
-      { id: 'today', hash: '#/', label: 'Matchs à venir', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' },
+      { id: 'today', hash: '#/', label: 'Matchs', icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' },
       { id: 'team', hash: '#/team', label: 'Équipe', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>' },
       { id: 'groups', hash: '#/groups', label: 'Poules', icon: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>' },
+      { id: 'predict', hash: '#/predict', label: 'Pronos', icon: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>' },
     ];
     let html = '<nav class="wc-nav" aria-label="Navigation"><div class="wc-nav__inner">';
     tabs.forEach((t) => {
@@ -299,6 +428,117 @@
     }
 
     return body;
+  }
+
+  function renderRegisterForm() {
+    return (
+      '<section class="wc-predict-register">' +
+      '<h2 class="wc-section-title">Rejoindre la compétition</h2>' +
+      '<p class="wc-predict-intro">Choisissez un pseudo unique (affiché) et votre prénom (entre parenthèses).</p>' +
+      '<form class="wc-predict-form" data-action="register">' +
+      '<label class="wc-field"><span class="wc-field__label">Pseudo</span>' +
+      '<input type="text" name="pseudo" class="wc-field__input" required maxlength="40" autocomplete="nickname" placeholder="Ex. BleuMarin"></label>' +
+      '<label class="wc-field"><span class="wc-field__label">Prénom</span>' +
+      '<input type="text" name="first_name" class="wc-field__input" required maxlength="80" autocomplete="given-name" placeholder="Ex. Alex"></label>' +
+      '<button type="submit" class="wc-btn wc-btn--primary">M\'inscrire</button>' +
+      '</form></section>'
+    );
+  }
+
+  function renderPredict() {
+    if (state.predict.memberLoading) {
+      return '<div class="wc-loading">Chargement des pronostics…</div>';
+    }
+    if (!state.predict.member) {
+      return renderRegisterForm();
+    }
+
+    const member = state.predict.member;
+    const stats =
+      '<div class="wc-predict-stats">' +
+      '<p class="wc-predict-stats__name"><strong>' + esc(member.pseudo) + '</strong> (' + esc(member.first_name) + ')</p>' +
+      '<p class="wc-predict-stats__pts">' + esc(formatPoints(state.predict.totalPoints)) + ' pts · ' +
+      state.predict.predictedCount + ' pronos · ' + state.predict.scoredCount + ' notés</p>' +
+      '</div>';
+
+    const matches = getSortedMatches();
+    const byDay = {};
+    matches.forEach((m) => {
+      const dk = formatKickoff(m.kickoffParis).dateKey;
+      if (!byDay[dk]) byDay[dk] = [];
+      byDay[dk].push(m);
+    });
+    const dayKeys = Object.keys(byDay).sort();
+
+    let body = '<h2 class="wc-section-title">Mes pronostics</h2>' + stats;
+    const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
+    dayKeys.forEach((dayKey) => {
+      const sectionId = 'wc-predict-day-' + dayKey;
+      let dayOffset = -1;
+      if (dayKey === todayKey) dayOffset = 0;
+      else if (dayKey === addDaysToParisDateKey(todayKey, 1)) dayOffset = 1;
+      body +=
+        '<section class="wc-day-block" aria-labelledby="' + sectionId + '">' +
+        '<h3 id="' + sectionId + '" class="wc-section-title wc-section-title--day">' + esc(formatDaySectionTitle(dayKey, dayOffset)) + '</h3>' +
+        '<div class="wc-day-block__matches">' +
+        byDay[dayKey].map((m) => renderPredictMatchCard(m)).join('') +
+        '</div></section>';
+    });
+
+    return body;
+  }
+
+  function renderLeaderboardModal() {
+    if (!state.predict.leaderboardOpen) return '';
+
+    let inner;
+    if (state.predict.leaderboardLoading) {
+      inner = '<div class="wc-loading">Chargement du classement…</div>';
+    } else if (!state.predict.leaderboard.length) {
+      inner = '<p class="wc-empty">Aucun joueur inscrit pour le moment.</p>';
+    } else {
+      const top3 = state.predict.leaderboard.slice(0, 3);
+      let podium = '<div class="wc-podium">';
+      top3.forEach((row, i) => {
+        podium +=
+          '<div class="wc-podium__item wc-podium__item--' + (i + 1) + '">' +
+          '<span class="wc-podium__rank">' + row.rank + '</span>' +
+          '<span class="wc-podium__name">' + esc(row.display_name) + '</span>' +
+          '<span class="wc-podium__pts">' + esc(formatPoints(row.total_points)) + ' pts</span>' +
+          '</div>';
+      });
+      podium += '</div>';
+
+      let table =
+        '<table class="wc-leaderboard"><thead><tr>' +
+        '<th>#</th><th>Joueur</th><th>Pts</th><th>Pronos</th><th>Notés</th>' +
+        '</tr></thead><tbody>';
+      state.predict.leaderboard.forEach((row) => {
+        const mine = row.id === state.predict.myMemberId ? ' wc-leaderboard__row--me' : '';
+        table +=
+          '<tr class="' + mine + '">' +
+          '<td>' + row.rank + '</td>' +
+          '<td>' + esc(row.display_name) + '</td>' +
+          '<td><strong>' + esc(formatPoints(row.total_points)) + '</strong></td>' +
+          '<td>' + row.predicted_count + '</td>' +
+          '<td>' + row.scored_count + '</td>' +
+          '</tr>';
+      });
+      table += '</tbody></table>';
+      inner = podium + table;
+    }
+
+    return (
+      '<div class="wc-leaderboard-modal" role="dialog" aria-modal="true" aria-labelledby="wc-leaderboard-title">' +
+      '<div class="wc-leaderboard-modal__backdrop" data-action="close-leaderboard"></div>' +
+      '<div class="wc-leaderboard-modal__panel">' +
+      '<div class="wc-leaderboard-modal__head">' +
+      '<h2 id="wc-leaderboard-title" class="wc-leaderboard-modal__title">Synthèse du classement</h2>' +
+      '<button type="button" class="wc-leaderboard-modal__close" data-action="close-leaderboard" aria-label="Fermer">×</button>' +
+      '</div>' +
+      '<div class="wc-leaderboard-modal__body">' + inner + '</div>' +
+      '</div></div>'
+    );
   }
 
   function renderTeam(route) {
@@ -399,13 +639,145 @@
     }
 
     const route = parseRoute();
+    if (route.view === 'predict' && !state.predict.memberChecked && !state.predict.memberLoading) {
+      loadPredictMember();
+    }
+
     let content = renderHeader();
     if (route.view === 'today') content += renderToday();
     else if (route.view === 'team') content += renderTeam(route);
     else if (route.view === 'groups') content += renderGroups(route);
+    else if (route.view === 'predict') content += renderPredict();
 
-    root.innerHTML = content + renderNav(route);
+    root.innerHTML = content + renderNav(route) + renderLeaderboardModal();
     bindEvents(route);
+  }
+
+  async function loadPredictMember() {
+    state.predict.memberLoading = true;
+    render();
+    const token = getMemberToken();
+    if (!token) {
+      state.predict.member = null;
+      state.predict.memberChecked = true;
+      state.predict.memberLoading = false;
+      render();
+      return;
+    }
+    try {
+      const data = await api('members.php?token=' + encodeURIComponent(token));
+      state.predict.member = data.member;
+      await loadPredictions();
+    } catch (_) {
+      setMemberToken('');
+      state.predict.member = null;
+      state.predict.predictions = {};
+      state.predict.matchPoints = {};
+      state.predict.totalPoints = 0;
+      state.predict.predictedCount = 0;
+      state.predict.scoredCount = 0;
+    } finally {
+      state.predict.memberChecked = true;
+      state.predict.memberLoading = false;
+      render();
+    }
+  }
+
+  async function loadPredictions() {
+    const token = getMemberToken();
+    if (!token) return;
+    const data = await api('predictions.php?token=' + encodeURIComponent(token));
+    state.predict.predictions = data.predictions || {};
+    state.predict.matchPoints = data.match_points || {};
+    state.predict.totalPoints = data.total_points || 0;
+    state.predict.predictedCount = data.predicted_count || 0;
+    state.predict.scoredCount = data.scored_count || 0;
+  }
+
+  async function registerMember(pseudo, firstName) {
+    const data = await api('members.php', {
+      method: 'POST',
+      body: JSON.stringify({ pseudo: pseudo.trim(), first_name: firstName.trim() }),
+    });
+    setMemberToken(data.member.client_token);
+    state.predict.member = data.member;
+    state.predict.memberChecked = true;
+    state.predict.predictions = {};
+    state.predict.matchPoints = {};
+    state.predict.totalPoints = 0;
+    state.predict.predictedCount = 0;
+    state.predict.scoredCount = 0;
+    showToast('Bienvenue ' + data.member.pseudo + ' !');
+    render();
+  }
+
+  async function savePrediction(matchId, predHome, predAway) {
+    const token = getMemberToken();
+    if (!token) return;
+    try {
+      const data = await api('predictions.php', {
+        method: 'PUT',
+        body: JSON.stringify({
+          token,
+          match_id: matchId,
+          pred_home: predHome,
+          pred_away: predAway,
+        }),
+      });
+      const p = data.prediction;
+      state.predict.predictions[matchId] = {
+        pred_home: p.pred_home,
+        pred_away: p.pred_away,
+        updated_at: p.updated_at,
+      };
+      await loadPredictions();
+      showToast('Pronostic enregistré');
+      render();
+    } catch (e) {
+      showToast(e.message || 'Erreur');
+    }
+  }
+
+  function scheduleSave(matchId) {
+    clearTimeout(saveTimers[matchId]);
+    saveTimers[matchId] = setTimeout(() => {
+      const card = root.querySelector('[data-match-id="' + matchId + '"]');
+      if (!card) return;
+      const homeInput = card.querySelector('[data-side="home"]');
+      const awayInput = card.querySelector('[data-side="away"]');
+      if (!homeInput || !awayInput) return;
+      const homeVal = homeInput.value;
+      const awayVal = awayInput.value;
+      if (homeVal === '' || awayVal === '') return;
+      const home = parseInt(homeVal, 10);
+      const away = parseInt(awayVal, 10);
+      if (Number.isNaN(home) || Number.isNaN(away) || home < 0 || home > 15 || away < 0 || away > 15) return;
+      savePrediction(matchId, home, away);
+    }, 400);
+  }
+
+  async function openLeaderboard() {
+    state.predict.leaderboardOpen = true;
+    state.predict.leaderboardLoading = true;
+    render();
+    try {
+      const token = getMemberToken();
+      const qs = token ? '?token=' + encodeURIComponent(token) : '';
+      const data = await api('leaderboard.php' + qs);
+      state.predict.leaderboard = data.leaderboard || [];
+      state.predict.myMemberId = data.my_member_id;
+    } catch (e) {
+      showToast(e.message || 'Erreur classement');
+      state.predict.leaderboard = [];
+    } finally {
+      state.predict.leaderboardLoading = false;
+      render();
+    }
+  }
+
+  function closeLeaderboard() {
+    state.predict.leaderboardOpen = false;
+    render();
   }
 
   function bindEvents(route) {
@@ -422,6 +794,40 @@
         const gid = btn.getAttribute('data-group');
         localStorage.setItem(GROUP_KEY, gid);
         location.hash = '#/groups/' + gid;
+      });
+    });
+
+    const cupBtn = root.querySelector('[data-action="leaderboard"]');
+    if (cupBtn) {
+      cupBtn.addEventListener('click', () => openLeaderboard());
+    }
+
+    root.querySelectorAll('[data-action="close-leaderboard"]').forEach((el) => {
+      el.addEventListener('click', () => closeLeaderboard());
+    });
+
+    const regForm = root.querySelector('form[data-action="register"]');
+    if (regForm) {
+      regForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pseudo = regForm.querySelector('[name="pseudo"]').value;
+        const firstName = regForm.querySelector('[name="first_name"]').value;
+        try {
+          await registerMember(pseudo, firstName);
+        } catch (err) {
+          showToast(err.message || 'Inscription impossible');
+        }
+      });
+    }
+
+    root.querySelectorAll('.wc-predict-input').forEach((input) => {
+      input.addEventListener('input', () => {
+        const matchId = input.getAttribute('data-match');
+        if (matchId) scheduleSave(matchId);
+      });
+      input.addEventListener('change', () => {
+        const matchId = input.getAttribute('data-match');
+        if (matchId) scheduleSave(matchId);
       });
     });
   }
