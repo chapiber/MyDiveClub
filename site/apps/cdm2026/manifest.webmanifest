@@ -7,6 +7,7 @@
   "scope": "/portailClub/apps/cdm2026/",
   "display": "standalone",
   "orientation": "portrait",
+  "prefer_related_applications": false,
   "background_color": "#f8fafc",
   "theme_color": "#002868",
   "lang": "fr",

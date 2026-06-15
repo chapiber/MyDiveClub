@@ -162,6 +162,12 @@
   transform: scale(0.98);
 }
 
+.wc-install-banner__btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
+}
+
 .wc-install-banner__close {
   flex-shrink: 0;
   width: 2rem;

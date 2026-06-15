@@ -8,7 +8,6 @@
   const MEMBER_TOKEN_KEY = 'portailClub_cdm2026_member_token';
   const INSTALL_DISMISS_KEY = 'portailClub_cdm2026_install_dismissed';
 
-  let deferredInstallPrompt = null;
   let installCanPrompt = false;
 
   const STAGE_LABELS = {
@@ -47,6 +46,7 @@
     pwa: {
       helpOpen: false,
       successOpen: false,
+      installWaiting: false,
     },
   };
 
@@ -239,21 +239,34 @@
     return /Android/i.test(navigator.userAgent);
   }
 
+  function syncInstallPrompt() {
+    const ready = !!(window.cdm2026Pwa && window.cdm2026Pwa.getDeferredPrompt());
+    installCanPrompt = ready;
+    return ready;
+  }
+
   function initPwaInstall() {
     if (isStandalonePwa()) return;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredInstallPrompt = e;
-      installCanPrompt = true;
+
+    window.addEventListener('cdm2026-installable', () => {
+      syncInstallPrompt();
+      state.pwa.installWaiting = false;
       render();
     });
-    window.addEventListener('appinstalled', () => {
-      deferredInstallPrompt = null;
+
+    window.addEventListener('cdm2026-installed', () => {
       installCanPrompt = false;
+      state.pwa.installWaiting = false;
       localStorage.setItem(INSTALL_DISMISS_KEY, '1');
       state.pwa.successOpen = true;
       render();
     });
+
+    if (window.cdm2026Pwa && window.cdm2026Pwa.ensureServiceWorker) {
+      window.cdm2026Pwa.ensureServiceWorker().then(() => {
+        if (syncInstallPrompt()) render();
+      });
+    }
   }
 
   function openInstallHelp() {
@@ -327,19 +340,21 @@
         '<p class="wc-install-banner__hint">Safari → Partager → Sur l\'écran d\'accueil</p>' +
         '<button type="button" class="wc-install-banner__link" data-action="install-help">Voir les étapes</button>';
     } else {
-      const hint = installCanPrompt
-        ? ''
-        : '<p class="wc-install-banner__note">Si le bouton ne propose rien, suivez le guide pas à pas.</p>';
+      const waiting = state.pwa.installWaiting;
+      const btnLabel = waiting ? 'Préparation…' : 'Installer l\'app';
+      const btnDisabled = waiting ? ' disabled' : '';
       actionHtml =
-        hint +
         '<div class="wc-install-banner__actions">' +
-        '<button type="button" class="wc-install-banner__btn" data-action="pwa-install">' +
+        '<button type="button" class="wc-install-banner__btn" data-action="pwa-install"' + btnDisabled + '>' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
         '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
         '<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
-        '</svg>Installer l\'app</button>' +
-        '<button type="button" class="wc-install-banner__link" data-action="install-help">Guide pas à pas</button>' +
+        '</svg>' + esc(btnLabel) + '</button>' +
         '</div>';
+      if (!installCanPrompt && !waiting && isAndroidDevice() && !isChromeBrowser()) {
+        actionHtml +=
+          '<p class="wc-install-banner__note">Utilisez <strong>Google Chrome</strong> pour installer l\'application.</p>';
+      }
     }
 
     return (
@@ -355,20 +370,58 @@
     );
   }
 
+  async function runInstallPrompt(promptEvent) {
+    if (!promptEvent || !promptEvent.prompt) return;
+    promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
+    installCanPrompt = false;
+    if (outcome === 'accepted') {
+      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      openInstallSuccess();
+    }
+    render();
+  }
+
   async function triggerPwaInstall() {
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-      const { outcome } = await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-      installCanPrompt = false;
-      if (outcome === 'accepted') {
-        localStorage.setItem(INSTALL_DISMISS_KEY, '1');
-        openInstallSuccess();
-      }
-      render();
+    if (state.pwa.installWaiting) return;
+
+    if (isAndroidDevice() && !isChromeBrowser()) {
+      showToast('Ouvrez cette page dans Google Chrome pour installer');
       return;
     }
-    openInstallHelp();
+
+    const pwa = window.cdm2026Pwa;
+    if (pwa && pwa.ensureServiceWorker) {
+      await pwa.ensureServiceWorker();
+    }
+
+    syncInstallPrompt();
+    let prompt = pwa && pwa.getDeferredPrompt ? pwa.getDeferredPrompt() : null;
+    if (prompt) {
+      if (pwa.takeDeferredPrompt) prompt = pwa.takeDeferredPrompt();
+      await runInstallPrompt(prompt);
+      return;
+    }
+
+    state.pwa.installWaiting = true;
+    render();
+
+    prompt = pwa && pwa.waitForInstallPrompt ? await pwa.waitForInstallPrompt(20000) : null;
+    state.pwa.installWaiting = false;
+
+    if (prompt) {
+      if (pwa.takeDeferredPrompt) prompt = pwa.takeDeferredPrompt() || prompt;
+      await runInstallPrompt(prompt);
+      return;
+    }
+
+    installCanPrompt = false;
+    render();
+    if (isAndroidDevice()) {
+      openInstallHelp();
+    } else {
+      showToast('Installation indisponible — menu du navigateur');
+    }
   }
 
   function dismissInstallBanner() {

@@ -16,18 +16,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/portal.css?v=__BUILD_VERSION__">
   <link rel="stylesheet" href="assets/css/cdm2026.css?v=__BUILD_VERSION__">
-  <script>
-    (function () {
-      if (localStorage.getItem('portailClub_swMigrated') === '2') return;
-      var dest = '/portailClub/update.html?to=' + encodeURIComponent(location.pathname + location.search + location.hash);
-      location.replace(dest);
-    })();
-  </script>
 </head>
 <body>
   <div id="wc-root" class="wc-app" aria-live="polite"></div>
   <div id="wc-toast" class="wc-toast" role="status" aria-live="polite"></div>
-  <script src="../../assets/js/app-update.js?v=__BUILD_VERSION__" defer></script>
+  <script src="assets/js/cdm-pwa.js?v=__BUILD_VERSION__"></script>
   <script src="../../assets/js/qrcodegen.js?v=__BUILD_VERSION__" defer></script>
   <script src="assets/js/cdm2026.js?v=__BUILD_VERSION__" defer></script>
 </body>
