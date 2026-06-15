@@ -478,10 +478,16 @@
     return html;
   }
 
+  function getPastDayMatches(beforeDateKey) {
+    return getSortedMatches().filter((m) => formatKickoff(m.kickoffParis).dateKey < beforeDateKey);
+  }
+
   function renderToday() {
     const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
     const todayMatches = getMatchesForDateKey(todayKey);
-    let body =
+    const pastMatches = getPastDayMatches(todayKey);
+    let body = renderPastMatchesPanel(pastMatches, (m) => renderMatchCard(m));
+    body +=
       '<section class="wc-day-block wc-day-block--today wc-day-block--d0" aria-labelledby="wc-day-today">' +
       '<h2 id="wc-day-today" class="wc-section-title wc-section-title--today">' +
       esc(formatDaySectionTitle(todayKey, 0)) +
@@ -543,7 +549,7 @@
     );
   }
 
-  function renderPredictPastPanel(pastMatches) {
+  function renderPastMatchesPanel(pastMatches, renderCard) {
     if (!pastMatches.length) return '';
 
     const byDay = {};
@@ -560,7 +566,7 @@
         '<div class="wc-predict-past__day">' +
         '<p class="wc-predict-past__day-title">' + esc(formatDaySectionTitle(dayKey, -1)) + '</p>' +
         '<div class="wc-day-block__matches">' +
-        byDay[dayKey].map((m) => renderPredictMatchCard(m)).join('') +
+        byDay[dayKey].map((m) => renderCard(m)).join('') +
         '</div></div>';
     });
 
@@ -573,6 +579,10 @@
       '<div class="wc-predict-past__body">' + inner + '</div>' +
       '</details>'
     );
+  }
+
+  function renderPredictPastPanel(pastMatches) {
+    return renderPastMatchesPanel(pastMatches, (m) => renderPredictMatchCard(m));
   }
 
   function renderPredict() {
