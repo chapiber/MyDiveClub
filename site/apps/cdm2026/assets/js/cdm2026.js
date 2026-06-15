@@ -44,6 +44,10 @@
       scrollToFocus: false,
       shareOpen: false,
     },
+    pwa: {
+      helpOpen: false,
+      successOpen: false,
+    },
   };
 
   const saveTimers = {};
@@ -173,6 +177,60 @@
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
 
+  function isAndroidDevice() {
+    return /Android/i.test(navigator.userAgent);
+  }
+
+  function isChromeBrowser() {
+    return /Chrome/i.test(navigator.userAgent) && !/Edg|OPR|SamsungBrowser/i.test(navigator.userAgent);
+  }
+
+  function getInstallHelpSteps() {
+    if (isAndroidDevice()) {
+      if (!isChromeBrowser()) {
+        return [
+          'Ouvrez cette page dans <strong>Google Chrome</strong> (obligatoire pour l’installation).',
+          'Appuyez sur <strong>⋮</strong> (menu) en haut à droite.',
+          'Choisissez <strong>Installer l’application</strong> ou <strong>Ajouter à l’écran d’accueil</strong>.',
+          'Confirmez — l’icône <strong>CDM 2026</strong> apparaît sur votre écran d’accueil.',
+        ];
+      }
+      return [
+        'Appuyez sur <strong>⋮</strong> (menu) en haut à droite de Chrome.',
+        'Choisissez <strong>Installer l’application</strong> ou <strong>Ajouter à l’écran d’accueil</strong>.',
+        'Confirmez — l’icône <strong>CDM 2026</strong> apparaît sur votre écran d’accueil.',
+        'Si le menu n’apparaît pas, rechargez la page et attendez quelques secondes.',
+      ];
+    }
+    return [
+      'Dans Chrome ou Edge : menu <strong>⋮</strong> → <strong>Installer l’application</strong>.',
+      'Après installation : touche <strong>Windows</strong>, tapez <strong>CDM 2026</strong>.',
+      'Ou dans Chrome : barre d’adresse <strong>chrome://apps</strong>.',
+      'Dans Edge : <strong>edge://apps</strong>.',
+    ];
+  }
+
+  function getInstallSuccessSteps() {
+    if (isAndroidDevice()) {
+      return [
+        'L’icône <strong>CDM 2026</strong> est sur votre écran d’accueil ou dans le tiroir d’applications.',
+        'Ouvrez-la pour accéder directement aux pronostics.',
+      ];
+    }
+    if (isIosDevice()) {
+      return [
+        'L’icône est sur votre écran d’accueil Safari.',
+        'Ouvrez-la pour lancer l’app en plein écran.',
+      ];
+    }
+    return [
+      'Touche <strong>Windows</strong>, tapez <strong>CDM 2026</strong> ou <strong>Coupe du Monde 2026</strong>.',
+      'Chrome : barre d’adresse <strong>chrome://apps</strong> → lancer « CDM 2026 ».',
+      'Edge : <strong>edge://apps</strong> → même nom.',
+      'L’app s’ouvre dans sa propre fenêtre, sans barre d’adresse.',
+    ];
+  }
+
   function shouldShowInstallBanner() {
     if (isStandalonePwa()) return false;
     if (localStorage.getItem(INSTALL_DISMISS_KEY) === '1') return false;
@@ -193,8 +251,71 @@
       deferredInstallPrompt = null;
       installCanPrompt = false;
       localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      state.pwa.successOpen = true;
       render();
     });
+  }
+
+  function openInstallHelp() {
+    state.pwa.helpOpen = true;
+    render();
+  }
+
+  function closeInstallHelp() {
+    state.pwa.helpOpen = false;
+    render();
+  }
+
+  function openInstallSuccess() {
+    state.pwa.successOpen = true;
+    render();
+  }
+
+  function closeInstallSuccess() {
+    state.pwa.successOpen = false;
+    render();
+  }
+
+  function renderInstallHelpModal() {
+    if (!state.pwa.helpOpen) return '';
+    const steps = getInstallHelpSteps()
+      .map((s) => '<li>' + s + '</li>')
+      .join('');
+    return (
+      '<div class="wc-install-modal" role="dialog" aria-modal="true" aria-labelledby="wc-install-help-title">' +
+      '<div class="wc-install-modal__backdrop" data-action="close-install-help"></div>' +
+      '<div class="wc-install-modal__panel">' +
+      '<div class="wc-install-modal__head">' +
+      '<h2 id="wc-install-help-title" class="wc-install-modal__title">Installer CDM 2026</h2>' +
+      '<button type="button" class="wc-install-modal__close" data-action="close-install-help" aria-label="Fermer">×</button>' +
+      '</div>' +
+      '<div class="wc-install-modal__body">' +
+      '<p class="wc-install-modal__lead">Suivez ces étapes sur votre appareil :</p>' +
+      '<ol class="wc-install-modal__steps">' + steps + '</ol>' +
+      '<button type="button" class="wc-btn wc-btn--primary wc-install-modal__action" data-action="close-install-help">Compris</button>' +
+      '</div></div></div>'
+    );
+  }
+
+  function renderInstallSuccessModal() {
+    if (!state.pwa.successOpen) return '';
+    const steps = getInstallSuccessSteps()
+      .map((s) => '<li>' + s + '</li>')
+      .join('');
+    return (
+      '<div class="wc-install-modal wc-install-modal--success" role="dialog" aria-modal="true" aria-labelledby="wc-install-success-title">' +
+      '<div class="wc-install-modal__backdrop" data-action="close-install-success"></div>' +
+      '<div class="wc-install-modal__panel">' +
+      '<div class="wc-install-modal__head">' +
+      '<h2 id="wc-install-success-title" class="wc-install-modal__title">Application installée</h2>' +
+      '<button type="button" class="wc-install-modal__close" data-action="close-install-success" aria-label="Fermer">×</button>' +
+      '</div>' +
+      '<div class="wc-install-modal__body">' +
+      '<p class="wc-install-modal__lead">Où la retrouver ?</p>' +
+      '<ol class="wc-install-modal__steps">' + steps + '</ol>' +
+      '<button type="button" class="wc-btn wc-btn--primary wc-install-modal__action" data-action="close-install-success">OK</button>' +
+      '</div></div></div>'
+    );
   }
 
   function renderInstallBanner() {
@@ -203,17 +324,22 @@
     let actionHtml;
     if (isIosDevice()) {
       actionHtml =
-        '<p class="wc-install-banner__hint">Safari → Partager → Sur l\'écran d\'accueil</p>';
-    } else if (installCanPrompt) {
+        '<p class="wc-install-banner__hint">Safari → Partager → Sur l\'écran d\'accueil</p>' +
+        '<button type="button" class="wc-install-banner__link" data-action="install-help">Voir les étapes</button>';
+    } else {
+      const hint = installCanPrompt
+        ? ''
+        : '<p class="wc-install-banner__note">Si le bouton ne propose rien, suivez le guide pas à pas.</p>';
       actionHtml =
+        hint +
+        '<div class="wc-install-banner__actions">' +
         '<button type="button" class="wc-install-banner__btn" data-action="pwa-install">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
         '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
         '<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
-        '</svg>Installer l\'app</button>';
-    } else {
-      actionHtml =
-        '<p class="wc-install-banner__hint">Chrome → menu ⋮ → Installer l\'application</p>';
+        '</svg>Installer l\'app</button>' +
+        '<button type="button" class="wc-install-banner__link" data-action="install-help">Guide pas à pas</button>' +
+        '</div>';
     }
 
     return (
@@ -230,15 +356,19 @@
   }
 
   async function triggerPwaInstall() {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-    installCanPrompt = false;
-    if (outcome === 'accepted') {
-      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installCanPrompt = false;
+      if (outcome === 'accepted') {
+        localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+        openInstallSuccess();
+      }
+      render();
+      return;
     }
-    render();
+    openInstallHelp();
   }
 
   function dismissInstallBanner() {
@@ -931,7 +1061,7 @@
     else if (route.view === 'groups') content += renderGroups(route);
     else if (route.view === 'predict') content += renderPredict();
 
-    root.innerHTML = content + renderNav(route) + renderLeaderboardModal() + renderShareModal();
+    root.innerHTML = content + renderNav(route) + renderLeaderboardModal() + renderShareModal() + renderInstallHelpModal() + renderInstallSuccessModal();
     bindEvents(route);
   }
 
@@ -1115,6 +1245,18 @@
     if (installBtn) {
       installBtn.addEventListener('click', () => triggerPwaInstall());
     }
+
+    root.querySelectorAll('[data-action="install-help"]').forEach((el) => {
+      el.addEventListener('click', () => openInstallHelp());
+    });
+
+    root.querySelectorAll('[data-action="close-install-help"]').forEach((el) => {
+      el.addEventListener('click', () => closeInstallHelp());
+    });
+
+    root.querySelectorAll('[data-action="close-install-success"]').forEach((el) => {
+      el.addEventListener('click', () => closeInstallSuccess());
+    });
 
     root.querySelectorAll('[data-action="dismiss-install"]').forEach((el) => {
       el.addEventListener('click', () => dismissInstallBanner());

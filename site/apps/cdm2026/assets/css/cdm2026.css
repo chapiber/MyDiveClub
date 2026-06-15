@@ -180,6 +180,32 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.wc-install-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.wc-install-banner__note {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  color: var(--wc-muted);
+  line-height: 1.35;
+}
+
+.wc-install-banner__link {
+  padding: 0.35rem 0;
+  border: none;
+  background: transparent;
+  color: var(--wc-usa-blue);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .wc-back-portal {
   display: inline-flex;
   align-items: center;
@@ -1423,6 +1449,104 @@
   }
 
   .wc-share-modal__panel {
+    border-radius: 20px;
+    margin: 1rem;
+  }
+}
+
+/* —— Modales installation PWA —— */
+.wc-install-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.wc-install-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 33, 46, 0.55);
+}
+
+.wc-install-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 0.5rem calc(0.5rem + var(--safe-bottom));
+  border-radius: 20px 20px 16px 16px;
+  background: var(--wc-surface);
+  box-shadow: 0 -8px 40px rgba(0, 40, 104, 0.2);
+  overflow: hidden;
+}
+
+.wc-install-modal--success .wc-install-modal__panel {
+  border-top: 4px solid var(--wc-mex-green);
+}
+
+.wc-install-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 2px solid var(--wc-border);
+}
+
+.wc-install-modal__title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--wc-usa-blue);
+}
+
+.wc-install-modal__close {
+  min-width: var(--pc-tap-min);
+  min-height: var(--pc-tap-min);
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: rgba(0, 40, 104, 0.08);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--wc-usa-blue);
+  cursor: pointer;
+}
+
+.wc-install-modal__body {
+  padding: 1rem 1rem 1.15rem;
+}
+
+.wc-install-modal__lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--wc-muted);
+  line-height: 1.45;
+}
+
+.wc-install-modal__steps {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--wc-text);
+}
+
+.wc-install-modal__steps li + li {
+  margin-top: 0.55rem;
+}
+
+.wc-install-modal__action {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .wc-install-modal {
+    align-items: center;
+  }
+
+  .wc-install-modal__panel {
     border-radius: 20px;
     margin: 1rem;
   }
