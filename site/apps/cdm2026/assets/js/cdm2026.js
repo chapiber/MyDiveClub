@@ -231,12 +231,23 @@
     ];
   }
 
+  function isInstallBannerDismissed() {
+    if (isAndroidDevice()) {
+      return sessionStorage.getItem(INSTALL_DISMISS_KEY) === '1';
+    }
+    return localStorage.getItem(INSTALL_DISMISS_KEY) === '1';
+  }
+
   function shouldShowInstallBanner() {
     if (isStandalonePwa()) return false;
-    if (localStorage.getItem(INSTALL_DISMISS_KEY) === '1') return false;
+    if (isInstallBannerDismissed()) return false;
     if (isIosDevice()) return true;
     if (installCanPrompt) return true;
-    return /Android/i.test(navigator.userAgent);
+    return isAndroidDevice();
+  }
+
+  function shouldShowAndroidInstallAction() {
+    return isAndroidDevice() && !isStandalonePwa();
   }
 
   function syncInstallPrompt() {
@@ -248,6 +259,10 @@
   function initPwaInstall() {
     if (isStandalonePwa()) return;
 
+    if (isAndroidDevice()) {
+      localStorage.removeItem(INSTALL_DISMISS_KEY);
+    }
+
     window.addEventListener('cdm2026-installable', () => {
       syncInstallPrompt();
       state.pwa.installWaiting = false;
@@ -257,7 +272,9 @@
     window.addEventListener('cdm2026-installed', () => {
       installCanPrompt = false;
       state.pwa.installWaiting = false;
-      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      if (!isAndroidDevice()) {
+        localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      }
       state.pwa.successOpen = true;
       render();
     });
@@ -376,7 +393,9 @@
     const { outcome } = await promptEvent.userChoice;
     installCanPrompt = false;
     if (outcome === 'accepted') {
-      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      if (!isAndroidDevice()) {
+        localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+      }
       openInstallSuccess();
     }
     render();
@@ -425,7 +444,11 @@
   }
 
   function dismissInstallBanner() {
-    localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    if (isAndroidDevice()) {
+      sessionStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    } else {
+      localStorage.setItem(INSTALL_DISMISS_KEY, '1');
+    }
     render();
   }
 
@@ -738,8 +761,30 @@
     );
   }
 
+  function renderInstallHeaderButton() {
+    if (!shouldShowAndroidInstallAction()) return '';
+    const waiting = state.pwa.installWaiting;
+    const label = waiting ? '…' : 'Installer';
+    const disabled = waiting ? ' disabled' : '';
+    return (
+      '<button type="button" class="wc-install-btn" data-action="pwa-install"' + disabled + ' aria-label="Installer l\'application CDM 2026">' +
+      '<svg class="wc-install-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+      '<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
+      '</svg>' +
+      '<span class="wc-install-btn__label">' + esc(label) + '</span>' +
+      '</button>'
+    );
+  }
+
   function renderHeaderActions() {
-    return '<div class="wc-header__actions">' + renderShareButton() + renderCupButton() + '</div>';
+    return (
+      '<div class="wc-header__actions">' +
+      renderInstallHeaderButton() +
+      renderShareButton() +
+      renderCupButton() +
+      '</div>'
+    );
   }
 
   function renderHeader() {
@@ -757,15 +802,18 @@
         '</div>';
     }
     return (
-      (isStandalonePwa() ? '' : '<a href="../../index.html" class="wc-back-portal">← Portail Club</a>') +
       '<header class="wc-header">' +
+      (isStandalonePwa()
+        ? ''
+        : '<div class="wc-header__top"><a href="../../index.html" class="wc-back-portal">← Portail Club</a></div>') +
       '<div class="wc-header__inner">' +
+      '<div class="wc-header__brand">' +
       '<img class="wc-header__emblem" src="assets/img/emblem-placeholder.svg" alt="CDM 2026" width="56" height="38">' +
       '<div class="wc-header__text">' +
       '<p class="wc-header__eyebrow">FIFA · USA · Mexique · Canada</p>' +
       '<h1 class="wc-header__title">Coupe du Monde 2026</h1>' +
       '<p class="wc-header__sub">Horaires heure de Paris · TV France</p>' +
-      '</div>' +
+      '</div></div>' +
       renderHeaderActions() +
       '</div>' +
       '</header>' +
@@ -1294,10 +1342,10 @@
       shareBtn.addEventListener('click', () => openShare());
     }
 
-    const installBtn = root.querySelector('[data-action="pwa-install"]');
-    if (installBtn) {
-      installBtn.addEventListener('click', () => triggerPwaInstall());
-    }
+    const installBtns = root.querySelectorAll('[data-action="pwa-install"]');
+    installBtns.forEach((btn) => {
+      btn.addEventListener('click', () => triggerPwaInstall());
+    });
 
     root.querySelectorAll('[data-action="install-help"]').forEach((el) => {
       el.addEventListener('click', () => openInstallHelp());
