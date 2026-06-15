@@ -38,6 +38,7 @@
       myMemberId: null,
       leaderboardLoading: false,
       scrollToFocus: false,
+      shareOpen: false,
     },
   };
 
@@ -363,6 +364,70 @@
     );
   }
 
+  function renderShareButton() {
+    return (
+      '<button type="button" class="wc-share-btn" data-action="share" aria-label="Partager l\'application">' +
+      '<svg class="wc-share-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>' +
+      '<polyline points="16 6 12 2 8 6"/>' +
+      '<line x1="12" y1="2" x2="12" y2="15"/>' +
+      '</svg>' +
+      '<span class="wc-share-btn__label">Partager</span>' +
+      '</button>'
+    );
+  }
+
+  function getShareUrl() {
+    const u = new URL(location.href);
+    u.hash = '';
+    u.search = '';
+    return u.href;
+  }
+
+  function drawShareQr(canvas, text) {
+    if (!window.qrcodegen) return;
+    const scale = 8;
+    const border = 4;
+    const qr = qrcodegen.QrCode.encodeText(text, qrcodegen.QrCode.Ecc.MEDIUM);
+    const size = qr.size;
+    canvas.width = canvas.height = (size + border * 2) * scale;
+    const ctx = canvas.getContext('2d');
+    for (let y = -border; y < size + border; y++) {
+      for (let x = -border; x < size + border; x++) {
+        ctx.fillStyle = qr.getModule(x, y) ? '#14212e' : '#ffffff';
+        ctx.fillRect((x + border) * scale, (y + border) * scale, scale, scale);
+      }
+    }
+    canvas.style.width = '220px';
+    canvas.style.height = '220px';
+  }
+
+  function renderShareModal() {
+    if (!state.predict.shareOpen) return '';
+    const shareUrl = getShareUrl();
+    return (
+      '<div class="wc-share-modal" role="dialog" aria-modal="true" aria-labelledby="wc-share-title">' +
+      '<div class="wc-share-modal__backdrop" data-action="close-share"></div>' +
+      '<div class="wc-share-modal__panel">' +
+      '<div class="wc-share-modal__head">' +
+      '<h2 id="wc-share-title" class="wc-share-modal__title">Partager l\'app</h2>' +
+      '<button type="button" class="wc-share-modal__close" data-action="close-share" aria-label="Fermer">×</button>' +
+      '</div>' +
+      '<div class="wc-share-modal__body">' +
+      '<p class="wc-share-modal__lead">Scannez le QR code ou copiez le lien pour inviter vos copains.</p>' +
+      '<div class="wc-share-modal__qr">' +
+      '<canvas id="wc-share-qr" width="220" height="220" role="img" aria-label="QR code vers l\'application CDM 2026"></canvas>' +
+      '</div>' +
+      '<p class="wc-share-modal__url"><strong id="wc-share-url">' + esc(shareUrl) + '</strong></p>' +
+      '<button type="button" class="wc-btn wc-btn--primary wc-share-modal__copy" data-action="copy-share">Copier le lien</button>' +
+      '</div></div></div>'
+    );
+  }
+
+  function renderHeaderActions() {
+    return '<div class="wc-header__actions">' + renderShareButton() + renderCupButton() + '</div>';
+  }
+
   function renderHeader() {
     const meta = state.data.meta || {};
     const updated = meta.updatedAt
@@ -387,7 +452,7 @@
       '<h1 class="wc-header__title">Coupe du Monde 2026</h1>' +
       '<p class="wc-header__sub">Horaires heure de Paris · TV France</p>' +
       '</div>' +
-      renderCupButton() +
+      renderHeaderActions() +
       '</div>' +
       '</header>' +
       metaHtml
@@ -724,7 +789,7 @@
     else if (route.view === 'groups') content += renderGroups(route);
     else if (route.view === 'predict') content += renderPredict();
 
-    root.innerHTML = content + renderNav(route) + renderLeaderboardModal();
+    root.innerHTML = content + renderNav(route) + renderLeaderboardModal() + renderShareModal();
     bindEvents(route);
   }
 
@@ -857,6 +922,26 @@
     render();
   }
 
+  function openShare() {
+    state.predict.shareOpen = true;
+    render();
+  }
+
+  function closeShare() {
+    state.predict.shareOpen = false;
+    render();
+  }
+
+  async function copyShareUrl() {
+    const url = getShareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('Lien copié');
+    } catch (_) {
+      showToast('Copie impossible');
+    }
+  }
+
   function bindEvents(route) {
     root.querySelectorAll('.wc-team-chip').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -879,9 +964,32 @@
       cupBtn.addEventListener('click', () => openLeaderboard());
     }
 
+    const shareBtn = root.querySelector('[data-action="share"]');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => openShare());
+    }
+
     root.querySelectorAll('[data-action="close-leaderboard"]').forEach((el) => {
       el.addEventListener('click', () => closeLeaderboard());
     });
+
+    root.querySelectorAll('[data-action="close-share"]').forEach((el) => {
+      el.addEventListener('click', () => closeShare());
+    });
+
+    const copyShareBtn = root.querySelector('[data-action="copy-share"]');
+    if (copyShareBtn) {
+      copyShareBtn.addEventListener('click', () => copyShareUrl());
+    }
+
+    const shareQr = document.getElementById('wc-share-qr');
+    if (shareQr && state.predict.shareOpen) {
+      try {
+        drawShareQr(shareQr, getShareUrl());
+      } catch (_) {
+        /* QR indisponible */
+      }
+    }
 
     const regForm = root.querySelector('form[data-action="register"]');
     if (regForm) {
