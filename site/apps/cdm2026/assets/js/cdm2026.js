@@ -43,6 +43,17 @@
       leaderboardLoading: false,
       scrollToFocus: false,
       shareOpen: false,
+      matchBoardOpen: false,
+      matchBoardMatchId: null,
+      matchBoardLoading: false,
+      matchBoard: null,
+      memberBoardOpen: false,
+      memberBoardMemberId: null,
+      memberBoardLoading: false,
+      memberBoard: null,
+      pointsInitialized: false,
+      highlightMatchIds: {},
+      refreshTimer: null,
     },
     pwa: {
       helpOpen: false,
@@ -53,6 +64,8 @@
   };
 
   const saveTimers = {};
+  const PREDICT_REFRESH_MS = 90000;
+  const RECENT_SCORED_LIMIT = 5;
 
   function showToast(msg) {
     if (!toastEl) return;
@@ -178,6 +191,39 @@
 
   function isPredictableMatch(m) {
     return matchHasTeams(m) && !isMatchLocked(m);
+  }
+
+  function isMatchScored(m) {
+    return !!(m.score && m.score.status === 'finished' && m.score.home != null && m.score.away != null);
+  }
+
+  function isMatchAwaitingResult(m) {
+    return !!(m.score && m.score.status === 'finished' && (m.score.home == null || m.score.away == null));
+  }
+
+  function getScoredMatchesSorted() {
+    return getSortedMatches().filter(isMatchScored);
+  }
+
+  function getRecentlyScoredMatches(limit) {
+    const scored = getScoredMatchesSorted();
+    return scored.slice(-limit).reverse();
+  }
+
+  function matchShortLabel(m) {
+    const h = teamByCode(m.home);
+    const a = teamByCode(m.away);
+    return (h ? h.name : m.home || '?') + ' – ' + (a ? a.name : m.away || '?');
+  }
+
+  function resetPredictSessionState() {
+    state.predict.predictions = {};
+    state.predict.matchPoints = {};
+    state.predict.totalPoints = 0;
+    state.predict.predictedCount = 0;
+    state.predict.scoredCount = 0;
+    state.predict.pointsInitialized = false;
+    state.predict.highlightMatchIds = {};
   }
 
   function markPredictScrollFocus() {
@@ -631,12 +677,15 @@
     if (live) cls += ' wc-match--live';
     if (finished) cls += ' wc-match--finished';
     if (locked) cls += ' wc-match--locked';
+    if (state.predict.highlightMatchIds[m.id]) cls += ' wc-match--scored-new';
 
     let badges = '';
     if (!hasTeams) {
       badges += '<span class="wc-badge wc-badge--pending">Équipes à déterminer</span>';
     } else if (finished && m.score.home != null) {
       badges += '<span class="wc-badge wc-badge--done">Terminé</span>';
+    } else if (isMatchAwaitingResult(m)) {
+      badges += '<span class="wc-badge wc-badge--awaiting">Résultat en attente</span>';
     } else if (locked) {
       badges += '<span class="wc-badge wc-badge--locked">Verrouillé</span>';
     } else if (pred) {
@@ -664,6 +713,11 @@
     }
 
     const focusAttr = opts.focus ? ' id="wc-predict-focus"' : '';
+    const communityBtn = isMatchScored(m)
+      ? '<button type="button" class="wc-match-board-btn" data-action="match-board" data-match-id="' + esc(m.id) + '">' +
+        '<span class="wc-match-board-btn__icon" aria-hidden="true">👥</span>' +
+        '<span>Pronos du groupe</span></button>'
+      : '';
 
     return (
       '<article class="' + cls + '" data-match-id="' + esc(m.id) + '"' + focusAttr + '>' +
@@ -676,6 +730,7 @@
       '</div>' +
       '<div class="wc-match__body">' +
       teamsHtml +
+      communityBtn +
       '<div class="wc-match__venue">' + esc(m.venue) + ', ' + esc(m.city) + '</div>' +
       '</div>' +
       '</article>'
@@ -1021,6 +1076,126 @@
     return renderPastMatchesPanel(pastMatches, (m) => renderPredictMatchCard(m));
   }
 
+  function renderRecentScoredSection(recentMatches) {
+    if (!recentMatches.length) return '';
+    let cards = '';
+    recentMatches.forEach((m) => {
+      const pred = state.predict.predictions[m.id];
+      const pts = state.predict.matchPoints[m.id];
+      cards +=
+        '<div class="wc-recent-score">' +
+        '<p class="wc-recent-score__title">' + esc(matchShortLabel(m)) + '</p>' +
+        renderPredictFinishedTeams(m, pred, pts) +
+        '<button type="button" class="wc-match-board-btn wc-match-board-btn--inline" data-action="match-board" data-match-id="' +
+        esc(m.id) +
+        '"><span class="wc-match-board-btn__icon" aria-hidden="true">👥</span><span>Voir tous les pronos</span></button>' +
+        '</div>';
+    });
+    return (
+      '<section class="wc-recent-scores" aria-label="Résultats récents">' +
+      '<h3 class="wc-recent-scores__heading">Résultats récents</h3>' +
+      '<div class="wc-recent-scores__list">' + cards + '</div>' +
+      '</section>'
+    );
+  }
+
+  function renderMatchBoardModal() {
+    if (!state.predict.matchBoardOpen) return '';
+
+    let inner;
+    if (state.predict.matchBoardLoading) {
+      inner = '<div class="wc-loading">Chargement des pronos…</div>';
+    } else if (!state.predict.matchBoard || !state.predict.matchBoard.entries) {
+      inner = '<p class="wc-empty">Aucun pronostic pour ce match.</p>';
+    } else {
+      const board = state.predict.matchBoard;
+      const h = teamByCode(board.home);
+      const a = teamByCode(board.away);
+      const title = (h ? h.name : board.home) + ' ' + board.result.home + ' – ' + board.result.away + ' ' + (a ? a.name : board.away);
+      let table =
+        '<p class="wc-board-modal__result"><strong>' + esc(title) + '</strong></p>' +
+        '<table class="wc-board-table"><thead><tr>' +
+        '<th>Joueur</th><th>Prono</th><th>Pts</th><th></th>' +
+        '</tr></thead><tbody>';
+      board.entries.forEach((row) => {
+        const mine = row.member_id === state.predict.myMemberId ? ' wc-board-table__row--me' : '';
+        table +=
+          '<tr class="' + mine + '">' +
+          '<td>' + esc(row.pseudo) + '</td>' +
+          '<td><strong>' + row.pred_home + ' – ' + row.pred_away + '</strong></td>' +
+          '<td><strong>' + esc(formatPoints(row.points)) + '</strong></td>' +
+          '<td class="wc-board-table__label">' + esc(row.label || '') + '</td>' +
+          '</tr>';
+      });
+      table += '</tbody></table>';
+      inner = table;
+    }
+
+    return (
+      '<div class="wc-board-modal" role="dialog" aria-modal="true" aria-labelledby="wc-match-board-title">' +
+      '<div class="wc-board-modal__backdrop" data-action="close-match-board"></div>' +
+      '<div class="wc-board-modal__panel">' +
+      '<div class="wc-board-modal__head">' +
+      '<h2 id="wc-match-board-title" class="wc-board-modal__title">Pronos du match</h2>' +
+      '<button type="button" class="wc-board-modal__close" data-action="close-match-board" aria-label="Fermer">×</button>' +
+      '</div>' +
+      '<div class="wc-board-modal__body">' + inner + '</div>' +
+      '</div></div>'
+    );
+  }
+
+  function renderMemberBoardModal() {
+    if (!state.predict.memberBoardOpen) return '';
+
+    let inner;
+    if (state.predict.memberBoardLoading) {
+      inner = '<div class="wc-loading">Chargement…</div>';
+    } else if (!state.predict.memberBoard) {
+      inner = '<p class="wc-empty">Joueur introuvable.</p>';
+    } else {
+      const board = state.predict.memberBoard;
+      let table =
+        '<p class="wc-board-modal__lead"><strong>' + esc(board.pseudo) + '</strong> · ' +
+        esc(formatPoints(board.total_points)) + ' pts · ' +
+        board.scored_count + ' match' + (board.scored_count > 1 ? 's' : '') + ' noté' + (board.scored_count > 1 ? 's' : '') +
+        '</p>';
+      if (!board.matches.length) {
+        table += '<p class="wc-empty">Aucun match noté pour le moment.</p>';
+      } else {
+        table +=
+          '<table class="wc-board-table"><thead><tr>' +
+          '<th>Match</th><th>Résultat</th><th>Prono</th><th>Pts</th>' +
+          '</tr></thead><tbody>';
+        board.matches.forEach((row) => {
+          const h = teamByCode(row.home);
+          const a = teamByCode(row.away);
+          const label = (h ? h.name : row.home) + ' – ' + (a ? a.name : row.away);
+          table +=
+            '<tr>' +
+            '<td>' + esc(label) + '</td>' +
+            '<td>' + row.result.home + '–' + row.result.away + '</td>' +
+            '<td><strong>' + row.pred_home + '–' + row.pred_away + '</strong></td>' +
+            '<td><strong>' + esc(formatPoints(row.points)) + '</strong> <span class="wc-board-table__label">' + esc(row.label || '') + '</span></td>' +
+            '</tr>';
+        });
+        table += '</tbody></table>';
+      }
+      inner = table;
+    }
+
+    return (
+      '<div class="wc-board-modal" role="dialog" aria-modal="true" aria-labelledby="wc-member-board-title">' +
+      '<div class="wc-board-modal__backdrop" data-action="close-member-board"></div>' +
+      '<div class="wc-board-modal__panel">' +
+      '<div class="wc-board-modal__head">' +
+      '<h2 id="wc-member-board-title" class="wc-board-modal__title">Détail joueur</h2>' +
+      '<button type="button" class="wc-board-modal__close" data-action="close-member-board" aria-label="Fermer">×</button>' +
+      '</div>' +
+      '<div class="wc-board-modal__body">' + inner + '</div>' +
+      '</div></div>'
+    );
+  }
+
   function renderPredict() {
     if (state.predict.memberLoading) {
       return '<div class="wc-loading">Chargement des pronostics…</div>';
@@ -1038,7 +1213,8 @@
       '</div>';
 
     const matches = getSortedMatches();
-    const pastMatches = matches.filter((m) => isPastLockedMatch(m));
+    const recentScored = getRecentlyScoredMatches(RECENT_SCORED_LIMIT);
+    const pastMatches = matches.filter((m) => isPastLockedMatch(m) && !isMatchScored(m));
     const upcomingMatches = matches.filter((m) => !isPastLockedMatch(m));
 
     const byDay = {};
@@ -1063,6 +1239,7 @@
       renderPredictLeaderboardCta() +
       '</div>' +
       stats;
+    body += renderRecentScoredSection(recentScored);
     body += renderPredictPastPanel(pastMatches);
 
     if (!dayKeys.length && !pastMatches.length) {
@@ -1107,7 +1284,7 @@
       state.predict.leaderboard.forEach((row) => {
         const mine = row.id === state.predict.myMemberId ? ' wc-leaderboard__row--me' : '';
         table +=
-          '<tr class="' + mine + '">' +
+          '<tr class="wc-leaderboard__row' + mine + '" data-action="member-board" data-member-id="' + row.id + '" tabindex="0" role="button">' +
           '<td>' + row.rank + '</td>' +
           '<td>' + esc(row.display_name) + '</td>' +
           '<td><strong>' + esc(formatPoints(row.total_points)) + '</strong></td>' +
@@ -1246,10 +1423,13 @@
       renderNav(route) +
       renderFloatingMenu() +
       renderLeaderboardModal() +
+      renderMatchBoardModal() +
+      renderMemberBoardModal() +
       renderShareModal() +
       renderInstallHelpModal() +
       renderInstallSuccessModal();
     bindEvents(route);
+    syncPredictRefresh(route);
   }
 
   async function loadPredictMember() {
@@ -1273,11 +1453,7 @@
       if (e.status === 404) {
         setMemberSession('', '');
         state.predict.member = null;
-        state.predict.predictions = {};
-        state.predict.matchPoints = {};
-        state.predict.totalPoints = 0;
-        state.predict.predictedCount = 0;
-        state.predict.scoredCount = 0;
+        resetPredictSessionState();
       } else {
         retryLater = true;
         const cachedPseudo = getMemberPseudo();
@@ -1297,15 +1473,80 @@
     }
   }
 
-  async function loadPredictions() {
-    const token = getMemberToken();
-    if (!token) return;
-    const data = await api('predictions.php?token=' + encodeURIComponent(token));
+  function applyPredictionPayload(data, options) {
+    options = options || {};
+    const prevPoints = { ...state.predict.matchPoints };
     state.predict.predictions = data.predictions || {};
     state.predict.matchPoints = data.match_points || {};
     state.predict.totalPoints = data.total_points || 0;
     state.predict.predictedCount = data.predicted_count || 0;
     state.predict.scoredCount = data.scored_count || 0;
+
+    if (!state.predict.pointsInitialized) {
+      state.predict.pointsInitialized = true;
+      return false;
+    }
+    if (options.skipNotify) {
+      return false;
+    }
+
+    let changed = false;
+    Object.keys(state.predict.matchPoints).forEach((matchId) => {
+      if (prevPoints[matchId] === undefined) {
+        const m = state.data && state.data.matches.find((x) => x.id === matchId);
+        if (m) {
+          state.predict.highlightMatchIds[matchId] = true;
+          showToast(matchShortLabel(m) + ' : +' + formatPoints(state.predict.matchPoints[matchId]) + ' pts');
+          changed = true;
+        }
+      }
+    });
+    return changed;
+  }
+
+  async function loadPredictions(options) {
+    const token = getMemberToken();
+    if (!token) return false;
+    const data = await api('predictions.php?token=' + encodeURIComponent(token));
+    return applyPredictionPayload(data, options);
+  }
+
+  async function refreshTournamentData() {
+    const res = await fetch(DATA_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    state.data = await res.json();
+  }
+
+  async function refreshPredictData(options) {
+    options = options || {};
+    if (!state.data || !getMemberToken() || !state.predict.member) return;
+    try {
+      await refreshTournamentData();
+      const changed = await loadPredictions({ skipNotify: options.skipNotify });
+      if (changed || options.forceRender) {
+        render();
+      }
+    } catch (_) {
+      /* rafraîchissement silencieux */
+    }
+  }
+
+  function stopPredictRefresh() {
+    if (state.predict.refreshTimer) {
+      clearInterval(state.predict.refreshTimer);
+      state.predict.refreshTimer = null;
+    }
+  }
+
+  function syncPredictRefresh(route) {
+    stopPredictRefresh();
+    if (route.view === 'predict' && state.predict.member) {
+      state.predict.refreshTimer = setInterval(() => {
+        if (parseRoute().view === 'predict') {
+          refreshPredictData();
+        }
+      }, PREDICT_REFRESH_MS);
+    }
   }
 
   async function joinMember(pseudo) {
@@ -1316,6 +1557,7 @@
     setMemberSession(data.member.client_token, data.member.pseudo);
     state.predict.member = data.member;
     state.predict.memberChecked = true;
+    state.predict.pointsInitialized = false;
     await loadPredictions();
     markPredictScrollFocus();
     showToast(
@@ -1393,6 +1635,69 @@
 
   function closeLeaderboard() {
     state.predict.leaderboardOpen = false;
+    render();
+  }
+
+  async function openMatchBoard(matchId) {
+    closeFabMenu();
+    state.predict.matchBoardOpen = true;
+    state.predict.matchBoardMatchId = matchId;
+    state.predict.matchBoardLoading = true;
+    state.predict.matchBoard = null;
+    render();
+    try {
+      const token = getMemberToken();
+      const qs =
+        '?match_id=' +
+        encodeURIComponent(matchId) +
+        (token ? '&token=' + encodeURIComponent(token) : '');
+      const data = await api('match-board.php' + qs);
+      state.predict.matchBoard = data.board || null;
+      state.predict.myMemberId = data.my_member_id;
+    } catch (e) {
+      showToast(e.message || 'Erreur chargement pronos');
+      state.predict.matchBoardOpen = false;
+    } finally {
+      state.predict.matchBoardLoading = false;
+      render();
+    }
+  }
+
+  function closeMatchBoard() {
+    state.predict.matchBoardOpen = false;
+    state.predict.matchBoardMatchId = null;
+    state.predict.matchBoard = null;
+    render();
+  }
+
+  async function openMemberBoard(memberId) {
+    state.predict.memberBoardOpen = true;
+    state.predict.memberBoardMemberId = memberId;
+    state.predict.memberBoardLoading = true;
+    state.predict.memberBoard = null;
+    render();
+    try {
+      const token = getMemberToken();
+      const qs =
+        '?member_id=' +
+        encodeURIComponent(String(memberId)) +
+        (token ? '&token=' + encodeURIComponent(token) : '');
+      const data = await api('member-board.php' + qs);
+      state.predict.memberBoard = data.board || null;
+      state.predict.myMemberId = data.my_member_id;
+    } catch (e) {
+      showToast(e.message || 'Erreur chargement joueur');
+      state.predict.memberBoardOpen = false;
+    } finally {
+      state.predict.memberBoardLoading = false;
+      render();
+    }
+  }
+
+  function closeMemberBoard() {
+    state.predict.memberBoardOpen = false;
+    state.predict.memberBoardMemberId = null;
+    state.predict.memberBoard = null;
     render();
   }
 
@@ -1477,6 +1782,36 @@
       el.addEventListener('click', () => closeLeaderboard());
     });
 
+    root.querySelectorAll('[data-action="match-board"]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const matchId = btn.getAttribute('data-match-id');
+        if (matchId) openMatchBoard(matchId);
+      });
+    });
+
+    root.querySelectorAll('[data-action="close-match-board"]').forEach((el) => {
+      el.addEventListener('click', () => closeMatchBoard());
+    });
+
+    root.querySelectorAll('[data-action="member-board"]').forEach((row) => {
+      const open = () => {
+        const memberId = parseInt(row.getAttribute('data-member-id') || '', 10);
+        if (!Number.isNaN(memberId)) openMemberBoard(memberId);
+      };
+      row.addEventListener('click', open);
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open();
+        }
+      });
+    });
+
+    root.querySelectorAll('[data-action="close-member-board"]').forEach((el) => {
+      el.addEventListener('click', () => closeMemberBoard());
+    });
+
     root.querySelectorAll('[data-action="close-share"]').forEach((el) => {
       el.addEventListener('click', () => closeShare());
     });
@@ -1552,11 +1887,24 @@
   }
 
   window.addEventListener('hashchange', () => {
-    if (parseRoute().view === 'predict') {
+    const route = parseRoute();
+    if (route.view === 'predict') {
       markPredictScrollFocus();
+      if (state.predict.member) {
+        refreshPredictData({ skipNotify: true, forceRender: true });
+      }
+    } else {
+      stopPredictRefresh();
     }
     render();
   });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && parseRoute().view === 'predict' && state.predict.member) {
+      refreshPredictData();
+    }
+  });
+
   initPwaInstall();
   loadData();
 })();

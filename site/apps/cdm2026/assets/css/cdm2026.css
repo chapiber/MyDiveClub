@@ -1838,3 +1838,211 @@
 .wc-predict-lb-btn:active {
   transform: scale(0.98);
 }
+
+/* —— Résultats récents (pronos) —— */
+.wc-recent-scores {
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  border: 2px solid rgba(201, 162, 39, 0.45);
+  background: linear-gradient(180deg, #fffdf5 0%, #faf6e8 100%);
+  box-shadow: 0 4px 16px rgba(92, 69, 16, 0.08);
+}
+
+.wc-recent-scores__heading {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5c4510;
+}
+
+.wc-recent-scores__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wc-recent-score {
+  padding: 0.65rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--wc-border);
+}
+
+.wc-recent-score__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--wc-usa-blue);
+  text-align: center;
+}
+
+.wc-match--scored-new {
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.55), 0 6px 20px rgba(201, 162, 39, 0.15);
+  animation: wc-score-pulse 2.4s ease-out 1;
+}
+
+@keyframes wc-score-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.65); }
+  70% { box-shadow: 0 0 0 10px rgba(201, 162, 39, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0); }
+}
+
+.wc-badge--awaiting {
+  background: rgba(0, 40, 104, 0.12);
+  color: var(--wc-usa-blue);
+}
+
+.wc-match-board-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  margin-top: 0.65rem;
+  min-height: var(--pc-tap-min, 44px);
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--wc-border);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--wc-usa-blue);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wc-match-board-btn--inline {
+  margin-top: 0.5rem;
+}
+
+.wc-match-board-btn__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.wc-match-board-btn:active {
+  transform: scale(0.98);
+  background: #eef2f7;
+}
+
+/* —— Modales pronos communauté —— */
+.wc-board-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.wc-board-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 20, 35, 0.55);
+}
+
+.wc-board-modal__panel {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: min(88vh, 720px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px 18px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.wc-board-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--wc-border);
+}
+
+.wc-board-modal__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--wc-usa-blue);
+}
+
+.wc-board-modal__close {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wc-board-modal__body {
+  overflow: auto;
+  padding: 0.85rem 1rem 1.25rem;
+}
+
+.wc-board-modal__result,
+.wc-board-modal__lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  text-align: center;
+  color: var(--wc-ink);
+}
+
+.wc-board-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.wc-board-table th,
+.wc-board-table td {
+  padding: 0.45rem 0.35rem;
+  border-bottom: 1px solid var(--wc-border);
+  text-align: left;
+}
+
+.wc-board-table th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--wc-muted);
+}
+
+.wc-board-table__row--me td {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+.wc-board-table__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--wc-mex-green);
+}
+
+.wc-leaderboard__row {
+  cursor: pointer;
+}
+
+.wc-leaderboard__row:focus-visible {
+  outline: 2px solid var(--wc-gold);
+  outline-offset: -2px;
+}
+
+@media (min-width: 640px) {
+  .wc-board-modal {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .wc-board-modal__panel {
+    border-radius: 18px;
+    max-height: min(80vh, 680px);
+  }
+}

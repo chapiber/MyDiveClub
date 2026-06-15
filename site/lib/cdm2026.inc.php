@@ -323,6 +323,48 @@ function portailClubCdmScorePrediction(int $predHome, int $predAway, int $realHo
     return 0.1;
 }
 
+function portailClubCdmPredictionLabel(float $pts): string
+{
+    if ($pts >= 5.0) {
+        return 'Score exact';
+    }
+    if ($pts >= 3.0) {
+        return 'Écart exact';
+    }
+    if ($pts >= 1.0) {
+        return 'Bon vainqueur';
+    }
+    if ($pts > 0) {
+        return 'Participation';
+    }
+    return '';
+}
+
+function portailClubCdmMatchHasFinalScore(array $match): bool
+{
+    $score = $match['score'] ?? null;
+    if (!is_array($score) || ($score['status'] ?? '') !== 'finished') {
+        return false;
+    }
+    return array_key_exists('home', $score)
+        && array_key_exists('away', $score)
+        && $score['home'] !== null
+        && $score['away'] !== null;
+}
+
+/** @return array{home:int,away:int} */
+function portailClubCdmMatchFinalScore(array $match): array
+{
+    if (!portailClubCdmMatchHasFinalScore($match)) {
+        portailClubJsonFail('Résultat non disponible pour ce match.', 400);
+    }
+    $score = $match['score'];
+    return [
+        'home' => (int)$score['home'],
+        'away' => (int)$score['away'],
+    ];
+}
+
 /** @param array<string, array{pred_home:int,pred_away:int}> $predictionsByMatch */
 function portailClubCdmComputeMemberStats(array $predictionsByMatch): array
 {
@@ -341,20 +383,17 @@ function portailClubCdmComputeMemberStats(array $predictionsByMatch): array
             continue;
         }
 
-        $score = $match['score'] ?? null;
-        if (!is_array($score) || ($score['status'] ?? '') !== 'finished') {
-            continue;
-        }
-        if (!isset($score['home'], $score['away'])) {
+        if (!portailClubCdmMatchHasFinalScore($match)) {
             continue;
         }
 
+        $final = portailClubCdmMatchFinalScore($match);
         $pred = $predictionsByMatch[$matchId];
         $pts = portailClubCdmScorePrediction(
             (int)$pred['pred_home'],
             (int)$pred['pred_away'],
-            (int)$score['home'],
-            (int)$score['away']
+            $final['home'],
+            $final['away']
         );
         $totalPoints += $pts;
         $scoredCount++;
@@ -438,5 +477,124 @@ function portailClubCdmBuildMemberScoreboard(PDO $pdo, int $memberId): array
         'predicted_count' => $stats['predicted_count'],
         'scored_count' => $stats['scored_count'],
         'match_points' => $stats['match_points'],
+    ];
+}
+
+/** @return array<string, mixed> */
+function portailClubCdmBuildMatchBoard(PDO $pdo, string $matchId): array
+{
+    $match = portailClubCdmFindMatch($matchId);
+    if ($match === null) {
+        portailClubJsonFail('Match introuvable.', 404);
+    }
+    $final = portailClubCdmMatchFinalScore($match);
+
+    $st = $pdo->prepare(
+        'SELECT m.id AS member_id, m.pseudo, p.pred_home, p.pred_away
+         FROM PORTAIL_CLUB_cdm_predictions p
+         INNER JOIN PORTAIL_CLUB_cdm_members m ON m.id = p.member_id
+         WHERE p.match_id = ?
+         ORDER BY m.pseudo ASC'
+    );
+    $st->execute([$matchId]);
+    $entries = [];
+    while ($row = $st->fetch()) {
+        $pts = portailClubCdmScorePrediction(
+            (int)$row['pred_home'],
+            (int)$row['pred_away'],
+            $final['home'],
+            $final['away']
+        );
+        $entries[] = [
+            'member_id' => (int)$row['member_id'],
+            'pseudo' => (string)$row['pseudo'],
+            'pred_home' => (int)$row['pred_home'],
+            'pred_away' => (int)$row['pred_away'],
+            'points' => $pts,
+            'label' => portailClubCdmPredictionLabel($pts),
+        ];
+    }
+
+    usort(
+        $entries,
+        static function (array $a, array $b): int {
+            if ($a['points'] !== $b['points']) {
+                return $b['points'] <=> $a['points'];
+            }
+            return strcmp($a['pseudo'], $b['pseudo']);
+        }
+    );
+
+    return [
+        'match_id' => $matchId,
+        'home' => (string)($match['home'] ?? ''),
+        'away' => (string)($match['away'] ?? ''),
+        'stage' => (string)($match['stage'] ?? ''),
+        'group' => isset($match['group']) ? (string)$match['group'] : null,
+        'kickoff_paris' => (string)($match['kickoffParis'] ?? ''),
+        'result' => [
+            'home' => $final['home'],
+            'away' => $final['away'],
+            'status' => 'finished',
+        ],
+        'entries' => $entries,
+    ];
+}
+
+/** @return array<string, mixed> */
+function portailClubCdmBuildMemberBoard(PDO $pdo, int $memberId): array
+{
+    $st = $pdo->prepare('SELECT id, pseudo FROM PORTAIL_CLUB_cdm_members WHERE id = ? LIMIT 1');
+    $st->execute([$memberId]);
+    $memberRow = $st->fetch();
+    if (!$memberRow) {
+        portailClubJsonFail('Joueur introuvable.', 404);
+    }
+
+    $board = portailClubCdmBuildMemberScoreboard($pdo, $memberId);
+    $data = portailClubCdmLoadTournamentData();
+    $matches = [];
+
+    foreach ($data['matches'] as $match) {
+        if (!is_array($match) || !portailClubCdmMatchHasFinalScore($match)) {
+            continue;
+        }
+        $matchId = (string)($match['id'] ?? '');
+        if ($matchId === '' || !isset($board['predictions'][$matchId])) {
+            continue;
+        }
+        $pred = $board['predictions'][$matchId];
+        $pts = $board['match_points'][$matchId] ?? null;
+        if ($pts === null) {
+            continue;
+        }
+        $final = portailClubCdmMatchFinalScore($match);
+        $matches[] = [
+            'match_id' => $matchId,
+            'home' => (string)($match['home'] ?? ''),
+            'away' => (string)($match['away'] ?? ''),
+            'kickoff_paris' => (string)($match['kickoffParis'] ?? ''),
+            'result' => $final,
+            'pred_home' => (int)$pred['pred_home'],
+            'pred_away' => (int)$pred['pred_away'],
+            'points' => $pts,
+            'label' => portailClubCdmPredictionLabel((float)$pts),
+        ];
+    }
+
+    usort(
+        $matches,
+        static function (array $a, array $b): int {
+            return strcmp($b['kickoff_paris'], $a['kickoff_paris']);
+        }
+    );
+
+    return [
+        'member_id' => (int)$memberRow['id'],
+        'pseudo' => (string)$memberRow['pseudo'],
+        'total_points' => $board['total_points'],
+        'predicted_count' => $board['predicted_count'],
+        'scored_count' => $board['scored_count'],
+        'matches' => $matches,
     ];
 }
