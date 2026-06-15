@@ -164,7 +164,48 @@
     );
   }
 
-  function renderTv(tv) {
+  function predictComparisonLabel(pts) {
+    const n = Number(pts);
+    if (Number.isNaN(n)) return '';
+    if (n >= 5) return 'Score exact';
+    if (n >= 3) return 'Écart exact';
+    if (n >= 1) return 'Bon vainqueur';
+    if (n > 0) return 'Participation';
+    return '';
+  }
+
+  function renderPredictFinishedTeams(m, pred, pts) {
+    const realHome = m.score.home;
+    const realAway = m.score.away;
+    let html =
+      '<div class="wc-predict-result">' +
+      '<p class="wc-predict-result__heading">Résultat réel</p>' +
+      '<div class="wc-match__teams">' +
+      renderTeamSide(m.home, 'home') +
+      '<div class="wc-match__score">' + realHome + ' – ' + realAway + '</div>' +
+      renderTeamSide(m.away, 'away') +
+      '</div>';
+
+    if (pred) {
+      const cmpLabel = predictComparisonLabel(pts);
+      html +=
+        '<div class="wc-predict-result__pred">' +
+        '<span class="wc-predict-result__label">Votre prono</span>' +
+        '<strong class="wc-predict-result__score">' + pred.pred_home + ' – ' + pred.pred_away + '</strong>';
+      if (cmpLabel) {
+        html += '<span class="wc-predict-result__cmp">' + esc(cmpLabel) + '</span>';
+      }
+      if (pts != null) {
+        html += '<span class="wc-badge wc-badge--pts">+' + esc(formatPoints(pts)) + ' pt' + (Number(pts) > 1 ? 's' : '') + '</span>';
+      }
+      html += '</div>';
+    } else {
+      html += '<p class="wc-predict-result__none">Pas de pronostic</p>';
+    }
+
+    return html + '</div>';
+  }
+
     if (!tv || !tv.channels || !tv.channels.length) return '';
     let html = '<div class="wc-match__tv">';
     tv.channels.forEach((ch) => {
@@ -280,6 +321,8 @@
     let badges = '';
     if (!hasTeams) {
       badges += '<span class="wc-badge wc-badge--pending">Équipes à déterminer</span>';
+    } else if (finished && m.score.home != null) {
+      badges += '<span class="wc-badge wc-badge--done">Terminé</span>';
     } else if (locked) {
       badges += '<span class="wc-badge wc-badge--locked">Verrouillé</span>';
     } else if (pred) {
@@ -287,13 +330,12 @@
     } else {
       badges += '<span class="wc-badge wc-badge--todo">À pronostiquer</span>';
     }
-    if (finished && pred && pts != null) {
-      badges += '<span class="wc-badge wc-badge--pts">+' + esc(formatPoints(pts)) + ' pts</span>';
-    }
 
     let teamsHtml;
     if (!hasTeams) {
       teamsHtml = '<div class="wc-match__label">' + esc(m.label || 'Match à déterminer') + '</div>';
+    } else if (finished && m.score.home != null) {
+      teamsHtml = renderPredictFinishedTeams(m, pred, pts);
     } else {
       teamsHtml =
         '<div class="wc-match__teams">' +
