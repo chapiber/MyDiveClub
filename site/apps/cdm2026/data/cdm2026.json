@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-06-14T05:01:26.336Z",
+    "updatedAt": "2026-06-15T06:28:52.264Z",
     "updatedBy": "cloud",
     "sources": [
       "franceinfo",
@@ -10,7 +10,8 @@
       "ouest-france.fr",
       "france24.com",
       "skysports.com",
-      "espn.com"
+      "espn.com",
+      "fifa.com"
     ],
     "tournament": {
       "start": "2026-06-11",
@@ -483,22 +484,22 @@
         },
         {
           "team": "AUS",
-          "played": 0,
-          "won": 0,
+          "played": 1,
+          "won": 1,
           "drawn": 0,
           "lost": 0,
-          "gf": 0,
+          "gf": 2,
           "ga": 0,
-          "pts": 0
+          "pts": 3
         },
         {
           "team": "TUR",
-          "played": 0,
+          "played": 1,
           "won": 0,
           "drawn": 0,
-          "lost": 0,
+          "lost": 1,
           "gf": 0,
-          "ga": 0,
+          "ga": 2,
           "pts": 0
         },
         {
@@ -524,42 +525,42 @@
       "standings": [
         {
           "team": "GER",
-          "played": 0,
-          "won": 0,
+          "played": 1,
+          "won": 1,
           "drawn": 0,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "ECU",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 7,
+          "ga": 1,
+          "pts": 3
         },
         {
           "team": "CIV",
-          "played": 0,
-          "won": 0,
+          "played": 1,
+          "won": 1,
           "drawn": 0,
           "lost": 0,
-          "gf": 0,
+          "gf": 1,
           "ga": 0,
+          "pts": 3
+        },
+        {
+          "team": "ECU",
+          "played": 1,
+          "won": 0,
+          "drawn": 0,
+          "lost": 1,
+          "gf": 0,
+          "ga": 1,
           "pts": 0
         },
         {
           "team": "CUW",
-          "played": 0,
+          "played": 1,
           "won": 0,
           "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
+          "lost": 1,
+          "gf": 1,
+          "ga": 7,
           "pts": 0
         }
       ]
@@ -574,43 +575,43 @@
       ],
       "standings": [
         {
-          "team": "NED",
-          "played": 0,
-          "won": 0,
+          "team": "SWE",
+          "played": 1,
+          "won": 1,
           "drawn": 0,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 5,
+          "ga": 1,
+          "pts": 3
+        },
+        {
+          "team": "NED",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 2,
+          "ga": 2,
+          "pts": 1
         },
         {
           "team": "JPN",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "SWE",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 2,
+          "ga": 2,
+          "pts": 1
         },
         {
           "team": "TUN",
-          "played": 0,
+          "played": 1,
           "won": 0,
           "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
+          "lost": 1,
+          "gf": 1,
+          "ga": 5,
           "pts": 0
         }
       ]
@@ -1046,9 +1047,9 @@
         "freeToAir": false
       },
       "score": {
-        "home": 1,
+        "home": 2,
         "away": 0,
-        "status": "live"
+        "status": "finished"
       }
     },
     {
@@ -1111,9 +1112,9 @@
         "freeToAir": false
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 1,
+        "away": 0,
+        "status": "finished"
       }
     },
     {
@@ -1133,9 +1134,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 7,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
@@ -1155,9 +1156,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 2,
+        "away": 2,
+        "status": "finished"
       }
     },
     {
@@ -1176,9 +1177,9 @@
         "freeToAir": false
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 5,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
