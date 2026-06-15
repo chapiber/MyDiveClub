@@ -48,6 +48,7 @@
       successOpen: false,
       installWaiting: false,
     },
+    menuOpen: false,
   };
 
   const saveTimers = {};
@@ -403,6 +404,7 @@
 
   async function triggerPwaInstall() {
     if (state.pwa.installWaiting) return;
+    closeFabMenu();
 
     if (isAndroidDevice() && !isChromeBrowser()) {
       showToast('Ouvrez cette page dans Google Chrome pour installer');
@@ -762,28 +764,79 @@
   }
 
   function renderInstallHeaderButton() {
-    if (!shouldShowAndroidInstallAction()) return '';
-    const waiting = state.pwa.installWaiting;
-    const label = waiting ? '…' : 'Installer';
-    const disabled = waiting ? ' disabled' : '';
-    return (
-      '<button type="button" class="wc-install-btn" data-action="pwa-install"' + disabled + ' aria-label="Installer l\'application CDM 2026">' +
-      '<svg class="wc-install-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
-      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
-      '<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>' +
-      '</svg>' +
-      '<span class="wc-install-btn__label">' + esc(label) + '</span>' +
-      '</button>'
-    );
+    return '';
   }
 
   function renderHeaderActions() {
     return (
-      '<div class="wc-header__actions">' +
-      renderInstallHeaderButton() +
+      '<div class="wc-header__actions wc-header__actions--desktop">' +
       renderShareButton() +
       renderCupButton() +
       '</div>'
+    );
+  }
+
+  function toggleFabMenu() {
+    state.menuOpen = !state.menuOpen;
+    render();
+  }
+
+  function closeFabMenu() {
+    if (!state.menuOpen) return;
+    state.menuOpen = false;
+    render();
+  }
+
+  function renderFloatingMenu() {
+    const openCls = state.menuOpen ? ' wc-fab--open' : '';
+    const backItem = isStandalonePwa()
+      ? ''
+      : '<a href="../../index.html" class="wc-fab-menu__item wc-fab-menu__item--link">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+        '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>' +
+        'Portail Club</a>';
+    const installItem = shouldShowAndroidInstallAction()
+      ? '<button type="button" class="wc-fab-menu__item" data-action="pwa-install">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+        '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+        '<polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+        (state.pwa.installWaiting ? 'Préparation…' : 'Installer l\'app') +
+        '</button>'
+      : '';
+
+    return (
+      '<div class="wc-fab' + openCls + '">' +
+      '<button type="button" class="wc-fab__backdrop" data-action="close-menu" aria-label="Fermer le menu"></button>' +
+      '<div class="wc-fab-menu" role="menu" aria-label="Actions">' +
+      '<button type="button" class="wc-fab-menu__item" data-action="share" role="menuitem">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>' +
+      '<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>' +
+      'Partager</button>' +
+      '<button type="button" class="wc-fab-menu__item wc-fab-menu__item--gold" data-action="leaderboard" role="menuitem">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
+      '<path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4z"/>' +
+      '<path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/></svg>' +
+      'Classement</button>' +
+      installItem +
+      backItem +
+      '</div>' +
+      '<button type="button" class="wc-fab__toggle" data-action="toggle-menu" aria-label="Menu" aria-expanded="' +
+      (state.menuOpen ? 'true' : 'false') +
+      '">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">' +
+      '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>' +
+      '</svg></button></div>'
+    );
+  }
+
+  function renderPredictLeaderboardCta() {
+    return (
+      '<button type="button" class="wc-predict-lb-btn" data-action="leaderboard">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
+      '<path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4z"/>' +
+      '<path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/></svg>' +
+      '<span>Classement</span></button>'
     );
   }
 
@@ -888,7 +941,10 @@
   function renderRegisterForm() {
     return (
       '<section class="wc-predict-register">' +
-      '<h2 class="wc-section-title">Rejoindre la compétition</h2>' +
+      '<div class="wc-predict-head">' +
+      '<h2 class="wc-section-title wc-section-title--inline">Rejoindre la compétition</h2>' +
+      renderPredictLeaderboardCta() +
+      '</div>' +
       '<p class="wc-predict-intro">Choisissez un pseudo unique (affiché) et votre prénom (entre parenthèses).</p>' +
       '<form class="wc-predict-form" data-action="register">' +
       '<label class="wc-field"><span class="wc-field__label">Pseudo</span>' +
@@ -983,7 +1039,12 @@
       null;
     const focusMatchId = focusMatch ? focusMatch.id : null;
 
-    let body = '<h2 class="wc-section-title">Mes pronostics</h2>' + stats;
+    let body =
+      '<div class="wc-predict-head">' +
+      '<h2 class="wc-section-title wc-section-title--inline">Mes pronostics</h2>' +
+      renderPredictLeaderboardCta() +
+      '</div>' +
+      stats;
     body += renderPredictPastPanel(pastMatches);
 
     if (!dayKeys.length && !pastMatches.length) {
@@ -1162,7 +1223,14 @@
     else if (route.view === 'groups') content += renderGroups(route);
     else if (route.view === 'predict') content += renderPredict();
 
-    root.innerHTML = content + renderNav(route) + renderLeaderboardModal() + renderShareModal() + renderInstallHelpModal() + renderInstallSuccessModal();
+    root.innerHTML =
+      content +
+      renderNav(route) +
+      renderFloatingMenu() +
+      renderLeaderboardModal() +
+      renderShareModal() +
+      renderInstallHelpModal() +
+      renderInstallSuccessModal();
     bindEvents(route);
   }
 
@@ -1272,6 +1340,7 @@
   }
 
   async function openLeaderboard() {
+    closeFabMenu();
     state.predict.leaderboardOpen = true;
     state.predict.leaderboardLoading = true;
     render();
@@ -1296,6 +1365,7 @@
   }
 
   function openShare() {
+    closeFabMenu();
     state.predict.shareOpen = true;
     render();
   }
@@ -1332,15 +1402,23 @@
       });
     });
 
-    const cupBtn = root.querySelector('[data-action="leaderboard"]');
-    if (cupBtn) {
-      cupBtn.addEventListener('click', () => openLeaderboard());
-    }
+    const cupBtns = root.querySelectorAll('[data-action="leaderboard"]');
+    cupBtns.forEach((btn) => {
+      btn.addEventListener('click', () => openLeaderboard());
+    });
 
-    const shareBtn = root.querySelector('[data-action="share"]');
-    if (shareBtn) {
-      shareBtn.addEventListener('click', () => openShare());
-    }
+    const shareBtns = root.querySelectorAll('[data-action="share"]');
+    shareBtns.forEach((btn) => {
+      btn.addEventListener('click', () => openShare());
+    });
+
+    root.querySelectorAll('[data-action="toggle-menu"]').forEach((btn) => {
+      btn.addEventListener('click', () => toggleFabMenu());
+    });
+
+    root.querySelectorAll('[data-action="close-menu"]').forEach((btn) => {
+      btn.addEventListener('click', () => closeFabMenu());
+    });
 
     const installBtns = root.querySelectorAll('[data-action="pwa-install"]');
     installBtns.forEach((btn) => {
