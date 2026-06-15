@@ -37,6 +37,7 @@
       leaderboard: [],
       myMemberId: null,
       leaderboardLoading: false,
+      scrollToFocus: false,
     },
   };
 
@@ -140,6 +141,22 @@
     return Date.now() >= formatKickoff(m.kickoffParis).ts;
   }
 
+  function isPastMatch(m) {
+    return formatKickoff(m.kickoffParis).ts < Date.now();
+  }
+
+  function isPastLockedMatch(m) {
+    return isPastMatch(m) && (!matchHasTeams(m) || isMatchLocked(m));
+  }
+
+  function isPredictableMatch(m) {
+    return matchHasTeams(m) && !isMatchLocked(m);
+  }
+
+  function markPredictScrollFocus() {
+    state.predict.scrollToFocus = true;
+  }
+
   function getSortedMatches() {
     return [...state.data.matches].sort(
       (a, b) => formatKickoff(a.kickoffParis).ts - formatKickoff(b.kickoffParis).ts
@@ -239,7 +256,8 @@
     );
   }
 
-  function renderPredictMatchCard(m) {
+  function renderPredictMatchCard(m, opts) {
+    opts = opts || {};
     const { date, time } = formatKickoff(m.kickoffParis);
     const fra = isFranceMatch(m);
     const live = m.score && m.score.status === 'live';
@@ -288,8 +306,10 @@
         '</div>';
     }
 
+    const focusAttr = opts.focus ? ' id="wc-predict-focus"' : '';
+
     return (
-      '<article class="' + cls + '" data-match-id="' + esc(m.id) + '">' +
+      '<article class="' + cls + '" data-match-id="' + esc(m.id) + '"' + focusAttr + '>' +
       '<div class="wc-match__time">' +
       '<div>' +
       '<div class="wc-match__datetime">' + esc(date) + ' · ' + esc(time) + '</div>' +
@@ -445,6 +465,49 @@
     );
   }
 
+  function renderPredictDayBlock(dayKey, dayMatches, dayOffset, focusMatchId) {
+    const sectionId = 'wc-predict-day-' + dayKey;
+    return (
+      '<section class="wc-day-block" aria-labelledby="' + sectionId + '">' +
+      '<h3 id="' + sectionId + '" class="wc-section-title wc-section-title--day">' + esc(formatDaySectionTitle(dayKey, dayOffset)) + '</h3>' +
+      '<div class="wc-day-block__matches">' +
+      dayMatches.map((m) => renderPredictMatchCard(m, { focus: m.id === focusMatchId })).join('') +
+      '</div></section>'
+    );
+  }
+
+  function renderPredictPastPanel(pastMatches) {
+    if (!pastMatches.length) return '';
+
+    const byDay = {};
+    pastMatches.forEach((m) => {
+      const dk = formatKickoff(m.kickoffParis).dateKey;
+      if (!byDay[dk]) byDay[dk] = [];
+      byDay[dk].push(m);
+    });
+    const dayKeys = Object.keys(byDay).sort();
+
+    let inner = '';
+    dayKeys.forEach((dayKey) => {
+      inner +=
+        '<div class="wc-predict-past__day">' +
+        '<p class="wc-predict-past__day-title">' + esc(formatDaySectionTitle(dayKey, -1)) + '</p>' +
+        '<div class="wc-day-block__matches">' +
+        byDay[dayKey].map((m) => renderPredictMatchCard(m)).join('') +
+        '</div></div>';
+    });
+
+    return (
+      '<details class="wc-predict-past">' +
+      '<summary class="wc-predict-past__summary">' +
+      '<span>Matchs passés verrouillés</span>' +
+      '<span class="wc-predict-past__count">' + pastMatches.length + ' match' + (pastMatches.length > 1 ? 's' : '') + '</span>' +
+      '</summary>' +
+      '<div class="wc-predict-past__body">' + inner + '</div>' +
+      '</details>'
+    );
+  }
+
   function renderPredict() {
     if (state.predict.memberLoading) {
       return '<div class="wc-loading">Chargement des pronostics…</div>';
@@ -462,28 +525,38 @@
       '</div>';
 
     const matches = getSortedMatches();
+    const pastMatches = matches.filter((m) => isPastLockedMatch(m));
+    const upcomingMatches = matches.filter((m) => !isPastLockedMatch(m));
+
     const byDay = {};
-    matches.forEach((m) => {
+    upcomingMatches.forEach((m) => {
       const dk = formatKickoff(m.kickoffParis).dateKey;
       if (!byDay[dk]) byDay[dk] = [];
       byDay[dk].push(m);
     });
     const dayKeys = Object.keys(byDay).sort();
 
-    let body = '<h2 class="wc-section-title">Mes pronostics</h2>' + stats;
     const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-    dayKeys.forEach((dayKey) => {
-      const sectionId = 'wc-predict-day-' + dayKey;
-      let dayOffset = -1;
-      if (dayKey === todayKey) dayOffset = 0;
-      else if (dayKey === addDaysToParisDateKey(todayKey, 1)) dayOffset = 1;
-      body +=
-        '<section class="wc-day-block" aria-labelledby="' + sectionId + '">' +
-        '<h3 id="' + sectionId + '" class="wc-section-title wc-section-title--day">' + esc(formatDaySectionTitle(dayKey, dayOffset)) + '</h3>' +
-        '<div class="wc-day-block__matches">' +
-        byDay[dayKey].map((m) => renderPredictMatchCard(m)).join('') +
-        '</div></section>';
-    });
+    const todayMatches = byDay[todayKey] || [];
+    const focusMatch =
+      todayMatches.find((m) => isPredictableMatch(m)) ||
+      upcomingMatches.find((m) => isPredictableMatch(m)) ||
+      null;
+    const focusMatchId = focusMatch ? focusMatch.id : null;
+
+    let body = '<h2 class="wc-section-title">Mes pronostics</h2>' + stats;
+    body += renderPredictPastPanel(pastMatches);
+
+    if (!dayKeys.length && !pastMatches.length) {
+      body += '<div class="wc-empty">Aucun match à pronostiquer.</div>';
+    } else {
+      dayKeys.forEach((dayKey) => {
+        let dayOffset = -1;
+        if (dayKey === todayKey) dayOffset = 0;
+        else if (dayKey === addDaysToParisDateKey(todayKey, 1)) dayOffset = 1;
+        body += renderPredictDayBlock(dayKey, byDay[dayKey], dayOffset, focusMatchId);
+      });
+    }
 
     return body;
   }
@@ -679,6 +752,7 @@
     } finally {
       state.predict.memberChecked = true;
       state.predict.memberLoading = false;
+      markPredictScrollFocus();
       render();
     }
   }
@@ -707,6 +781,7 @@
     state.predict.totalPoints = 0;
     state.predict.predictedCount = 0;
     state.predict.scoredCount = 0;
+    markPredictScrollFocus();
     showToast('Bienvenue ' + data.member.pseudo + ' !');
     render();
   }
@@ -830,6 +905,21 @@
         if (matchId) scheduleSave(matchId);
       });
     });
+
+    if (route.view === 'predict') {
+      scrollToPredictFocus();
+    }
+  }
+
+  function scrollToPredictFocus() {
+    if (!state.predict.scrollToFocus) return;
+    state.predict.scrollToFocus = false;
+    requestAnimationFrame(() => {
+      const el = document.getElementById('wc-predict-focus');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 
   async function loadData() {
@@ -848,6 +938,11 @@
     }
   }
 
-  window.addEventListener('hashchange', render);
+  window.addEventListener('hashchange', () => {
+    if (parseRoute().view === 'predict') {
+      markPredictScrollFocus();
+    }
+    render();
+  });
   loadData();
 })();

@@ -870,6 +870,59 @@
   color: var(--wc-muted);
 }
 
+.wc-predict-past {
+  margin-bottom: 1rem;
+  border: 2px solid var(--wc-border);
+  border-radius: 14px;
+  background: #eef2f6;
+  overflow: hidden;
+}
+
+.wc-predict-past__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--wc-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.wc-predict-past__summary::-webkit-details-marker {
+  display: none;
+}
+
+.wc-predict-past__count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--wc-muted);
+}
+
+.wc-predict-past__body {
+  padding: 0 0.75rem 0.85rem;
+  border-top: 1px solid var(--wc-border);
+}
+
+.wc-predict-past__day + .wc-predict-past__day {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--wc-border);
+}
+
+.wc-predict-past__day-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--wc-muted);
+}
+
+#wc-predict-focus {
+  scroll-margin-top: calc(0.75rem + var(--safe-top));
+}
+
 .wc-match--predict .wc-match__teams {
   align-items: center;
 }
