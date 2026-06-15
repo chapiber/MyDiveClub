@@ -956,17 +956,20 @@
   }
 
   function renderRegisterForm() {
+    const rememberedPseudo = getMemberPseudo();
     return (
       '<section class="wc-predict-register">' +
       '<div class="wc-predict-head">' +
       '<h2 class="wc-section-title wc-section-title--inline">Rejoindre la compétition</h2>' +
       renderPredictLeaderboardCta() +
       '</div>' +
-      '<p class="wc-predict-intro">Choisissez un pseudo unique pour la compétition.</p>' +
+      '<p class="wc-predict-intro">Première visite : choisissez un pseudo. Déjà inscrit sur un autre appareil ou après effacement des données : retapez votre pseudo pour vous reconnecter.</p>' +
       '<form class="wc-predict-form" data-action="register">' +
       '<label class="wc-field"><span class="wc-field__label">Pseudo</span>' +
-      '<input type="text" name="pseudo" class="wc-field__input" required maxlength="40" autocomplete="nickname" placeholder="Ex. BleuMarin"></label>' +
-      '<button type="submit" class="wc-btn wc-btn--primary">M\'inscrire</button>' +
+      '<input type="text" name="pseudo" class="wc-field__input" required maxlength="40" autocomplete="nickname" placeholder="Ex. Chapichapo"' +
+      (rememberedPseudo ? ' value="' + esc(rememberedPseudo) + '"' : '') +
+      '></label>' +
+      '<button type="submit" class="wc-btn wc-btn--primary">M\'inscrire / Me connecter</button>' +
       '</form></section>'
     );
   }
@@ -1305,7 +1308,7 @@
     state.predict.scoredCount = data.scored_count || 0;
   }
 
-  async function registerMember(pseudo) {
+  async function joinMember(pseudo) {
     const data = await api('members.php', {
       method: 'POST',
       body: JSON.stringify({ pseudo: pseudo.trim() }),
@@ -1313,13 +1316,13 @@
     setMemberSession(data.member.client_token, data.member.pseudo);
     state.predict.member = data.member;
     state.predict.memberChecked = true;
-    state.predict.predictions = {};
-    state.predict.matchPoints = {};
-    state.predict.totalPoints = 0;
-    state.predict.predictedCount = 0;
-    state.predict.scoredCount = 0;
+    await loadPredictions();
     markPredictScrollFocus();
-    showToast('Bienvenue ' + data.member.pseudo + ' !');
+    showToast(
+      data.created
+        ? 'Bienvenue ' + data.member.pseudo + ' !'
+        : 'Reconnecté — ' + data.member.pseudo
+    );
     render();
   }
 
@@ -1498,7 +1501,7 @@
         e.preventDefault();
         const pseudo = regForm.querySelector('[name="pseudo"]').value;
         try {
-          await registerMember(pseudo);
+          await joinMember(pseudo);
         } catch (err) {
           showToast(err.message || 'Inscription impossible');
         }

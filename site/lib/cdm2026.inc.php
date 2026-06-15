@@ -130,23 +130,56 @@ function portailClubCdmGetMemberByToken(PDO $pdo, string $token): array
     return $member;
 }
 
-/** @return array{id:int,pseudo:string,client_token:string,created_at:string} */
-function portailClubCdmCreateMember(PDO $pdo, array $body): array
+/** @return array{id:int,pseudo:string,client_token:string,created_at:string}|null */
+function portailClubCdmFindMemberByPseudo(PDO $pdo, string $pseudo): ?array
+{
+    $st = $pdo->prepare(
+        'SELECT id, pseudo, client_token, created_at
+         FROM PORTAIL_CLUB_cdm_members WHERE pseudo = ? LIMIT 1'
+    );
+    $st->execute([$pseudo]);
+    $row = $st->fetch();
+    if (!$row) {
+        return null;
+    }
+    return portailClubCdmFormatMember($row);
+}
+
+/**
+ * Inscription ou reconnexion par pseudo (nouveau token émis sur ce mobile).
+ *
+ * @return array{member: array, created: bool}
+ */
+function portailClubCdmJoinMember(PDO $pdo, array $body): array
 {
     $pseudo = portailClubCdmNormalizePseudo($body['pseudo'] ?? '');
-
-    $stCheck = $pdo->prepare('SELECT 1 FROM PORTAIL_CLUB_cdm_members WHERE pseudo = ? LIMIT 1');
-    $stCheck->execute([$pseudo]);
-    if ($stCheck->fetchColumn()) {
-        portailClubJsonFail('Ce pseudo est déjà pris.');
-    }
+    $existing = portailClubCdmFindMemberByPseudo($pdo, $pseudo);
 
     $token = portailClubCdmGenerateToken();
+    if ($existing !== null) {
+        $st = $pdo->prepare('UPDATE PORTAIL_CLUB_cdm_members SET client_token = ? WHERE id = ?');
+        $st->execute([$token, $existing['id']]);
+        return [
+            'member' => portailClubCdmGetMemberByToken($pdo, $token),
+            'created' => false,
+        ];
+    }
+
     $st = $pdo->prepare(
         'INSERT INTO PORTAIL_CLUB_cdm_members (pseudo, client_token) VALUES (?, ?)'
     );
     $st->execute([$pseudo, $token]);
-    return portailClubCdmGetMemberByToken($pdo, $token);
+    return [
+        'member' => portailClubCdmGetMemberByToken($pdo, $token),
+        'created' => true,
+    ];
+}
+
+/** @deprecated Utiliser portailClubCdmJoinMember */
+function portailClubCdmCreateMember(PDO $pdo, array $body): array
+{
+    $result = portailClubCdmJoinMember($pdo, $body);
+    return $result['member'];
 }
 
 function portailClubCdmMatchHasTeams(array $match): bool

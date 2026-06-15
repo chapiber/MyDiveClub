@@ -18,8 +18,8 @@ try {
 
     if ($method === 'POST') {
         $body = portailClubReadJsonBody();
-        $member = portailClubCdmCreateMember($pdo, $body);
-        portailClubJsonOk(['member' => $member]);
+        $result = portailClubCdmJoinMember($pdo, $body);
+        portailClubJsonOk($result);
     }
 
     portailClubJsonFail('Méthode non autorisée.', 405);
