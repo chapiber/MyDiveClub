@@ -7,7 +7,9 @@ description: >-
 disable-model-invocation: true
 ---
 
-# CDM 2026 Ã”Ã‡Ã¶ Mise â”œÃ¡ jour donnâ”œÂ®es
+# CDM 2026 ? Mise à jour données
+
+> **Automatisation NAS** : la MAJ quotidienne (n8n ? skills-runner) est désormais **programmatique** (`handler: cdm_update`, sans agent Cursor). Cette skill reste pour les **mises à jour manuelles** depuis l'IDE.
 
 ## Fichiers cibles
 
