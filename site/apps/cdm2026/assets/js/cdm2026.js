@@ -352,12 +352,14 @@
 
   function renderCupButton() {
     return (
-      '<button type="button" class="wc-cup-btn" data-action="leaderboard" aria-label="Synthèse du classement">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
+      '<button type="button" class="wc-cup-btn" data-action="leaderboard" aria-label="Classement des pronostics">' +
+      '<svg class="wc-cup-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
       '<path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 0 1-10 0V4z"/>' +
       '<path d="M5 4H3v2a4 4 0 0 0 4 4M19 4h2v2a4 4 0 0 1-4 4"/>' +
       '<path d="M9 2h6l1 2H8l1-2z"/>' +
-      '</svg></button>'
+      '</svg>' +
+      '<span class="wc-cup-btn__label">Classement</span>' +
+      '</button>'
     );
   }
 
