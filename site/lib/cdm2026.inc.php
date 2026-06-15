@@ -6,7 +6,6 @@ require_once __DIR__ . '/api.inc.php';
 const PORTAIL_CLUB_CDM_JSON_PATH = __DIR__ . '/../apps/cdm2026/data/cdm2026.json';
 const PORTAIL_CLUB_CDM_MAX_GOALS = 15;
 const PORTAIL_CLUB_CDM_PSEUDO_MAX = 40;
-const PORTAIL_CLUB_CDM_FIRST_NAME_MAX = 80;
 
 /** @var array<string, mixed>|null */
 $GLOBALS['portailClubCdmTournamentCache'] = null;
@@ -75,11 +74,6 @@ function portailClubCdmNormalizePseudo(mixed $value): string
     return $s;
 }
 
-function portailClubCdmNormalizeFirstName(mixed $value): string
-{
-    return portailClubTrimName($value, 'Prénom', PORTAIL_CLUB_CDM_FIRST_NAME_MAX);
-}
-
 function portailClubCdmGenerateToken(): string
 {
     return bin2hex(random_bytes(32));
@@ -100,23 +94,22 @@ function portailClubCdmTokenFromRequest(array $body = []): string
     return portailClubCdmNormalizeToken($token);
 }
 
-/** @return array{id:int,pseudo:string,first_name:string,client_token:string,created_at:string} */
+/** @return array{id:int,pseudo:string,client_token:string,created_at:string} */
 function portailClubCdmFormatMember(array $row): array
 {
     return [
         'id' => (int)$row['id'],
         'pseudo' => (string)$row['pseudo'],
-        'first_name' => (string)$row['first_name'],
         'client_token' => (string)$row['client_token'],
         'created_at' => (string)$row['created_at'],
     ];
 }
 
-/** @return array{id:int,pseudo:string,first_name:string,client_token:string,created_at:string}|null */
+/** @return array{id:int,pseudo:string,client_token:string,created_at:string}|null */
 function portailClubCdmFindMemberByToken(PDO $pdo, string $token): ?array
 {
     $st = $pdo->prepare(
-        'SELECT id, pseudo, first_name, client_token, created_at
+        'SELECT id, pseudo, client_token, created_at
          FROM PORTAIL_CLUB_cdm_members WHERE client_token = ? LIMIT 1'
     );
     $st->execute([$token]);
@@ -127,7 +120,7 @@ function portailClubCdmFindMemberByToken(PDO $pdo, string $token): ?array
     return portailClubCdmFormatMember($row);
 }
 
-/** @return array{id:int,pseudo:string,first_name:string,client_token:string,created_at:string} */
+/** @return array{id:int,pseudo:string,client_token:string,created_at:string} */
 function portailClubCdmGetMemberByToken(PDO $pdo, string $token): array
 {
     $member = portailClubCdmFindMemberByToken($pdo, $token);
@@ -137,11 +130,10 @@ function portailClubCdmGetMemberByToken(PDO $pdo, string $token): array
     return $member;
 }
 
-/** @return array{id:int,pseudo:string,first_name:string,client_token:string,created_at:string} */
+/** @return array{id:int,pseudo:string,client_token:string,created_at:string} */
 function portailClubCdmCreateMember(PDO $pdo, array $body): array
 {
     $pseudo = portailClubCdmNormalizePseudo($body['pseudo'] ?? '');
-    $firstName = portailClubCdmNormalizeFirstName($body['first_name'] ?? '');
 
     $stCheck = $pdo->prepare('SELECT 1 FROM PORTAIL_CLUB_cdm_members WHERE pseudo = ? LIMIT 1');
     $stCheck->execute([$pseudo]);
@@ -151,9 +143,9 @@ function portailClubCdmCreateMember(PDO $pdo, array $body): array
 
     $token = portailClubCdmGenerateToken();
     $st = $pdo->prepare(
-        'INSERT INTO PORTAIL_CLUB_cdm_members (pseudo, first_name, client_token) VALUES (?, ?, ?)'
+        'INSERT INTO PORTAIL_CLUB_cdm_members (pseudo, client_token) VALUES (?, ?)'
     );
-    $st->execute([$pseudo, $firstName, $token]);
+    $st->execute([$pseudo, $token]);
     return portailClubCdmGetMemberByToken($pdo, $token);
 }
 
@@ -348,7 +340,7 @@ function portailClubCdmComputeMemberStats(array $predictionsByMatch): array
 function portailClubCdmBuildLeaderboard(PDO $pdo): array
 {
     $st = $pdo->query(
-        'SELECT id, pseudo, first_name, client_token, created_at
+        'SELECT id, pseudo, client_token, created_at
          FROM PORTAIL_CLUB_cdm_members ORDER BY pseudo ASC'
     );
     $members = $st->fetchAll() ?: [];
@@ -368,8 +360,7 @@ function portailClubCdmBuildLeaderboard(PDO $pdo): array
         $rows[] = [
             'id' => $memberId,
             'pseudo' => (string)$member['pseudo'],
-            'first_name' => (string)$member['first_name'],
-            'display_name' => (string)$member['pseudo'] . ' (' . (string)$member['first_name'] . ')',
+            'display_name' => (string)$member['pseudo'],
             'total_points' => $stats['total_points'],
             'predicted_count' => $stats['predicted_count'],
             'scored_count' => $stats['scored_count'],

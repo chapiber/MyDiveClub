@@ -6,6 +6,7 @@
   const TEAM_KEY = 'portailClub_cdm2026_team';
   const GROUP_KEY = 'portailClub_cdm2026_group';
   const MEMBER_TOKEN_KEY = 'portailClub_cdm2026_member_token';
+  const MEMBER_PSEUDO_KEY = 'portailClub_cdm2026_member_pseudo';
   const INSTALL_DISMISS_KEY = 'portailClub_cdm2026_install_dismissed';
 
   let installCanPrompt = false;
@@ -79,9 +80,23 @@
     return localStorage.getItem(MEMBER_TOKEN_KEY) || '';
   }
 
+  function getMemberPseudo() {
+    return localStorage.getItem(MEMBER_PSEUDO_KEY) || '';
+  }
+
+  function setMemberSession(token, pseudo) {
+    if (token) {
+      localStorage.setItem(MEMBER_TOKEN_KEY, token);
+      if (pseudo) localStorage.setItem(MEMBER_PSEUDO_KEY, pseudo);
+    } else {
+      localStorage.removeItem(MEMBER_TOKEN_KEY);
+      localStorage.removeItem(MEMBER_PSEUDO_KEY);
+    }
+  }
+
   function setMemberToken(token) {
     if (token) localStorage.setItem(MEMBER_TOKEN_KEY, token);
-    else localStorage.removeItem(MEMBER_TOKEN_KEY);
+    else setMemberSession('', '');
   }
 
   async function api(path, options) {
@@ -92,7 +107,9 @@
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.ok === false) {
-      throw new Error(data.error || 'Erreur réseau');
+      const err = new Error(data.error || 'Erreur réseau');
+      err.status = res.status;
+      throw err;
     }
     return data;
   }
@@ -945,12 +962,10 @@
       '<h2 class="wc-section-title wc-section-title--inline">Rejoindre la compétition</h2>' +
       renderPredictLeaderboardCta() +
       '</div>' +
-      '<p class="wc-predict-intro">Choisissez un pseudo unique (affiché) et votre prénom (entre parenthèses).</p>' +
+      '<p class="wc-predict-intro">Choisissez un pseudo unique pour la compétition.</p>' +
       '<form class="wc-predict-form" data-action="register">' +
       '<label class="wc-field"><span class="wc-field__label">Pseudo</span>' +
       '<input type="text" name="pseudo" class="wc-field__input" required maxlength="40" autocomplete="nickname" placeholder="Ex. BleuMarin"></label>' +
-      '<label class="wc-field"><span class="wc-field__label">Prénom</span>' +
-      '<input type="text" name="first_name" class="wc-field__input" required maxlength="80" autocomplete="given-name" placeholder="Ex. Alex"></label>' +
       '<button type="submit" class="wc-btn wc-btn--primary">M\'inscrire</button>' +
       '</form></section>'
     );
@@ -1014,7 +1029,7 @@
     const member = state.predict.member;
     const stats =
       '<div class="wc-predict-stats">' +
-      '<p class="wc-predict-stats__name"><strong>' + esc(member.pseudo) + '</strong> (' + esc(member.first_name) + ')</p>' +
+      '<p class="wc-predict-stats__name"><strong>' + esc(member.pseudo) + '</strong></p>' +
       '<p class="wc-predict-stats__pts">' + esc(formatPoints(state.predict.totalPoints)) + ' pts · ' +
       state.predict.predictedCount + ' pronos · ' + state.predict.scoredCount + ' notés</p>' +
       '</div>';
@@ -1212,7 +1227,7 @@
     }
 
     const route = parseRoute();
-    if (route.view === 'predict' && !state.predict.memberChecked && !state.predict.memberLoading) {
+    if (!state.predict.memberChecked && !state.predict.memberLoading && getMemberToken()) {
       loadPredictMember();
     }
 
@@ -1245,22 +1260,36 @@
       render();
       return;
     }
+    let retryLater = false;
     try {
       const data = await api('members.php?token=' + encodeURIComponent(token));
       state.predict.member = data.member;
+      setMemberSession(data.member.client_token, data.member.pseudo);
       await loadPredictions();
-    } catch (_) {
-      setMemberToken('');
-      state.predict.member = null;
-      state.predict.predictions = {};
-      state.predict.matchPoints = {};
-      state.predict.totalPoints = 0;
-      state.predict.predictedCount = 0;
-      state.predict.scoredCount = 0;
+    } catch (e) {
+      if (e.status === 404) {
+        setMemberSession('', '');
+        state.predict.member = null;
+        state.predict.predictions = {};
+        state.predict.matchPoints = {};
+        state.predict.totalPoints = 0;
+        state.predict.predictedCount = 0;
+        state.predict.scoredCount = 0;
+      } else {
+        retryLater = true;
+        const cachedPseudo = getMemberPseudo();
+        if (cachedPseudo) {
+          state.predict.member = { pseudo: cachedPseudo, client_token: token };
+        }
+      }
     } finally {
-      state.predict.memberChecked = true;
       state.predict.memberLoading = false;
-      markPredictScrollFocus();
+      if (!retryLater) {
+        state.predict.memberChecked = true;
+      }
+      if (parseRoute().view === 'predict') {
+        markPredictScrollFocus();
+      }
       render();
     }
   }
@@ -1276,12 +1305,12 @@
     state.predict.scoredCount = data.scored_count || 0;
   }
 
-  async function registerMember(pseudo, firstName) {
+  async function registerMember(pseudo) {
     const data = await api('members.php', {
       method: 'POST',
-      body: JSON.stringify({ pseudo: pseudo.trim(), first_name: firstName.trim() }),
+      body: JSON.stringify({ pseudo: pseudo.trim() }),
     });
-    setMemberToken(data.member.client_token);
+    setMemberSession(data.member.client_token, data.member.pseudo);
     state.predict.member = data.member;
     state.predict.memberChecked = true;
     state.predict.predictions = {};
@@ -1468,9 +1497,8 @@
       regForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const pseudo = regForm.querySelector('[name="pseudo"]').value;
-        const firstName = regForm.querySelector('[name="first_name"]').value;
         try {
-          await registerMember(pseudo, firstName);
+          await registerMember(pseudo);
         } catch (err) {
           showToast(err.message || 'Inscription impossible');
         }
