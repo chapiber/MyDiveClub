@@ -1,17 +1,17 @@
 {
   "meta": {
-    "updatedAt": "2026-06-15T20:00:03.604Z",
+    "updatedAt": "2026-06-15T20:23:38.532Z",
     "updatedBy": "cloud",
     "sources": [
+      "espn.com",
+      "fifa.com",
+      "france24.com",
       "franceinfo",
+      "fwctimes.com",
       "lequipe",
       "matchcalendar.football",
-      "fwctimes.com",
       "ouest-france.fr",
-      "france24.com",
-      "skysports.com",
-      "espn.com",
-      "fifa.com"
+      "skysports.com"
     ],
     "tournament": {
       "start": "2026-06-11",
@@ -678,13 +678,23 @@
       "standings": [
         {
           "team": "ESP",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
           "gf": 0,
           "ga": 0,
-          "pts": 0
+          "pts": 1
+        },
+        {
+          "team": "CPV",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 0,
+          "ga": 0,
+          "pts": 1
         },
         {
           "team": "URU",
@@ -698,16 +708,6 @@
         },
         {
           "team": "KSA",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "CPV",
           "played": 0,
           "won": 0,
           "drawn": 0,
@@ -1221,9 +1221,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 0,
+        "away": 0,
+        "status": "finished"
       }
     },
     {
