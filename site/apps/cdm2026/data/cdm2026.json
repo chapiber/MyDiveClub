@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-06-16T20:00:02.487Z",
+    "updatedAt": "2026-06-16T22:00:02.279Z",
     "updatedBy": "cloud",
     "sources": [
       "espn.com",
@@ -730,23 +730,13 @@
       "standings": [
         {
           "team": "FRA",
-          "played": 0,
-          "won": 0,
+          "played": 1,
+          "won": 1,
           "drawn": 0,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "SEN",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 3,
+          "ga": 1,
+          "pts": 3
         },
         {
           "team": "NOR",
@@ -766,6 +756,16 @@
           "lost": 0,
           "gf": 0,
           "ga": 0,
+          "pts": 0
+        },
+        {
+          "team": "SEN",
+          "played": 1,
+          "won": 0,
+          "drawn": 0,
+          "lost": 1,
+          "gf": 1,
+          "ga": 3,
           "pts": 0
         }
       ]
@@ -1287,9 +1287,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 3,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
