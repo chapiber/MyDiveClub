@@ -65,8 +65,6 @@
 
   const saveTimers = {};
   const PREDICT_REFRESH_MS = 90000;
-  const RECENT_SCORED_LIMIT = 5;
-
   function showToast(msg) {
     if (!toastEl) return;
     toastEl.textContent = msg;
@@ -205,9 +203,35 @@
     return getSortedMatches().filter(isMatchScored);
   }
 
-  function getRecentlyScoredMatches(limit) {
-    const scored = getScoredMatchesSorted();
-    return scored.slice(-limit).reverse();
+  function getPredictScrollTargets(matches) {
+    let lastFinished = null;
+    for (let i = matches.length - 1; i >= 0; i -= 1) {
+      if (isMatchScored(matches[i])) {
+        lastFinished = matches[i];
+        break;
+      }
+    }
+
+    let nextUpcoming = null;
+    if (lastFinished) {
+      const idx = matches.indexOf(lastFinished);
+      if (idx >= 0 && idx < matches.length - 1) {
+        nextUpcoming = matches[idx + 1];
+      }
+    } else {
+      nextUpcoming = matches.find((m) => isPredictableMatch(m)) || matches[0] || null;
+    }
+
+    return { lastFinished, nextUpcoming };
+  }
+
+  function getPredictDayOffset(dayKey, todayKey) {
+    if (dayKey < todayKey) return -1;
+    if (dayKey === todayKey) return 0;
+    for (let offset = 1; offset <= 60; offset += 1) {
+      if (addDaysToParisDateKey(todayKey, offset) === dayKey) return offset;
+    }
+    return -1;
   }
 
   function matchShortLabel(m) {
@@ -712,7 +736,9 @@
         '</div>';
     }
 
-    const focusAttr = opts.focus ? ' id="wc-predict-focus"' : '';
+    let focusAttr = '';
+    if (opts.focus) focusAttr = ' id="wc-predict-focus"';
+    else if (opts.focusPrev) focusAttr = ' id="wc-predict-focus-prev"';
     const communityBtn = isMatchScored(m)
       ? '<button type="button" class="wc-match-board-btn" data-action="match-board" data-match-id="' + esc(m.id) + '">' +
         '<span class="wc-match-board-btn__icon" aria-hidden="true">👥</span>' +
@@ -1029,13 +1055,22 @@
     );
   }
 
-  function renderPredictDayBlock(dayKey, dayMatches, dayOffset, focusMatchId) {
+  function renderPredictDayBlock(dayKey, dayMatches, dayOffset, scrollTargets) {
     const sectionId = 'wc-predict-day-' + dayKey;
+    const lastId = scrollTargets.lastFinished ? scrollTargets.lastFinished.id : null;
+    const nextId = scrollTargets.nextUpcoming ? scrollTargets.nextUpcoming.id : null;
     return (
-      '<section class="wc-day-block" aria-labelledby="' + sectionId + '">' +
+      '<section class="wc-day-block wc-day-block--predict" aria-labelledby="' + sectionId + '">' +
       '<h3 id="' + sectionId + '" class="wc-section-title wc-section-title--day">' + esc(formatDaySectionTitle(dayKey, dayOffset)) + '</h3>' +
       '<div class="wc-day-block__matches">' +
-      dayMatches.map((m) => renderPredictMatchCard(m, { focus: m.id === focusMatchId })).join('') +
+      dayMatches
+        .map((m) =>
+          renderPredictMatchCard(m, {
+            focus: m.id === nextId,
+            focusPrev: m.id === lastId,
+          })
+        )
+        .join('') +
       '</div></section>'
     );
   }
@@ -1069,33 +1104,6 @@
       '</summary>' +
       '<div class="wc-predict-past__body">' + inner + '</div>' +
       '</details>'
-    );
-  }
-
-  function renderPredictPastPanel(pastMatches) {
-    return renderPastMatchesPanel(pastMatches, (m) => renderPredictMatchCard(m));
-  }
-
-  function renderRecentScoredSection(recentMatches) {
-    if (!recentMatches.length) return '';
-    let cards = '';
-    recentMatches.forEach((m) => {
-      const pred = state.predict.predictions[m.id];
-      const pts = state.predict.matchPoints[m.id];
-      cards +=
-        '<div class="wc-recent-score">' +
-        '<p class="wc-recent-score__title">' + esc(matchShortLabel(m)) + '</p>' +
-        renderPredictFinishedTeams(m, pred, pts) +
-        '<button type="button" class="wc-match-board-btn wc-match-board-btn--inline" data-action="match-board" data-match-id="' +
-        esc(m.id) +
-        '"><span class="wc-match-board-btn__icon" aria-hidden="true">👥</span><span>Voir tous les pronos</span></button>' +
-        '</div>';
-    });
-    return (
-      '<section class="wc-recent-scores" aria-label="Résultats récents">' +
-      '<h3 class="wc-recent-scores__heading">Résultats récents</h3>' +
-      '<div class="wc-recent-scores__list">' + cards + '</div>' +
-      '</section>'
     );
   }
 
@@ -1213,25 +1221,16 @@
       '</div>';
 
     const matches = getSortedMatches();
-    const recentScored = getRecentlyScoredMatches(RECENT_SCORED_LIMIT);
-    const pastMatches = matches.filter((m) => isPastLockedMatch(m) && !isMatchScored(m));
-    const upcomingMatches = matches.filter((m) => !isPastLockedMatch(m));
+    const scrollTargets = getPredictScrollTargets(matches);
 
     const byDay = {};
-    upcomingMatches.forEach((m) => {
+    matches.forEach((m) => {
       const dk = formatKickoff(m.kickoffParis).dateKey;
       if (!byDay[dk]) byDay[dk] = [];
       byDay[dk].push(m);
     });
     const dayKeys = Object.keys(byDay).sort();
-
     const todayKey = new Date().toLocaleDateString('fr-CA', { timeZone: 'Europe/Paris' });
-    const todayMatches = byDay[todayKey] || [];
-    const focusMatch =
-      todayMatches.find((m) => isPredictableMatch(m)) ||
-      upcomingMatches.find((m) => isPredictableMatch(m)) ||
-      null;
-    const focusMatchId = focusMatch ? focusMatch.id : null;
 
     let body =
       '<div class="wc-predict-head">' +
@@ -1239,18 +1238,15 @@
       renderPredictLeaderboardCta() +
       '</div>' +
       stats;
-    body += renderRecentScoredSection(recentScored);
-    body += renderPredictPastPanel(pastMatches);
 
-    if (!dayKeys.length && !pastMatches.length) {
+    if (!dayKeys.length) {
       body += '<div class="wc-empty">Aucun match à pronostiquer.</div>';
     } else {
+      body += '<div class="wc-predict-days">';
       dayKeys.forEach((dayKey) => {
-        let dayOffset = -1;
-        if (dayKey === todayKey) dayOffset = 0;
-        else if (dayKey === addDaysToParisDateKey(todayKey, 1)) dayOffset = 1;
-        body += renderPredictDayBlock(dayKey, byDay[dayKey], dayOffset, focusMatchId);
+        body += renderPredictDayBlock(dayKey, byDay[dayKey], getPredictDayOffset(dayKey, todayKey), scrollTargets);
       });
+      body += '</div>';
     }
 
     return body;
@@ -1863,10 +1859,31 @@
     if (!state.predict.scrollToFocus) return;
     state.predict.scrollToFocus = false;
     requestAnimationFrame(() => {
-      const el = document.getElementById('wc-predict-focus');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      requestAnimationFrame(() => {
+        const nextEl = document.getElementById('wc-predict-focus');
+        const prevEl = document.getElementById('wc-predict-focus-prev');
+        const anchorEl = nextEl || prevEl;
+        if (!anchorEl) return;
+
+        const section = anchorEl.closest('.wc-day-block');
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        const row = anchorEl.closest('.wc-day-block__matches');
+        if (!row) return;
+
+        if (prevEl && nextEl && prevEl.parentElement === row) {
+          const spanLeft = prevEl.offsetLeft - 12;
+          const spanRight = nextEl.offsetLeft + nextEl.offsetWidth + 12;
+          const targetScroll = (spanLeft + spanRight) / 2 - row.clientWidth / 2;
+          row.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+        } else {
+          const el = nextEl || prevEl;
+          const targetScroll = el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2;
+          row.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+        }
+      });
     });
   }
 

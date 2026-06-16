@@ -1191,8 +1191,39 @@
   color: var(--wc-muted);
 }
 
-#wc-predict-focus {
+#wc-predict-focus,
+#wc-predict-focus-prev {
   scroll-margin-top: calc(0.75rem + var(--safe-top));
+  scroll-margin-inline: 0.85rem;
+}
+
+.wc-predict-days .wc-day-block--predict {
+  margin-bottom: 1rem;
+  padding: 0.85rem 0 0.35rem;
+  border-radius: 18px;
+  background: var(--wc-surface);
+  border: 2px solid var(--wc-border);
+}
+
+.wc-predict-days .wc-day-block__matches {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0.85rem 0.5rem;
+  scroll-padding-inline: 0.85rem;
+}
+
+.wc-predict-days .wc-day-block__matches .wc-match {
+  flex: 0 0 min(88vw, 300px);
+  margin-bottom: 0;
+  scroll-snap-align: start;
+}
+
+.wc-predict-days .wc-section-title--day {
+  padding: 0 0.85rem;
 }
 
 .wc-match--predict .wc-match__teams {
