@@ -702,6 +702,23 @@
     if (finished) cls += ' wc-match--finished';
     if (locked) cls += ' wc-match--locked';
     if (state.predict.highlightMatchIds[m.id]) cls += ' wc-match--scored-new';
+    if (isMatchScored(m)) cls += ' wc-match--predict-done';
+    else if (pred) cls += ' wc-match--predict-saved';
+
+    let statusStrip = '';
+    if (isMatchScored(m)) {
+      statusStrip =
+        '<div class="wc-predict-status wc-predict-status--done">' +
+        '<span class="wc-predict-status__icon" aria-hidden="true">✓</span>' +
+        '<span>Match terminé</span>' +
+        '</div>';
+    } else if (pred) {
+      statusStrip =
+        '<div class="wc-predict-status wc-predict-status--saved">' +
+        '<span class="wc-predict-status__icon" aria-hidden="true">◎</span>' +
+        '<span>Pronostic enregistré · en attente</span>' +
+        '</div>';
+    }
 
     let badges = '';
     if (!hasTeams) {
@@ -747,6 +764,7 @@
 
     return (
       '<article class="' + cls + '" data-match-id="' + esc(m.id) + '"' + focusAttr + '>' +
+      statusStrip +
       '<div class="wc-match__time">' +
       '<div>' +
       '<div class="wc-match__datetime">' + esc(date) + ' · ' + esc(time) + '</div>' +
@@ -1237,7 +1255,13 @@
       '<h2 class="wc-section-title wc-section-title--inline">Mes pronostics</h2>' +
       renderPredictLeaderboardCta() +
       '</div>' +
-      stats;
+      stats +
+      '<div class="wc-predict-legend" aria-label="Légende des statuts">' +
+      '<span class="wc-predict-legend__item wc-predict-legend__item--done">' +
+      '<span class="wc-predict-legend__icon" aria-hidden="true">✓</span> Terminé</span>' +
+      '<span class="wc-predict-legend__item wc-predict-legend__item--saved">' +
+      '<span class="wc-predict-legend__icon" aria-hidden="true">◎</span> Prono en attente</span>' +
+      '</div>';
 
     if (!dayKeys.length) {
       body += '<div class="wc-empty">Aucun match à pronostiquer.</div>';
@@ -1865,24 +1889,17 @@
         const anchorEl = nextEl || prevEl;
         if (!anchorEl) return;
 
-        const section = anchorEl.closest('.wc-day-block');
-        if (section) {
-          section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (prevEl && nextEl) {
+          const prevRect = prevEl.getBoundingClientRect();
+          const nextRect = nextEl.getBoundingClientRect();
+          const spanTop = prevRect.top + window.scrollY;
+          const spanBottom = nextRect.bottom + window.scrollY;
+          const targetTop = (spanTop + spanBottom) / 2 - window.innerHeight / 2;
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+          return;
         }
 
-        const row = anchorEl.closest('.wc-day-block__matches');
-        if (!row) return;
-
-        if (prevEl && nextEl && prevEl.parentElement === row) {
-          const spanLeft = prevEl.offsetLeft - 12;
-          const spanRight = nextEl.offsetLeft + nextEl.offsetWidth + 12;
-          const targetScroll = (spanLeft + spanRight) / 2 - row.clientWidth / 2;
-          row.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
-        } else {
-          const el = nextEl || prevEl;
-          const targetScroll = el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2;
-          row.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
-        }
+        anchorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
     });
   }
