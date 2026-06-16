@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-06-16T04:00:06.230Z",
+    "updatedAt": "2026-06-16T05:18:57.154Z",
     "updatedBy": "cloud",
     "sources": [
       "espn.com",
@@ -10,6 +10,7 @@
       "fwctimes.com",
       "lequipe",
       "matchcalendar.football",
+      "openfootball/worldcup.json",
       "ouest-france.fr",
       "skysports.com"
     ],
@@ -626,44 +627,44 @@
       ],
       "standings": [
         {
-          "team": "BEL",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
           "team": "IRN",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "EGY",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 2,
+          "ga": 2,
+          "pts": 1
         },
         {
           "team": "NZL",
-          "played": 0,
+          "played": 1,
           "won": 0,
-          "drawn": 0,
+          "drawn": 1,
           "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
+          "gf": 2,
+          "ga": 2,
+          "pts": 1
+        },
+        {
+          "team": "BEL",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
+        },
+        {
+          "team": "EGY",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
         }
       ]
     },
@@ -676,6 +677,26 @@
         "CPV"
       ],
       "standings": [
+        {
+          "team": "URU",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
+        },
+        {
+          "team": "KSA",
+          "played": 1,
+          "won": 0,
+          "drawn": 1,
+          "lost": 0,
+          "gf": 1,
+          "ga": 1,
+          "pts": 1
+        },
         {
           "team": "ESP",
           "played": 1,
@@ -695,26 +716,6 @@
           "gf": 0,
           "ga": 0,
           "pts": 1
-        },
-        {
-          "team": "URU",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
-        },
-        {
-          "team": "KSA",
-          "played": 0,
-          "won": 0,
-          "drawn": 0,
-          "lost": 0,
-          "gf": 0,
-          "ga": 0,
-          "pts": 0
         }
       ]
     },
@@ -1199,9 +1200,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 1,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
@@ -1242,9 +1243,9 @@
         "freeToAir": false
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 2,
+        "away": 2,
+        "status": "finished"
       }
     },
     {
@@ -1264,9 +1265,9 @@
         "freeToAir": true
       },
       "score": {
-        "home": null,
-        "away": null,
-        "status": "scheduled"
+        "home": 1,
+        "away": 1,
+        "status": "finished"
       }
     },
     {
