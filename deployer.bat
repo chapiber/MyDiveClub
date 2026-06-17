@@ -34,7 +34,7 @@ echo [INFO] Generation version.json (%LOGTS%) sur NAS...
 powershell -NoProfile -Command "$v = @{ version = '%LOGTS%'; builtAt = (Get-Date -Format 'o'); label = (Get-Date -Format 'dd/MM/yyyy HH:mm') }; $json = $v | ConvertTo-Json -Compress; [IO.File]::WriteAllText('%DEST%\version.json',$json,[Text.UTF8Encoding]::new($false))"
 
 echo [INFO] Cache-bust __BUILD_VERSION__ = %LOGTS% sur NAS...
-powershell -NoProfile -Command "$bv='%LOGTS%'; $dest='%DEST%'; $files=@((Join-Path $dest 'apps\formations\index.html'),(Join-Path $dest 'apps\materiel\index.html'),(Join-Path $dest 'apps\ipd\index.html'),(Join-Path $dest 'index.html'),(Join-Path $dest 'install.html')); foreach($f in $files){ if(Test-Path $f){ $c=[IO.File]::ReadAllText($f,[Text.UTF8Encoding]::new($false)) -replace '__BUILD_VERSION__',$bv; [IO.File]::WriteAllText($f,$c,[Text.UTF8Encoding]::new($false)) } }"
+powershell -NoProfile -Command "$bv='%LOGTS%'; $dest='%DEST%'; $files=@((Join-Path $dest 'apps\formations\index.html'),(Join-Path $dest 'apps\materiel\index.html'),(Join-Path $dest 'index.html'),(Join-Path $dest 'install.html')); foreach($f in $files){ if(Test-Path $f){ $c=[IO.File]::ReadAllText($f,[Text.UTF8Encoding]::new($false)) -replace '__BUILD_VERSION__',$bv; [IO.File]::WriteAllText($f,$c,[Text.UTF8Encoding]::new($false)) } }"
 
 echo [OK] Deploiement termine — https://diveapps.serveblog.net/portailClub/
 exit /b 0
