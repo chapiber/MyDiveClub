@@ -41,6 +41,19 @@ Tables :
   - `PORTAIL_CLUB_materiel_equipment`, `PORTAIL_CLUB_materiel_equipment_state_log`
   - `PORTAIL_CLUB_materiel_interventions`, `PORTAIL_CLUB_materiel_intervention_check_values`
 
+## Débrief IPD (compagnon mares-ipd)
+
+```
+site/apps/ipd/               # Historique lecture seule + instructions compagnon
+site/api/ipd/*.php           # REST JSON (sessions, détail)
+site/lib/ipd.inc.php         # logique métier
+site/sql/025_ipd_init.sql    # tables PORTAIL_CLUB_ipd_*
+site/tools/e2e_ipd.php       # smoke test CLI
+docs/integration-ipd.md      # architecture Option 1 (Flutter + API)
+```
+
+L'app **mares-ipd** (Flutter) conserve BLE + libdivecomputer ; elle pousse les résultats via `POST api/ipd/sessions.php`.
+
 ## Suivi Matériel (V1)
 
 ```

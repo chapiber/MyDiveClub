@@ -1,0 +1,272 @@
+/* Débrief IPD — SPA lecture seule + instructions compagnon */
+
+.ipd-app {
+  min-height: 100dvh;
+  padding: calc(0.75rem + var(--safe-top)) 1rem calc(5rem + var(--safe-bottom));
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .ipd-app {
+    max-width: 42rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+.ipd-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.ipd-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 14px;
+  background: var(--pc-surface);
+  color: var(--pc-accent);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.ipd-back:active {
+  background: var(--pc-accent-soft);
+  transform: scale(0.98);
+}
+
+.ipd-topbar__brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.ipd-eyebrow {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pc-accent);
+}
+
+.ipd-title {
+  margin: 0.1rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ipd-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: var(--pc-muted);
+}
+
+.ipd-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ipd-tab {
+  flex: 1;
+  min-height: 2.75rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 14px;
+  background: var(--pc-surface);
+  color: var(--pc-text);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ipd-tab--active {
+  border-color: var(--pc-accent);
+  background: var(--pc-accent-soft);
+  color: var(--pc-accent);
+}
+
+.ipd-card {
+  background: var(--pc-surface);
+  border: 2px solid var(--pc-border);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.ipd-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.ipd-card p,
+.ipd-card li {
+  margin: 0.35rem 0;
+  font-size: 0.88rem;
+  color: var(--pc-muted);
+  line-height: 1.45;
+}
+
+.ipd-card ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ipd-card strong {
+  color: var(--pc-text);
+}
+
+.ipd-list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 2px solid var(--pc-border);
+  border-radius: 14px;
+  background: var(--pc-surface);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.55rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+
+.ipd-list-item:active {
+  background: var(--pc-accent-soft);
+}
+
+.ipd-list-item__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.ipd-list-item__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--pc-muted);
+}
+
+.ipd-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ipd-badge--ok {
+  background: #e6f6ee;
+  color: #0d7a45;
+}
+
+.ipd-badge--warn {
+  background: #fff4e5;
+  color: #9a5b00;
+}
+
+.ipd-badge--ko {
+  background: #fdecea;
+  color: #b42318;
+}
+
+.ipd-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ipd-metric {
+  background: var(--pc-bg);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+}
+
+.ipd-metric__label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--pc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ipd-metric__value {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.ipd-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--pc-muted);
+  font-size: 0.9rem;
+}
+
+.ipd-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + var(--safe-bottom));
+  transform: translateX(-50%) translateY(120%);
+  max-width: 22rem;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  background: #1a2b33;
+  color: #fff;
+  font-size: 0.85rem;
+  z-index: 100;
+  transition: transform 0.25s ease;
+}
+
+.ipd-toast--show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.ipd-loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--pc-muted);
+}
+
+.ipd-event {
+  border-top: 1px solid var(--pc-border);
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.ipd-event:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.ipd-event h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+}
+
+.ipd-criteria {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ipd-criteria li {
+  font-size: 0.8rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--pc-border);
+}
+
+.ipd-criteria li:last-child {
+  border-bottom: none;
+}
