@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/api.inc.php';
+require_once __DIR__ . '/formations.inc.php';
 
 const PORTAIL_CLUB_IPD_VERDICTS = ['conforme', 'a_ameliorer', 'non_conforme', 'non_applicable'];
 const PORTAIL_CLUB_IPD_LEVELS = ['n2', 'n3', 'n4', 'mf1'];
