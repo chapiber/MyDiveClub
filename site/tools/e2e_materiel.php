@@ -354,6 +354,46 @@ try {
         echo "SKIP compliance (type bcd absent)\n";
     }
 
+    $locations = portailClubMaterielListLocations($pdo, true);
+    assertTrue(count($locations) >= 6, 'locations seed (6 lieux)');
+
+    $register = portailClubMaterielGetSecurityRegister($pdo);
+    assertTrue(isset($register['matrix']) && count($register['matrix']) >= 6, 'security register matrix');
+    assertTrue(($register['alert_count'] ?? 0) >= 1, 'security alert count (Rederis O2)');
+
+    $caimanLoc = null;
+    foreach ($locations as $loc) {
+        if ($loc['slug'] === 'caiman') {
+            $caimanLoc = $loc;
+            break;
+        }
+    }
+    assertTrue($caimanLoc !== null, 'location caiman');
+    if ($caimanLoc !== null) {
+        $patched = portailClubMaterielPatchSecurityCell($pdo, [
+            'location_id' => $caimanLoc['id'],
+            'type_slug' => 'o2',
+            'supplier' => 'LINDE',
+            'capacity' => '5L / 1m3',
+            'revision_due_on' => '2030-06-01',
+            'gauge_status' => 'full_ok',
+        ]);
+        assertTrue(($patched['security_status'] ?? '') === 'green', 'patch security cell O2');
+        assertTrue(($patched['specs_json']['supplier'] ?? '') === 'LINDE', 'patch security specs');
+    }
+
+    $epiList = portailClubMaterielListEquipment($pdo, ['domain' => 'epi', 'limit' => 5]);
+    $epiItems = $epiList['items'] ?? $epiList;
+    foreach ($epiItems as $row) {
+        assertTrue(($row['type_domain'] ?? 'epi') === 'epi', 'parc domain epi only');
+        break;
+    }
+
+    $secList = portailClubMaterielListEquipment($pdo, ['domain' => 'security', 'limit' => 5]);
+    $secItems = $secList['items'] ?? $secList;
+    assertTrue(count($secItems) >= 1, 'security equipment exists');
+    assertTrue(($secItems[0]['type_domain'] ?? '') === 'security', 'security domain filter');
+
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$created['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdSameId['id']]);
     $pdo->prepare('DELETE FROM PORTAIL_CLUB_materiel_equipment WHERE id = ?')->execute([(int)$createdNone['id']]);

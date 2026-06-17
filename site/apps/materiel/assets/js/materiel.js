@@ -17,6 +17,7 @@
   const PARAM_SECTIONS = [
     ['settings', 'Réglages'],
     ['structures', 'Structures'],
+    ['locations', 'Localisations'],
     ['roles', 'Rôles'],
     ['persons', 'Personnes'],
     ['types', 'Types EPI'],
@@ -63,6 +64,9 @@
     parcPage: 1,
     parcPagination: null,
     pairCandidates: [],
+    securityRegister: null,
+    securityAlertOnly: false,
+    locations: [],
   };
 
   function showToast(msg) {
@@ -151,7 +155,7 @@
       const paramSection = PARAM_SECTIONS.some(([id]) => id === parts[1]) ? parts[1] : 'settings';
       return { view: 'tab', tab: 'param', paramSection };
     }
-    const tab = ['parc', 'stats', 'param'].includes(parts[0]) ? parts[0] : 'parc';
+    const tab = ['parc', 'securite', 'stats', 'param'].includes(parts[0]) ? parts[0] : 'parc';
     const paramSection = parts[1] || 'settings';
     return { view: 'tab', tab, paramSection };
   }
@@ -250,6 +254,7 @@
 
   const NAV_TABS = [
     { id: 'parc', label: 'Parc', icon: '<path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/>' },
+    { id: 'securite', label: 'Sécurité', icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' },
     { id: 'stats', label: 'Stats', icon: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 17V11"/><path d="M12 17V7"/><path d="M16 17v-4"/>' },
     { id: 'param', label: 'Param', icon: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
   ];
@@ -363,8 +368,12 @@
     });
   }
 
+  function epiTypes() {
+    return (state.catalog?.types || []).filter((t) => (t.domain || 'epi') === 'epi');
+  }
+
   function renderFilterPanel() {
-    const typeOpts = (state.catalog?.types || []).map((t) =>
+    const typeOpts = epiTypes().map((t) =>
       `<option value="${t.id}"${String(state.filters.type_id) === String(t.id) ? ' selected' : ''}>${esc(t.label)}</option>`
     ).join('');
     const nfcBtn = nfcScanAvailable()
@@ -1037,7 +1046,7 @@
   }
 
   async function loadEquipmentList() {
-    let q = '/equipment.php?';
+    let q = '/equipment.php?domain=epi&';
     if (state.filters.q) q += 'q=' + encodeURIComponent(state.filters.q) + '&';
     if (state.filters.state) q += 'state=' + encodeURIComponent(state.filters.state) + '&';
     if (state.filters.type_id) q += 'type_id=' + encodeURIComponent(state.filters.type_id) + '&';
@@ -1100,6 +1109,283 @@
   async function loadStats() {
     const data = await api('/stats.php?' + structureQueryParam().replace(/^&/, ''));
     state.stats = data.stats;
+  }
+
+  async function loadSecurityRegister() {
+    let q = '/security_register.php?';
+    if (state.securityAlertOnly) q += 'alert_only=1&';
+    q += structureQueryParam().replace(/^&/, '');
+    const data = await api(q);
+    state.securityRegister = data;
+  }
+
+  function bindSecurityQuickEdit(container) {
+    const Sec = window.MaterielSecurity;
+    if (!Sec) return;
+
+    function openSheet(locationId, typeSlug) {
+      const reg = state.securityRegister;
+      if (!reg) return;
+      const row = reg.matrix[String(locationId)];
+      if (!row) return;
+      const cell = row.cells[typeSlug];
+      const existing = document.querySelector('[data-sec-sheet]');
+      if (existing) existing.remove();
+      const wrap = document.createElement('div');
+      wrap.innerHTML = Sec.renderQuickEditForm(row.location, typeSlug, cell);
+      const sheet = wrap.firstElementChild;
+      document.body.appendChild(sheet);
+      sheet.querySelectorAll('[data-sec-sheet-close]').forEach((el) => {
+        el.addEventListener('click', () => sheet.remove());
+      });
+      sheet.querySelector('[data-goto-item]')?.addEventListener('click', (ev) => {
+        const id = ev.currentTarget.dataset.gotoItem;
+        sheet.remove();
+        nav('#/item/' + id);
+      });
+      sheet.querySelector('#sm-sec-quick-form')?.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const form = ev.target;
+        const slug = form.dataset.typeSlug;
+        try {
+          await api('/security_register.php', {
+            method: 'PATCH',
+            body: JSON.stringify(Sec.collectQuickEditPayload(form, slug)),
+          });
+          showToast('Registre mis à jour');
+          sheet.remove();
+          await loadSecurityRegister();
+          renderSecurite();
+        } catch (err) { showToast(err.message); }
+      });
+    }
+
+    (container || root).querySelectorAll('[data-location-id][data-type-slug]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        openSheet(btn.dataset.locationId, btn.dataset.typeSlug);
+      });
+    });
+  }
+
+  function renderSecuriteFilters() {
+    const alertOn = state.securityAlertOnly;
+    return `<div class="sm-sec-filters">
+      <label class="sm-toggle"><input type="checkbox" id="sm-sec-alert-only"${alertOn ? ' checked' : ''}>
+        Alertes uniquement</label>
+    </div>`;
+  }
+
+  function renderSecurite() {
+    const Sec = window.MaterielSecurity;
+    const reg = state.securityRegister;
+    if (!Sec || !reg) {
+      root.innerHTML = renderTopbar('Registre sécurité') + '<p class="sm-loading">Chargement…</p>' + renderNavFab('securite');
+      bindNavFab(root);
+      return;
+    }
+
+    const lastUpd = reg.last_updated ? Sec.formatDateDisplay(String(reg.last_updated).slice(0, 10)) : '—';
+    const alertBanner = reg.alert_count > 0
+      ? `<div class="sm-sec-alert-banner" role="status">
+          <strong>${reg.alert_count}</strong> localisation(s) en alerte
+        </div>`
+      : '';
+
+    const desktop = Sec.renderDesktopTable(reg);
+    const mobile = `<div class="sm-sec-cards">${Sec.renderMobileCards(reg)}</div>`;
+
+    root.innerHTML = `
+      ${renderTopbar('Registre sécurité')}
+      ${renderFilterPanel()}
+      <div class="sm-sec-header">
+        <p class="sm-hint">Date dernière MAJ : <strong>${esc(lastUpd)}</strong></p>
+        ${alertBanner}
+        ${renderSecuriteFilters()}
+      </div>
+      <div class="sm-sec-desktop">${desktop}</div>
+      ${mobile}
+      ${renderNavFab('securite')}`;
+
+    bindNav(root);
+    bindNavFab(root);
+    bindStructureFilter(root);
+    bindSecurityQuickEdit(root);
+    root.querySelector('#sm-sec-alert-only')?.addEventListener('change', async (e) => {
+      state.securityAlertOnly = e.target.checked;
+      await loadSecurityRegister();
+      renderSecurite();
+    });
+  }
+
+  async function renderSecurityItem(id, e) {
+    const Sec = window.MaterielSecurity;
+    const specs = e.specs_json || {};
+    const status = e.security_status || 'none';
+    const alerts = (e.security_alerts || []).map((a) => `<li>${esc(a)}</li>`).join('');
+    const slug = e.type_slug;
+
+    let specFields = '';
+    if (slug === 'o2') {
+      specFields = `
+        <div class="sm-field"><label class="sm-label">Fournisseur</label><input class="sm-input" name="supplier" value="${esc(specs.supplier || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Capacité</label><input class="sm-input" name="capacity" value="${esc(specs.capacity || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Date révision</label><input class="sm-input" name="revision_due_on" type="date" value="${esc(specs.revision_due_on || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Jauge</label>
+          <select class="sm-select" name="gauge_status">
+            <option value=""${!specs.gauge_status ? ' selected' : ''}>—</option>
+            <option value="full_ok"${specs.gauge_status === 'full_ok' ? ' selected' : ''}>Plein (OK)</option>
+            <option value="low"${specs.gauge_status === 'low' ? ' selected' : ''}>KO (1/2 à 1/4)</option>
+            <option value="empty"${specs.gauge_status === 'empty' ? ' selected' : ''}>Vide</option>
+          </select></div>`;
+    } else if (slug === 'bavu') {
+      specFields = `
+        <div class="sm-field"><label class="sm-label">Modèle</label><input class="sm-input" name="model" value="${esc(specs.model || e.model || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Date péremption</label><input class="sm-input" name="expiry_on" type="date" value="${esc(specs.expiry_on || e.expiry_on || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Masques (taille)</label><input class="sm-input" name="mask_sizes" value="${esc(specs.mask_sizes || '')}"></div>`;
+    } else if (slug === 'dae') {
+      specFields = `
+        <div class="sm-field"><label class="sm-label">Modèle</label><input class="sm-input" name="model" value="${esc(specs.model || e.model || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Date batterie</label><input class="sm-input" name="battery_on" type="date" value="${esc(specs.battery_on || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Date électrodes</label><input class="sm-input" name="electrodes_on" type="date" value="${esc(specs.electrodes_on || '')}"></div>`;
+    } else {
+      specFields = `
+        <div class="sm-field"><label class="sm-label">État</label><input class="sm-input" name="status" value="${esc(specs.status || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Quantité</label><input class="sm-input" name="quantity" value="${esc(specs.quantity || '')}"></div>
+        <div class="sm-field"><label class="sm-label">Notes</label><textarea class="sm-textarea" name="notes">${esc(specs.notes || e.notes || '')}</textarea></div>`;
+    }
+
+    root.innerHTML = `
+      ${renderTopbar('Fiche sécurité', '#/securite', { subtitle: e.type_label })}
+      <header class="sm-item-hero">
+        <div class="sm-item-hero__head">
+          <h1 class="sm-item-hero__id">${esc(e.public_id)}</h1>
+          <span class="sm-sec-status-badge sm-sec-status-badge--${status}">${esc(status === 'none' ? '—' : status)}</span>
+        </div>
+        <p class="sm-item-hero__meta">${esc(e.type_label)} · ${esc(e.location_label || '—')}</p>
+      </header>
+      <section class="sm-panel sm-panel--compliance" aria-label="Conformité">
+        <h2 class="sm-panel__title">Conformité</h2>
+        ${alerts ? `<ul class="sm-sec-alerts">${alerts}</ul>` : '<p class="sm-hint">Aucune alerte active.</p>'}
+      </section>
+      <section class="sm-panel sm-panel--form">
+        <h2 class="sm-panel__title">Données registre</h2>
+        <form id="sm-security-item-form">${specFields}
+          <div class="sm-panel__actions sm-panel__actions--end">
+            <button type="submit" class="sm-btn sm-btn--primary">Enregistrer</button>
+          </div>
+        </form>
+      </section>
+      <section class="sm-panel sm-panel--timeline">
+        <h2 class="sm-panel__title">Interventions</h2>
+        ${renderTimelineInterventions(e.interventions || [], e)}
+      </section>
+      ${renderNavFab('securite')}`;
+
+    bindNav(root);
+    bindNavFab(root);
+    root.querySelector('#sm-security-item-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const body = { specs_json: {} };
+      fd.forEach((val, key) => { body.specs_json[key] = val; });
+      if (slug === 'o2') {
+        body.specs_json.supplier = fd.get('supplier');
+      }
+      try {
+        await api('/equipment.php?id=' + id, { method: 'PATCH', body: JSON.stringify(body) });
+        showToast('Fiche enregistrée');
+        await renderItem(id);
+      } catch (err) { showToast(err.message); }
+    });
+  }
+
+  function renderLocationList(locations) {
+    return locations.map((loc) => `
+      <div class="sm-card sm-location-card" data-location-id="${loc.id}">
+        <div class="sm-card__row">
+          <div>
+            <strong>${esc(loc.label)}</strong>
+            ${loc.active ? '' : ' <span class="sm-card__meta">(inactif)</span>'}
+            <p class="sm-card__meta">${esc(loc.slug)} · ${loc.security_count} fiche(s) sécurité</p>
+          </div>
+          <button type="button" class="sm-btn sm-btn--ghost sm-btn--compact" data-edit-location="${loc.id}">Modifier</button>
+        </div>
+        <form class="sm-location-form sm-card--nested" id="sm-location-form-${loc.id}" hidden>
+          <div class="sm-field"><label class="sm-label">Nom</label>
+            <input class="sm-input" name="label" value="${esc(loc.label)}" required></div>
+          <div class="sm-field"><label class="sm-label">Code</label>
+            <input class="sm-input" name="slug" value="${esc(loc.slug)}"></div>
+          <div class="sm-field"><label class="sm-label">Ordre</label>
+            <input class="sm-input" name="sort_order" type="number" value="${loc.sort_order}"></div>
+          <label class="sm-toggle"><input type="checkbox" name="active"${loc.active ? ' checked' : ''}> Actif</label>
+          <div class="sm-field"><label class="sm-label">Structures associées (filtre)</label>
+            <div class="sm-check-group">
+              ${state.structures.map((s) => `
+                <label class="sm-toggle"><input type="checkbox" name="structure_${s.id}"
+                  ${(loc.structure_ids || []).includes(s.id) ? 'checked' : ''}> ${esc(s.label)}</label>`).join('')}
+            </div>
+          </div>
+          <div class="sm-field"><label class="sm-label">Notes</label>
+            <textarea class="sm-textarea" name="notes">${esc(loc.notes || '')}</textarea></div>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--compact">Enregistrer</button>
+        </form>
+      </div>`).join('');
+  }
+
+  function bindLocationParamForms(locations) {
+    root.querySelectorAll('[data-edit-location]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const form = root.querySelector('#sm-location-form-' + btn.dataset.editLocation);
+        if (form) form.hidden = !form.hidden;
+      });
+    });
+    locations.forEach((loc) => {
+      const form = root.querySelector('#sm-location-form-' + loc.id);
+      if (!form) return;
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(form);
+        const structureIds = state.structures
+          .filter((s) => fd.get('structure_' + s.id))
+          .map((s) => s.id);
+        try {
+          await api('/locations.php?id=' + loc.id, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              label: fd.get('label'),
+              slug: fd.get('slug'),
+              sort_order: parseInt(fd.get('sort_order'), 10) || 0,
+              active: !!fd.get('active'),
+              notes: fd.get('notes'),
+              structure_ids: structureIds,
+            }),
+          });
+          showToast('Localisation mise à jour');
+          await renderParam('locations');
+        } catch (err) { showToast(err.message); }
+      });
+    });
+    root.querySelector('#sm-location-add-form')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const structureIds = state.structures
+        .filter((s) => fd.get('structure_' + s.id))
+        .map((s) => s.id);
+      try {
+        await api('/locations.php', {
+          method: 'POST',
+          body: JSON.stringify({
+            label: fd.get('label'),
+            slug: fd.get('slug'),
+            sort_order: parseInt(fd.get('sort_order'), 10) || 0,
+            notes: fd.get('notes'),
+            structure_ids: structureIds,
+          }),
+        });
+        showToast('Localisation ajoutée');
+        await renderParam('locations');
+      } catch (err) { showToast(err.message); }
+    });
   }
 
   function renderParc() {
@@ -1385,6 +1671,10 @@
     const data = await api('/equipment.php?id=' + id);
     state.item = data.equipment;
     const e = state.item;
+    if (e.type_domain === 'security' || (e.type_slug && window.MaterielSecurity?.TYPE_LABELS[e.type_slug])) {
+      await renderSecurityItem(id, e);
+      return;
+    }
     if (e.type_slug === 'regulator') {
       await renderRegulatorItem(id, e);
       return;
@@ -1419,7 +1709,7 @@
           <div class="sm-field sm-field--inline">
             <label class="sm-label" for="sm-edit-type">Type</label>
             <select id="sm-edit-type" class="sm-select" name="type_id" required>
-              ${(state.catalog?.types || []).filter((t) => t.trackable).map((t) =>
+              ${epiTypes().filter((t) => t.trackable).map((t) =>
                 `<option value="${t.id}"${e.type_id === t.id ? ' selected' : ''}>${esc(t.label)}</option>`).join('')}
             </select>
           </div>
@@ -1848,7 +2138,7 @@
     const idLocked = !!scannedId;
     let suggestId = scannedId;
     if (!suggestId) {
-      const firstTypeId = (state.catalog?.types || []).filter((t) => t.trackable)[0]?.id;
+      const firstTypeId = epiTypes().filter((t) => t.trackable)[0]?.id;
       let suggestQ = '/equipment.php?suggest_id=1';
       if (defaultStructId) suggestQ += '&structure_id=' + defaultStructId;
       if (firstTypeId) suggestQ += '&type_id=' + firstTypeId;
@@ -1857,7 +2147,7 @@
     }
     const structOpts = activeStructs.map((s) =>
       `<option value="${s.id}">${esc(s.label)}</option>`).join('');
-    const typeOpts = (state.catalog?.types || []).filter((t) => t.trackable).map((t) =>
+    const typeOpts = epiTypes().filter((t) => t.trackable).map((t) =>
       `<option value="${t.id}">${esc(t.label)}</option>`).join('');
     const willLinkNfc = !!(opts.nfcLinked || opts.blankTag);
     const nfcGraveChecked = willLinkNfc ? ' checked' : '';
@@ -2707,6 +2997,11 @@
       paramStructures = await loadParamStructures();
     }
 
+    if (section === 'locations') {
+      const locRes = await api('/locations.php');
+      state.locations = locRes.locations;
+    }
+
     if (section === 'persons') {
       const personsRes = await api('/persons.php?all=1');
       state.persons = personsRes.persons;
@@ -2735,6 +3030,22 @@
       </form>`;
     } else if (section === 'structures') {
       body = renderStructList(paramStructures);
+    } else if (section === 'locations') {
+      body = renderLocationList(state.locations || []) +
+        `<form id="sm-location-add-form" class="sm-card sm-card--form">
+          <h2 class="sm-section-title">Ajouter une localisation</h2>
+          <div class="sm-field"><label class="sm-label">Nom</label><input class="sm-input" name="label" required placeholder="ex. Caiman"></div>
+          <div class="sm-field"><label class="sm-label">Code (optionnel)</label><input class="sm-input" name="slug" placeholder="ex. caiman"></div>
+          <div class="sm-field"><label class="sm-label">Ordre</label><input class="sm-input" name="sort_order" type="number" value="0"></div>
+          <div class="sm-field"><label class="sm-label">Structures associées</label>
+            <div class="sm-check-group">
+              ${state.structures.map((s) => `
+                <label class="sm-toggle"><input type="checkbox" name="structure_${s.id}"> ${esc(s.label)}</label>`).join('')}
+            </div>
+          </div>
+          <div class="sm-field"><label class="sm-label">Notes</label><textarea class="sm-textarea" name="notes"></textarea></div>
+          <button type="submit" class="sm-btn sm-btn--primary sm-btn--block">Ajouter</button>
+        </form>`;
     } else if (section === 'roles') {
       body = state.roles.map((r) => `<div class="sm-card"><strong>${esc(r.label)}</strong><br><small>${esc(r.slug)}</small></div>`).join('') +
         `<form id="sm-role-form" class="sm-card">
@@ -2793,6 +3104,9 @@
     bindParamSegments(root);
     if (section === 'structures') {
       bindStructRows(root);
+    }
+    if (section === 'locations') {
+      bindLocationParamForms(state.locations || []);
     }
 
     root.querySelectorAll('.sm-type-card').forEach((el) => {
@@ -3214,6 +3528,9 @@
       } else if (route.tab === 'stats') {
         await loadStats();
         renderStats();
+      } else if (route.tab === 'securite') {
+        await loadSecurityRegister();
+        renderSecurite();
       } else if (route.tab === 'param') {
         await renderParam(route.paramSection);
       } else {

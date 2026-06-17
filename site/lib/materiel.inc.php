@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/api.inc.php';
 require_once __DIR__ . '/materiel_manufacturer_renewal.inc.php';
+require_once __DIR__ . '/materiel_security.inc.php';
 
 const PORTAIL_CLUB_MATERIEL_STATES = ['operational', 'in_repair', 'scrapped', 'for_sale'];
 const PORTAIL_CLUB_MATERIEL_INTERVENTION_SUBTYPES = ['revision', 'repair'];
@@ -716,6 +717,7 @@ function portailClubMaterielFormatEquipmentTypeRow(array $t, array $checks = [])
     return [
         'id' => (int)$t['id'],
         'slug' => $slug,
+        'domain' => (string)($t['domain'] ?? 'epi'),
         'label' => $t['label'],
         'renewal_years' => $t['renewal_years'] !== null ? (int)$t['renewal_years'] : null,
         'renewal_policy' => (string)($t['renewal_policy'] ?? 'manufacturer'),
@@ -735,7 +737,7 @@ function portailClubMaterielFormatEquipmentTypeRow(array $t, array $checks = [])
 function portailClubMaterielGetCatalog(PDO $pdo): array
 {
     $types = $pdo->query(
-        'SELECT id, slug, label, renewal_years, renewal_policy, renewal_health_threshold,
+        'SELECT id, slug, domain, label, renewal_years, renewal_policy, renewal_health_threshold,
                 revision_policy, revision_season_month,
                 min_stock_alert, trackable, allows_pairing, sort_order
          FROM PORTAIL_CLUB_materiel_equipment_types ORDER BY sort_order, label'
@@ -1050,17 +1052,24 @@ function portailClubMaterielDeleteTypeCheck(PDO $pdo, int $checkId): void
 function portailClubMaterielFormatEquipmentRow(array $r): array
 {
     $typeSlug = $r['type_slug'] ?? null;
+    $typeDomain = (string)($r['type_domain'] ?? 'epi');
     $specs = portailClubMaterielDecodeJsonColumn($r['specs_json'] ?? null);
     if ($typeSlug === 'regulator' && $specs === null) {
         $specs = portailClubMaterielEmptyRegulatorSpecs();
+    }
+    if ($typeDomain === 'security' && $specs === null && is_string($typeSlug)) {
+        $specs = portailClubMaterielEmptySecuritySpecs($typeSlug);
     }
     return [
         'id' => (int)$r['id'],
         'public_id' => $r['public_id'],
         'structure_id' => $r['structure_id'] !== null ? (int)$r['structure_id'] : null,
         'structure_label' => $r['structure_label'] ?? null,
+        'location_id' => isset($r['location_id']) && $r['location_id'] !== null ? (int)$r['location_id'] : null,
+        'location_label' => $r['location_label'] ?? null,
         'type_id' => (int)$r['type_id'],
         'type_slug' => $typeSlug,
+        'type_domain' => (string)($r['type_domain'] ?? 'epi'),
         'type_label' => $r['type_label'] ?? null,
         'brand' => $r['brand'],
         'purchase_year' => $r['purchase_year'] !== null ? (int)$r['purchase_year'] : null,
@@ -1078,6 +1087,7 @@ function portailClubMaterielFormatEquipmentRow(array $r): array
         'renewal_flagged_at' => $r['renewal_flagged_at'] ?? null,
         'health_score' => isset($r['health_score']) && $r['health_score'] !== null ? (int)$r['health_score'] : null,
         'specs_json' => $specs,
+        'expiry_on' => isset($r['expiry_on']) && $r['expiry_on'] !== null ? (string)$r['expiry_on'] : null,
         'created_at' => $r['created_at'],
         'updated_at' => $r['updated_at'],
     ];
@@ -1104,7 +1114,8 @@ function portailClubMaterielFormatEquipmentRowWithPair(array $r): array
     $item = portailClubMaterielFormatEquipmentRow($r);
     $item['type_allows_pairing'] = !empty($r['type_allows_pairing']);
     $item['pair_partner'] = portailClubMaterielFormatPairPartnerFromRow($r);
-    return portailClubMaterielAttachComplianceToItem($item, $r);
+    $item = portailClubMaterielAttachComplianceToItem($item, $r);
+    return portailClubMaterielAttachSecurityComplianceToItem($item);
 }
 
 /** @return array{last_revision_on:?string,revision_due:bool,renewal_due:bool,renewal_soon:bool,health_score:?int} */
@@ -1243,7 +1254,9 @@ function portailClubMaterielComplianceFilterSql(string $compliance): string
 
 function portailClubMaterielEquipmentSelectSql(): string
 {
-    return 'SELECT e.*, s.label AS structure_label, t.slug AS type_slug, t.label AS type_label,
+    return 'SELECT e.*, s.label AS structure_label,
+            loc.label AS location_label,
+            t.slug AS type_slug, t.domain AS type_domain, t.label AS type_label,
             t.trackable AS type_trackable, t.renewal_years AS type_renewal_years,
             t.renewal_policy AS type_renewal_policy, t.renewal_health_threshold AS type_renewal_health_threshold,
             t.revision_policy AS type_revision_policy, t.revision_season_month AS type_revision_season_month,
@@ -1259,6 +1272,7 @@ function portailClubMaterielEquipmentSelectSql(): string
              WHERE p.pair_id = e.pair_id AND p.id != e.id AND e.pair_id IS NOT NULL LIMIT 1) AS pair_partner_state
             FROM PORTAIL_CLUB_materiel_equipment e
             LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id
+            LEFT JOIN PORTAIL_CLUB_materiel_locations loc ON loc.id = e.location_id
             JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id
             LEFT JOIN (
                 SELECT equipment_id, MAX(done_on) AS last_revision_on
@@ -1312,6 +1326,18 @@ function portailClubMaterielListEquipmentFilterParts(array $filters): array
     $compliance = trim((string)($filters['compliance'] ?? ''));
     if ($compliance !== '') {
         $sql .= portailClubMaterielComplianceFilterSql($compliance);
+    }
+
+    $domain = strtolower(trim((string)($filters['domain'] ?? '')));
+    if ($domain === 'epi' || $domain === 'security') {
+        $sql .= ' AND t.domain = ?';
+        $params[] = $domain;
+    }
+
+    $locationId = (int)($filters['location_id'] ?? 0);
+    if ($locationId > 0) {
+        $sql .= ' AND e.location_id = ?';
+        $params[] = $locationId;
     }
 
     return [$sql, $params];
@@ -1823,12 +1849,33 @@ function portailClubMaterielPatchEquipment(PDO $pdo, int $id, array $body): arra
         $sets[] = 'purchase_year = ?';
         $params[] = $body['purchase_year'] !== '' && $body['purchase_year'] !== null ? (int)$body['purchase_year'] : null;
     }
-    if (array_key_exists('specs_json', $body) && ($current['type_slug'] ?? '') === 'regulator') {
+    $typeSlug = (string)($current['type_slug'] ?? '');
+    if (array_key_exists('specs_json', $body) && $typeSlug === 'regulator') {
         $specs = portailClubMaterielNormalizeRegulatorSpecs(
             is_array($body['specs_json']) ? $body['specs_json'] : []
         );
         $sets[] = 'specs_json = ?';
         $params[] = json_encode($specs, JSON_UNESCAPED_UNICODE);
+    }
+    if (array_key_exists('specs_json', $body) && ($current['type_domain'] ?? '') === 'security') {
+        $specs = portailClubMaterielNormalizeSecuritySpecs(
+            $typeSlug,
+            is_array($body['specs_json']) ? $body['specs_json'] : []
+        );
+        $sets[] = 'specs_json = ?';
+        $params[] = json_encode($specs, JSON_UNESCAPED_UNICODE);
+        if ($typeSlug === 'bavu') {
+            $sets[] = 'expiry_on = ?';
+            $params[] = $specs['expiry_on'];
+        }
+        if ($typeSlug === 'o2' && ($specs['supplier'] ?? '') !== '') {
+            $sets[] = 'brand = ?';
+            $params[] = $specs['supplier'];
+        }
+        if (($typeSlug === 'bavu' || $typeSlug === 'dae') && ($specs['model'] ?? '') !== '') {
+            $sets[] = 'model = ?';
+            $params[] = $specs['model'];
+        }
     }
 
     if ($sets !== []) {
@@ -2034,12 +2081,13 @@ function portailClubMaterielCreateIntervention(PDO $pdo, array $body): array
 function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
 {
     [$structSql, $structParams] = portailClubMaterielStructureFilterParts($structureIds);
-    $where = $structSql !== '' ? ' WHERE 1=1' . $structSql : '';
+    $where = ' WHERE t.domain = \'epi\'' . $structSql;
     $params = $structParams;
 
     $byState = [];
     $st = $pdo->prepare(
-        'SELECT e.state, COUNT(*) AS cnt FROM PORTAIL_CLUB_materiel_equipment e' . $where . ' GROUP BY e.state'
+        'SELECT e.state, COUNT(*) AS cnt FROM PORTAIL_CLUB_materiel_equipment e
+         JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id' . $where . ' GROUP BY e.state'
     );
     $st->execute($params);
     foreach ($st->fetchAll() as $r) {
@@ -2067,6 +2115,7 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
         'SELECT COALESCE(s.id, 0) AS id, COALESCE(s.label, \'Sans structure\') AS label,
                 COALESCE(s.sort_order, 9999) AS sort_order, COUNT(*) AS cnt
          FROM PORTAIL_CLUB_materiel_equipment e
+         JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id
          LEFT JOIN PORTAIL_CLUB_materiel_structures s ON s.id = e.structure_id' . $where .
         ' GROUP BY s.id, s.label, s.sort_order ORDER BY sort_order, label'
     );
@@ -2082,7 +2131,8 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
     $currentYear = (int)date('Y');
     $byAge = ['0-2' => 0, '3-5' => 0, '6-10' => 0, '10+' => 0, 'unknown' => 0];
     $st = $pdo->prepare(
-        'SELECT purchase_year FROM PORTAIL_CLUB_materiel_equipment e' . $where
+        'SELECT purchase_year FROM PORTAIL_CLUB_materiel_equipment e
+         JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id' . $where
     );
     $st->execute($params);
     foreach ($st->fetchAll() as $r) {
@@ -2109,7 +2159,8 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
     $nfcLinked = 0;
     $nfcUnlinked = 0;
     $st = $pdo->prepare(
-        'SELECT e.nfc_linked, COUNT(*) AS cnt FROM PORTAIL_CLUB_materiel_equipment e' . $where . ' GROUP BY e.nfc_linked'
+        'SELECT e.nfc_linked, COUNT(*) AS cnt FROM PORTAIL_CLUB_materiel_equipment e
+         JOIN PORTAIL_CLUB_materiel_equipment_types t ON t.id = e.type_id' . $where . ' GROUP BY e.nfc_linked'
     );
     $st->execute($params);
     foreach ($st->fetchAll() as $r) {
@@ -2123,7 +2174,7 @@ function portailClubMaterielGetStats(PDO $pdo, array $structureIds = []): array
     $stockAlerts = [];
     $types = portailClubMaterielGetCatalog($pdo)['types'];
     foreach ($types as $type) {
-        if (!$type['trackable'] || $type['min_stock_alert'] === null) {
+        if (!$type['trackable'] || $type['min_stock_alert'] === null || ($type['domain'] ?? 'epi') !== 'epi') {
             continue;
         }
         $sql = 'SELECT COUNT(*) FROM PORTAIL_CLUB_materiel_equipment e
@@ -2244,7 +2295,7 @@ function portailClubMaterielGetComplianceSummary(PDO $pdo, array $structureIds =
 
     $items = portailClubMaterielListEquipment($pdo, [
         'structure_ids' => $structureIds,
-        'compliance' => 'any',
+        'domain' => 'epi',
     ]);
     $urgent = [];
     foreach ($items as $item) {
@@ -2300,6 +2351,7 @@ function portailClubMaterielExportCsv(PDO $pdo, array $structureIds = []): strin
 {
     $items = portailClubMaterielListEquipment($pdo, [
         'structure_ids' => $structureIds,
+        'domain' => 'epi',
     ]);
     $lines = [];
     $lines[] = implode(';', [

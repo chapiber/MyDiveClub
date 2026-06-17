@@ -57,6 +57,8 @@ try {
             'q' => $_GET['q'] ?? '',
             'nfc_linked' => $_GET['nfc_linked'] ?? '',
             'compliance' => $_GET['compliance'] ?? '',
+            'domain' => $_GET['domain'] ?? '',
+            'location_id' => $_GET['location_id'] ?? 0,
         ];
         if (!empty($_GET['unpaired'])) {
             $filters['unpaired'] = true;
