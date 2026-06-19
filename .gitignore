@@ -7,6 +7,9 @@ deploy_logs/
 # Dépendances et artefacts
 node_modules/
 test-results/
+__pycache__/
+*.pyc
+site/tools/payload_sync_*.json
 
 # OS et temporaires
 *.log
