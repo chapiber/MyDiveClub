@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Installer â€” Portail Club</title>
-  <meta name="description" content="Installer le Portail Club sur votre tÃ©lÃ©phone â€” QR code et raccourci Ã©cran d'accueil.">
-  <meta name="theme-color" content="#0d7ea8">
+  <title>Installer — Portail Club</title>
+  <meta name="description" content="Installer le Portail Club sur votre téléphone — QR code et raccourci écran d'accueil.">
+  <meta name="theme-color" content="#132534">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/portal.css">
+  <link rel="stylesheet" href="assets/css/portal.css?v=__BUILD_VERSION__">
   <script src="assets/js/club-auth.js?v=__BUILD_VERSION__"></script>
 </head>
 <body data-page="install">
@@ -25,8 +25,12 @@
       Retour
     </a>
 
+    <div class="portal__club-strip" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+
     <h1>Installer le portail</h1>
-    <p class="install-page__lead">Scannez le QR code ou ajoutez le raccourci sur l'Ã©cran d'accueil â€” sans Play Store.</p>
+    <p class="install-page__lead">Scannez le QR code ou ajoutez le raccourci sur l'écran d'accueil — sans Play Store.</p>
 
     <section class="install-card" aria-labelledby="qr-title">
       <h2 id="qr-title" class="visually-hidden">QR code</h2>
@@ -39,16 +43,16 @@
     <button type="button" id="pwa-install-btn" class="install-btn install-btn--hidden">Installer sur cet appareil</button>
 
     <section class="install-steps" aria-labelledby="steps-title">
-      <h2 id="steps-title">Sur un autre tÃ©lÃ©phone</h2>
+      <h2 id="steps-title">Sur un autre téléphone</h2>
       <ol>
-        <li><strong>Android</strong> â€” Chrome â†’ menu â‹® â†’ Â« Ajouter Ã  l'Ã©cran d'accueil Â».</li>
-        <li><strong>iPhone</strong> â€” Safari â†’ partager â†‘ â†’ Â« Sur l'Ã©cran d'accueil Â».</li>
-        <li>Ouvrir depuis l'icÃ´ne â€” mode plein Ã©cran, gros boutons, utilisable en combinaison mouillÃ©e.</li>
+        <li><strong>Android</strong> — Chrome, menu ⋮, puis « Ajouter à l'écran d'accueil ».</li>
+        <li><strong>iPhone</strong> — Safari, bouton Partager, puis « Sur l'écran d'accueil ».</li>
+        <li>Ouvrir depuis l'icône : mode plein écran, gros boutons, utilisable en combinaison mouillée.</li>
       </ol>
     </section>
   </main>
   <script src="assets/js/qrcodegen.js"></script>
-  <script src="assets/js/app-update.js" defer></script>
-  <script src="assets/js/portal.js" defer></script>
+  <script src="assets/js/app-update.js?v=__BUILD_VERSION__" defer></script>
+  <script src="assets/js/portal.js?v=__BUILD_VERSION__" defer></script>
 </body>
 </html>

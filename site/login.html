@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Accès — Portail Club</title>
-  <meta name="theme-color" content="#0d7ea8">
+  <meta name="theme-color" content="#132534">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,9 +17,17 @@
 <body>
   <main class="login-page">
     <div class="login-page__brand">
-      <p class="portal__eyebrow">Club de plongée</p>
+      <div class="portal__club-strip" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="portal__club-logos" aria-label="Clubs du portail">
+        <li><img class="portal__club-logo" src="assets/brand/logos/aquablue.jpg" alt="Aquablue" width="72" height="36"></li>
+        <li><img class="portal__club-logo" src="assets/brand/logos/rederis.jpg" alt="Rederis" width="72" height="36"></li>
+        <li><img class="portal__club-logo" src="assets/brand/logos/cerbere.jpeg" alt="Cap Cerbère" width="72" height="36"></li>
+      </ul>
+      <p class="portal__eyebrow">Banyuls · Cerbère</p>
       <h1 class="login-page__title">Portail Club</h1>
-      <p class="login-page__lead">Saisissez le mot de passe club pour accéder aux outils moniteurs.</p>
+      <p class="login-page__lead">Mot de passe marcheron pour accéder aux outils moniteurs.</p>
     </div>
 
     <form id="login-form" class="login-card" novalidate>

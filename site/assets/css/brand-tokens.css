@@ -1,0 +1,25 @@
+/* Portail Club — tokens marque (Aquablue · Rederis · Cap Cerbère) */
+:root {
+  --club-aquablue: #0c9aa7;
+  --club-aquablue-accent: #f28c00;
+  --club-aquablue-soft: #e6f6f8;
+  --club-rederis: #c4382e;
+  --club-rederis-soft: #fcecea;
+  --club-cerbere: #3d5a73;
+  --club-cerbere-accent: #c9a227;
+  --club-cerbere-soft: #eef2f6;
+
+  --pc-bg: #f2f7f8;
+  --pc-surface: #ffffff;
+  --pc-text: #132534;
+  --pc-muted: #5a6d7d;
+  --pc-accent: #1a6b78;
+  --pc-accent-soft: #e4f2f4;
+  --pc-border: #d0dfe4;
+  --pc-shadow: 0 4px 22px rgba(19, 37, 52, 0.1);
+  --pc-theme: #132534;
+  --pc-tap-min: 72px;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}

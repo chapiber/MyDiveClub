@@ -1,6 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Portail Club">
-  <rect width="512" height="512" rx="96" fill="#0d7ea8"/>
-  <circle cx="256" cy="228" r="96" fill="none" stroke="#fff" stroke-width="20"/>
-  <path d="M148 312 Q256 392 364 312" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round"/>
-  <ellipse cx="256" cy="392" rx="140" ry="28" fill="#fff" opacity="0.35"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Portail Club  Aquablue, Rederis, Cap Cerbère">
+  <rect width="192" height="192" rx="44" fill="#132534"/>
+  <circle cx="96" cy="96" r="72" fill="none" stroke="#0c9aa7" stroke-width="20" stroke-dasharray="113 339" stroke-dashoffset="0"/>
+  <circle cx="96" cy="96" r="72" fill="none" stroke="#c4382e" stroke-width="20" stroke-dasharray="113 339" stroke-dashoffset="-113"/>
+  <circle cx="96" cy="96" r="72" fill="none" stroke="#c9a227" stroke-width="20" stroke-dasharray="113 339" stroke-dashoffset="-226"/>
+  <circle cx="96" cy="92" r="28" fill="none" stroke="#ffffff" stroke-width="7"/>
+  <path d="M68 108 Q96 128 124 108" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
 </svg>

@@ -1,13 +1,13 @@
 {
   "name": "Portail Club",
   "short_name": "Portail Club",
-  "description": "Outils moniteurs — club de plongée",
+  "description": "Outils moniteurs — Aquablue, Rederis, Cap Cerbère",
   "start_url": "/portailClub/",
   "scope": "/portailClub/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f7fb",
-  "theme_color": "#0d7ea8",
+  "background_color": "#f2f7f8",
+  "theme_color": "#132534",
   "lang": "fr",
   "icons": [
     {

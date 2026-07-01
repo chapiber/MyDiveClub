@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Portail Club">
-  <rect width="512" height="512" fill="#0d7ea8"/>
-  <circle cx="256" cy="228" r="88" fill="none" stroke="#fff" stroke-width="20"/>
-  <path d="M156 312 Q256 388 356 312" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round"/>
-  <ellipse cx="256" cy="400" rx="130" ry="24" fill="#fff" opacity="0.35"/>
+  <rect width="512" height="512" fill="#132534"/>
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#0c9aa7" stroke-width="52" stroke-dasharray="298 900" stroke-dashoffset="0"/>
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#c4382e" stroke-width="52" stroke-dasharray="298 900" stroke-dashoffset="-298"/>
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#c9a227" stroke-width="52" stroke-dasharray="298 900" stroke-dashoffset="-596"/>
+  <circle cx="256" cy="244" r="74" fill="none" stroke="#ffffff" stroke-width="18"/>
+  <path d="M182 288 Q256 340 330 288" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round"/>
 </svg>

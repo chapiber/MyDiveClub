@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Portail Club</title>
   <meta name="description" content="Outils moniteurs — club de plongée. Accès rapide, optimisé mobile.">
-  <meta name="theme-color" content="#0d7ea8">
+  <meta name="theme-color" content="#132534">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Portail Club">
@@ -29,7 +29,15 @@
   <div class="portal">
     <header class="portal__top">
       <div class="portal__brand">
-        <p class="portal__eyebrow">Club de plongée</p>
+        <div class="portal__club-strip" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <ul class="portal__club-logos" aria-label="Clubs du portail">
+          <li><img class="portal__club-logo" src="assets/brand/logos/aquablue.jpg" alt="Aquablue" width="72" height="36" loading="eager"></li>
+          <li><img class="portal__club-logo" src="assets/brand/logos/rederis.jpg" alt="Rederis" width="72" height="36" loading="eager"></li>
+          <li><img class="portal__club-logo" src="assets/brand/logos/cerbere.jpeg" alt="Cap Cerbère" width="72" height="36" loading="eager"></li>
+        </ul>
+        <p class="portal__eyebrow">Banyuls · Cerbère</p>
         <h1 class="portal__title">Portail Club</h1>
       </div>
       <a href="install.html" class="portal__install-btn" aria-label="Installer l'application et partager par QR code" title="Installer">

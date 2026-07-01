@@ -68,7 +68,7 @@
     const ctx = canvas.getContext('2d');
     for (let y = -border; y < size + border; y++) {
       for (let x = -border; x < size + border; x++) {
-        ctx.fillStyle = qr.getModule(x, y) ? '#14212e' : '#ffffff';
+        ctx.fillStyle = qr.getModule(x, y) ? '#132534' : '#ffffff';
         ctx.fillRect((x + border) * scale, (y + border) * scale, scale, scale);
       }
     }

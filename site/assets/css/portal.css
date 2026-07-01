@@ -1,17 +1,4 @@
-:root {
-  --pc-bg: #f4f7fb;
-  --pc-surface: #ffffff;
-  --pc-text: #14212e;
-  --pc-muted: #5a6d7d;
-  --pc-accent: #0d7ea8;
-  --pc-accent-soft: #e6f4fa;
-  --pc-border: #d8e3ec;
-  --pc-tap-min: 72px;
-  --pc-shadow: 0 4px 20px rgba(13, 126, 168, 0.12);
-  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
+@import url('brand-tokens.css');
 
 *,
 *::before,
@@ -31,7 +18,8 @@ body {
   font-size: 16px;
   line-height: 1.4;
   color: var(--pc-text);
-  background: var(--pc-bg);
+  background:
+    linear-gradient(165deg, var(--club-aquablue-soft) 0%, var(--pc-bg) 38%, var(--club-cerbere-soft) 100%);
 }
 
 /* --- Layout portail --- */
@@ -56,6 +44,47 @@ body {
 .portal__brand {
   flex: 1;
   min-width: 0;
+}
+
+.portal__club-strip {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0.65rem;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.portal__club-strip span {
+  flex: 1;
+  height: 4px;
+}
+
+.portal__club-strip span:nth-child(1) { background: var(--club-aquablue); }
+.portal__club-strip span:nth-child(2) { background: var(--club-rederis); }
+.portal__club-strip span:nth-child(3) { background: var(--club-cerbere-accent); }
+
+.portal__club-logos {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.portal__club-logos li {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.portal__club-logo {
+  width: 100%;
+  max-width: 4.5rem;
+  height: 2.25rem;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 1px 2px rgba(19, 37, 52, 0.08));
 }
 
 .portal__eyebrow {
@@ -336,7 +365,7 @@ body {
   margin-top: 1rem;
   border: 0;
   border-radius: 14px;
-  background: var(--pc-accent);
+  background: linear-gradient(135deg, var(--club-aquablue) 0%, var(--pc-accent) 50%, var(--club-cerbere) 100%);
   color: #fff;
   font: inherit;
   font-size: 1rem;
@@ -394,7 +423,7 @@ body {
   font-size: 1.05rem;
   font-weight: 600;
   color: #fff;
-  background: var(--pc-accent);
+  background: linear-gradient(135deg, var(--club-aquablue) 0%, var(--pc-accent) 50%, var(--club-cerbere) 100%);
   border: none;
   border-radius: 14px;
   cursor: pointer;
