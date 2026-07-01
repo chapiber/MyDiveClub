@@ -176,6 +176,20 @@ body {
   font-size: 1.15rem;
 }
 
+.app-tile--external {
+  position: relative;
+}
+
+.app-tile__external {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--pc-muted);
+  pointer-events: none;
+}
+
 /* --- Pied de page --- */
 
 .portal__footer {
@@ -231,6 +245,98 @@ body {
   margin: 0 0 1.5rem;
   color: var(--pc-muted);
   font-size: 1rem;
+}
+
+/* --- Page connexion --- */
+
+.login-page {
+  min-height: 100dvh;
+  padding: calc(1.5rem + var(--safe-top)) 1.25rem calc(1.5rem + var(--safe-bottom));
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-page__brand {
+  margin-bottom: 1.5rem;
+}
+
+.login-page__title {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.login-page__lead {
+  margin: 0;
+  color: var(--pc-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.login-card {
+  padding: 1.25rem;
+  border-radius: 20px;
+  background: var(--pc-surface);
+  border: 2px solid var(--pc-border);
+  box-shadow: var(--pc-shadow);
+}
+
+.login-card__label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.login-card__input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.85rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 14px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--pc-text);
+  background: var(--pc-bg);
+}
+
+.login-card__input:focus {
+  outline: none;
+  border-color: var(--pc-accent);
+  box-shadow: 0 0 0 3px var(--pc-accent-soft);
+}
+
+.login-card__input[aria-invalid="true"] {
+  border-color: #c0392b;
+}
+
+.login-card__error {
+  margin: 0.65rem 0 0;
+  font-size: 0.9rem;
+  color: #c0392b;
+}
+
+.login-card__submit {
+  width: 100%;
+  min-height: var(--pc-tap-min);
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 14px;
+  background: var(--pc-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-card__submit:active {
+  transform: scale(0.98);
+  opacity: 0.92;
 }
 
 .install-card {
