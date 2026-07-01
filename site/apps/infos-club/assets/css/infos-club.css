@@ -1,0 +1,116 @@
+/* Infos club — hub documentaire (aligné portal.css) */
+
+.ic-app {
+  min-height: 100dvh;
+  padding: calc(0.75rem + var(--safe-top)) 1rem calc(1.25rem + var(--safe-bottom));
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ic-app--viewer {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.ic-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.ic-app--viewer .ic-topbar {
+  flex-shrink: 0;
+}
+
+.ic-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 2px solid var(--pc-border);
+  border-radius: 14px;
+  background: var(--pc-surface);
+  color: var(--pc-accent);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.ic-back:active {
+  background: var(--pc-accent-soft);
+  transform: scale(0.98);
+}
+
+.ic-back svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ic-topbar__brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.ic-topbar__eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pc-muted);
+}
+
+.ic-topbar__title {
+  margin: 0.1rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ic-hub {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-content: start;
+}
+
+.ic-svg-view {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #f8f9fa;
+  padding: 0.5rem 1rem 1rem;
+}
+
+.ic-svg-view img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+.ic-doc-frame {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: calc(100dvh - 4.5rem - var(--safe-top) - var(--safe-bottom));
+  border: 0;
+  background: #fff;
+}
+
+@media (min-width: 640px) {
+  .ic-app {
+    max-width: 32rem;
+  }
+
+  .ic-app--viewer {
+    max-width: none;
+  }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Infos club — Portail Club</title>
+  <meta name="theme-color" content="#0d7ea8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="icon" href="../../assets/icons/icon-192.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/portal.css?v=__BUILD_VERSION__">
+  <link rel="stylesheet" href="assets/css/infos-club.css?v=__BUILD_VERSION__">
+  <script>
+    (function () {
+      if (localStorage.getItem('portailClub_swMigrated') === '2') return;
+      var dest = '/portailClub/update.html?to=' + encodeURIComponent(location.pathname + location.search + location.hash);
+      location.replace(dest);
+    })();
+  </script>
+</head>
+<body>
+  <div class="ic-app">
+    <header class="ic-topbar">
+      <a href="../../index.html" class="ic-back" aria-label="Retour au portail">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+      <div class="ic-topbar__brand">
+        <p class="ic-topbar__eyebrow">Aquablue</p>
+        <h1 class="ic-topbar__title">Infos club</h1>
+      </div>
+    </header>
+
+    <nav class="ic-hub apps" aria-label="Documents club">
+      <a href="journee-type.html" class="app-tile app-tile--solo">
+        <span class="app-tile__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </span>
+        <span class="app-tile__label">Journée type</span>
+      </a>
+      <a href="tarifs.html" class="app-tile app-tile--solo">
+        <span class="app-tile__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </span>
+        <span class="app-tile__label">Tarifs 2026</span>
+      </a>
+    </nav>
+  </div>
+  <script src="../../assets/js/app-update.js?v=__BUILD_VERSION__" defer></script>
+</body>
+</html>

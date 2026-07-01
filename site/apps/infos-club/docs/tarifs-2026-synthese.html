@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<!-- Source: 05-Entreprises/AQUABLUE/01-Process/Tarifs/tarifs-2026-synthese.html -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Aquablue — Tarifs 2026 — Aide moniteurs</title>
+<style>
+:root {
+  --teal: #0e6e7e;
+  --text: #1a1a1a;
+  --muted: #555;
+  --border: #ccc;
+  --zebra: #f5f8f9;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@page { size: A4; margin: 10mm; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8pt;
+  line-height: 1.25;
+  color: var(--text);
+  background: #fff;
+}
+
+body.pdf-export { font-size: 7.5pt; }
+body.pdf-export .page { padding: 0; min-height: auto; }
+body.pdf-export h2 { margin-top: 0.35rem; }
+body.pdf-export table { margin-bottom: 0.25rem; }
+
+/* Export image longue — lecture mobile (scroll vertical) */
+body.mobile-export {
+  font-size: 11pt;
+  line-height: 1.35;
+  background: #fff;
+}
+body.mobile-export .page {
+  width: 100%;
+  max-width: 390px;
+  min-height: auto;
+  margin: 0 auto;
+  padding: 14px 16px 18px;
+}
+body.mobile-export .page + .page {
+  page-break-before: auto;
+  border-top: 2px solid var(--teal);
+  margin-top: 8px;
+  padding-top: 14px;
+}
+body.mobile-export .grid-2 {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+body.mobile-export header h1 { font-size: 17pt; }
+body.mobile-export header .sub { font-size: 9pt; }
+body.mobile-export h2 {
+  font-size: 11pt;
+  margin: 0.75rem 0 0.35rem;
+}
+body.mobile-export th { font-size: 9.5pt; }
+body.mobile-export td.small,
+body.mobile-export .notes { font-size: 9pt; }
+body.mobile-export th, body.mobile-export td { padding: 4px 6px; }
+body.mobile-export table { margin-bottom: 0.5rem; }
+body.mobile-export .tag { font-size: 8pt; }
+
+.page {
+  width: 190mm;
+  min-height: 277mm;
+  margin: 0 auto;
+  padding: 2mm 0;
+}
+.page + .page { page-break-before: always; }
+
+header {
+  border-bottom: 2px solid var(--teal);
+  padding-bottom: 3px;
+  margin-bottom: 4px;
+}
+header h1 {
+  font-size: 13pt;
+  color: var(--teal);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+header .sub {
+  font-size: 7pt;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+  align-items: start;
+}
+
+h2 {
+  font-size: 8pt;
+  font-weight: 700;
+  color: var(--teal);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  margin: 0.4rem 0 0.2rem;
+  padding-bottom: 1px;
+}
+h2:first-child { margin-top: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.35rem;
+  font-size: inherit;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 1px 3px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--teal);
+  color: #fff;
+  font-weight: 600;
+  font-size: 7pt;
+}
+tr:nth-child(even) td { background: var(--zebra); }
+td.num, th.num { text-align: right; white-space: nowrap; }
+td.small { font-size: 6.5pt; color: var(--muted); }
+
+.notes {
+  border: 1px solid var(--border);
+  background: var(--zebra);
+  padding: 3px 5px;
+  font-size: 6.5pt;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.notes strong { color: var(--text); }
+.notes ul { margin: 2px 0 0 12px; padding: 0; }
+.notes li { margin-bottom: 1px; }
+
+.col-span { grid-column: 1 / -1; }
+.tag {
+  display: inline-block;
+  font-size: 6pt;
+  background: #e8f4f6;
+  color: var(--teal);
+  padding: 0 3px;
+  border-radius: 2px;
+  margin-left: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ PAGE 1 ═══════════════ -->
+<div class="page">
+  <header>
+    <h1>Aquablue — Tarifs 2026 — Aide moniteurs</h1>
+    <p class="sub">Document de synthèse · Se référer au fichier source <em>TARIFS 2026 V3.xlsx</em> en cas de doute · Tarifs TTC en euros</p>
+  </header>
+
+  <div class="grid-2">
+  <!-- Colonne gauche -->
+  <div>
+    <h2>Initiation &amp; découverte</h2>
+    <table>
+      <thead><tr><th>Prestation</th><th class="num">Tarif</th></tr></thead>
+      <tbody>
+        <tr><td>Baptême</td><td class="num">100 € <span class="tag">85 € −12 ans</span></td></tr>
+        <tr><td>Top baptême</td><td class="num">135 € <span class="tag">120 € −12 ans</span></td></tr>
+        <tr><td>Baptême duo</td><td class="num">125 € / pers.</td></tr>
+        <tr><td>Top baptême duo</td><td class="num">160 € / pers.</td></tr>
+        <tr><td>Baptême trio</td><td class="num">135 € / pers.</td></tr>
+        <tr><td>Top baptême trio</td><td class="num">170 € / pers.</td></tr>
+        <tr><td>Randonnée palmée</td><td class="num">30 €</td></tr>
+        <tr><td>Rando palmée guidée (découverte milieu marin)</td><td class="num">50 €</td></tr>
+        <tr><td>Supplément photo</td><td class="num">20 €</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Formules combinées</h2>
+    <table>
+      <thead><tr><th>Formule</th><th class="num">Tarif</th></tr></thead>
+      <tbody>
+        <tr><td>Baptême + rando palmée</td><td class="num">120 €</td></tr>
+        <tr><td>Top baptême + rando palmée</td><td class="num">150 €</td></tr>
+        <tr><td>Baptême + top baptême</td><td class="num">220 €</td></tr>
+        <tr><td>Baptême + top baptême + rando</td><td class="num">235 €</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Apnée</h2>
+    <table>
+      <thead><tr><th>Prestation</th><th class="num">Tarif</th></tr></thead>
+      <tbody>
+        <tr><td>Baptême apnée sans certif.</td><td class="num">100 €</td></tr>
+        <tr><td>Discover Freediver</td><td class="num">125 €</td></tr>
+        <tr><td>Initiation (2 séances)</td><td class="num">190 €</td></tr>
+        <tr><td>Basic Free Diver (2 séances)</td><td class="num">220 €</td></tr>
+        <tr><td>Free Diver (4 séances)</td><td class="num">320 €</td></tr>
+        <tr><td>Plongeur encadré</td><td class="num">160 €</td></tr>
+        <tr><td>Plongeur autonome</td><td class="num">100 €</td></tr>
+        <tr><td>Groupe (6 pers. min.)</td><td class="num">90 €</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Colonne droite -->
+  <div>
+    <h2>Formations FFESSM</h2>
+    <table>
+      <thead>
+        <tr><th>Niveau</th><th class="num">Séances</th><th class="num">Stage</th><th class="num">€/séance</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Stage enfant Bronze</td><td class="num">5</td><td class="num">320 €</td><td class="num">64 €</td></tr>
+        <tr><td>Stage enfant Argent/Or</td><td class="num">5</td><td class="num">350 €</td><td class="num">70 €</td></tr>
+        <tr><td>PE12</td><td class="num">4</td><td class="num">320 €</td><td class="num">80 €</td></tr>
+        <tr><td>PE20 = N1</td><td class="num">6</td><td class="num">470 €</td><td class="num">78 €</td></tr>
+        <tr><td>PE20 si PE12</td><td class="num">4</td><td class="num">320 €</td><td class="num">80 €</td></tr>
+        <tr><td>PA20</td><td class="num">8</td><td class="num">570 €</td><td class="num">71 €</td></tr>
+        <tr><td>PE40</td><td class="num">4</td><td class="num">340 €</td><td class="num">85 €</td></tr>
+        <tr><td>PA40</td><td class="num">6</td><td class="num">510 €</td><td class="num">85 €</td></tr>
+        <tr><td>PA20 + PE40 = N2</td><td class="num">10</td><td class="num">690 €</td><td class="num">69 €</td></tr>
+        <tr><td>PA60 = N3</td><td class="num">10</td><td class="num">750 €</td><td class="num">75 €</td></tr>
+        <tr><td>PA60 si déjà PA40</td><td class="num">5</td><td class="num">500 €</td><td class="num">100 €</td></tr>
+        <tr><td>N4-GP (semaine finale + exam)</td><td class="num">10</td><td class="num">790 €</td><td class="num">79 €</td></tr>
+        <tr><td>N4-GP (2 semaines)</td><td class="num">20</td><td class="num">1 390 €</td><td class="num">70 €</td></tr>
+        <tr><td>N4-GP + N3</td><td class="num">30</td><td class="num">2 040 €</td><td class="num">68 €</td></tr>
+        <tr><td>RIFAP</td><td class="num">—</td><td class="num">300 €</td><td class="num small">200 € si intégré stage</td></tr>
+        <tr><td>Nitrox simple</td><td class="num">2</td><td class="num">160 €</td><td class="num small">80 € si intégré</td></tr>
+        <tr><td>Nitrox confirmé</td><td class="num">4</td><td class="num">360 €</td><td class="num small">190 € si intégré</td></tr>
+      </tbody>
+    </table>
+    <p class="notes" style="margin-bottom:0.35rem">Haute saison (juil./août) : majoration <strong>+25 %</strong> sur tarifs stage FFESSM.</p>
+
+    <h2>Formations PADI</h2>
+    <table>
+      <thead>
+        <tr><th>Formation</th><th class="num">Durée</th><th class="num">Tarif</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Scuba Diver*</td><td class="num">4 séances</td><td class="num">320 €</td></tr>
+        <tr><td>Open Water Diver*</td><td class="num">6 séances</td><td class="num">470 €</td></tr>
+        <tr><td>Advanced OWD</td><td class="num">5 séances</td><td class="num">560 €</td></tr>
+        <tr><td>Rescue</td><td class="num">5 séances</td><td class="num">590 €</td></tr>
+        <tr><td>EFR</td><td class="num">1 journée</td><td class="num">280 €</td></tr>
+        <tr><td>Divemaster</td><td class="num">7 jours</td><td class="num">1 290 €</td></tr>
+        <tr><td>E-learning (supplément)</td><td class="num">—</td><td class="num">+130 €</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Licences &amp; adhésions</h2>
+    <table>
+      <thead><tr><th>Article</th><th class="num">Tarif</th></tr></thead>
+      <tbody>
+        <tr><td>Licence adulte (+16 ans)</td><td class="num">48,50 €</td></tr>
+        <tr><td>Licence jeune (12–16 ans)</td><td class="num">30 €</td></tr>
+        <tr><td>Licence enfant (−12 ans)</td><td class="num">13,50 €</td></tr>
+        <tr><td>Carte certification</td><td class="num">16 €</td></tr>
+        <tr><td>Réédition carte</td><td class="num">20 €</td></tr>
+        <tr><td>Carnet / passeport</td><td class="num">7 €</td></tr>
+        <tr><td>Logbook du centre</td><td class="num">8,50 €</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE 2 ═══════════════ -->
+<div class="page">
+  <header>
+    <h1>Aquablue — Tarifs 2026 — Groupes &amp; technique</h1>
+    <p class="sub">Groupes : ≥ 10 plongeurs payants et 30 plongées minimum sur le séjour · Bloc (6–15 L), lestage et PMT compris</p>
+  </header>
+
+  <div class="grid-2">
+  <div>
+    <h2>Tarifs groupe standard</h2>
+    <table>
+      <thead><tr><th>Prestation</th><th class="num">Tarif</th></tr></thead>
+      <tbody>
+        <tr><td>Plongée autonome / auto-encadrée <span class="tag">haute saison</span></td><td class="num">33 € / pers.</td></tr>
+        <tr><td>Plongée autonome <span class="tag">basse saison 01/11/25–01/04/26</span></td><td class="num">28 € / pers.</td></tr>
+        <tr><td>Plongée autonome <span class="tag">basse saison 01/11/26–01/04/27</span></td><td class="num">30 € / pers.</td></tr>
+        <tr><td>Baptême (juillet/août)</td><td class="num">85 € <span class="tag">75 € −12 ans</span></td></tr>
+        <tr><td>Baptême (hors juillet/août)</td><td class="num">80 € <span class="tag">70 € −12 ans</span></td></tr>
+        <tr><td>Randonnée palmée</td><td class="num">25 € / pers.</td></tr>
+        <tr><td>Rando palmée avec guide</td><td class="num">35 € / pers.</td></tr>
+        <tr><td>Plongée explo encadrée</td><td class="num">45 € / pers.</td></tr>
+        <tr><td>Plongée technique encadrée</td><td class="num">55 € / pers.</td></tr>
+        <tr><td>Cap Creus autonome (½ journée)</td><td class="num">50 € / pers.</td></tr>
+        <tr><td>Cap Creus autonome (journée)</td><td class="num">90 € / pers.</td></tr>
+        <tr><td>Loc. matériel (combi, stab, dét., ordi, lampe)</td><td class="num">8 / 12 / 15 / 17 € / plongée</td></tr>
+        <tr><td>Bloc Nitrox</td><td class="num">+8 €</td></tr>
+        <tr><td>Baptême + rando encadrée</td><td class="num">110 €</td></tr>
+        <tr><td class="small">Majoration sans DP</td><td class="num small">+2 € / plongeur / plongée</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Groupes spéciaux</h2>
+    <p class="notes" style="margin-bottom:0.25rem">Catalane · Ferchaud · Canigou Subaquatique Vernetois · Nautile</p>
+    <table>
+      <thead><tr><th>Prestation</th><th class="num">Tarif</th></tr></thead>
+      <tbody>
+        <tr><td>Autonome <span class="tag">juil./août + Ascension + Pentecôte</span></td><td class="num">33 € / pers.</td></tr>
+        <tr><td>Autonome <span class="tag">reste de l'année</span></td><td class="num">30 € / pers.</td></tr>
+        <tr><td>Baptême (juillet/août)</td><td class="num">85 € <span class="tag">75 € −12 ans</span></td></tr>
+        <tr><td>Baptême (hors juillet/août)</td><td class="num">80 € <span class="tag">70 € −12 ans</span></td></tr>
+        <tr><td>Rando palmée libre</td><td class="num">25 € / pers.</td></tr>
+        <tr><td>Rando palmée avec guide</td><td class="num">35 € / pers.</td></tr>
+        <tr><td>Plongée explo encadrée</td><td class="num">45 € / pers.</td></tr>
+        <tr><td>Plongée technique encadrée</td><td class="num">55 € / pers.</td></tr>
+        <tr><td>Cap Creus (½ journée / journée)</td><td class="num">50 € / 90 €</td></tr>
+        <tr><td>Plongée de nuit</td><td class="num">+5 €</td></tr>
+        <tr><td>Loc. matériel</td><td class="num">8 / 12 / 15 / 17 € / plongée</td></tr>
+        <tr><td>Bloc Nitrox</td><td class="num">+8 €</td></tr>
+        <tr><td>Baptême + rando encadrée</td><td class="num">110 €</td></tr>
+        <tr><td class="small">Gratuité encadrants E3 min.</td><td class="num small">bloc dû : 8 € ou 4 € gonflage seul</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div>
+    <h2>Location matériel (particulier)</h2>
+    <p class="notes" style="margin-bottom:0.25rem">1 unité = détendeur, stab, combinaison, lampe ou ordinateur</p>
+    <table>
+      <thead>
+        <tr><th>Forfait</th><th class="num">1 unité</th><th class="num">2 unités</th><th class="num">3 unités</th><th class="num">+3 unités</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1 plongée</td><td class="num">10 €</td><td class="num">15 €</td><td class="num">20 €</td><td class="num">25 €</td></tr>
+        <tr><td>4 plongées</td><td class="num">38 €</td><td class="num">58 €</td><td class="num">78 €</td><td class="num">98 €</td></tr>
+        <tr><td>6 plongées</td><td class="num">54 €</td><td class="num">84 €</td><td class="num">114 €</td><td class="num">144 €</td></tr>
+        <tr><td>10 plongées</td><td class="num">80 €</td><td class="num">130 €</td><td class="num">180 €</td><td class="num">230 €</td></tr>
+        <tr><td>Bloc déco (pony)</td><td class="num" colspan="4">20 € / plongée</td></tr>
+        <tr><td>Combi étanche</td><td class="num" colspan="4">35 € / plongée</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Gonflage</h2>
+    <table>
+      <thead>
+        <tr><th>Volume</th><th class="num">6 L</th><th class="num">10 L</th><th class="num">12 L</th><th class="num">13,5 L</th><th class="num">15 L</th><th class="num">18 L</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Air (à l'unité)</td><td class="num">3 €</td><td class="num">5 €</td><td class="num">6 €</td><td class="num">7 €</td><td class="num">8 €</td><td class="num">10 €</td></tr>
+        <tr><td>Air (≥ 100 blocs)</td><td class="num">4 €</td><td class="num">5 €</td><td class="num">6 €</td><td class="num">7 €</td><td class="num">9 €</td><td class="num">—</td></tr>
+        <tr><td>Air (≥ 200 blocs)</td><td class="num">3,5 €</td><td class="num">4,5 €</td><td class="num">5,5 €</td><td class="num">6,5 €</td><td class="num">8,5 €</td><td class="num">—</td></tr>
+        <tr><td>Nitrox</td><td class="num" colspan="6">10 L : 10 € · 12 L : 12 € · 15 L : 15 €</td></tr>
+        <tr><td>Oxygène</td><td class="num" colspan="6">0,04 € / litre d'O₂</td></tr>
+      </tbody>
+    </table>
+
+    <div class="notes">
+      <strong>Notes &amp; majorations (particulier)</strong>
+      <ul>
+        <li>Tarifs enfants (−12 ans) indiqués entre parenthèses sur les baptêmes.</li>
+        <li>Refresh : <strong>80 €</strong> (+ matériel si besoin) · Cours particulier / séance technique : <strong>150 €</strong> (matériel compris).</li>
+        <li>Plongée de nuit, encadrement profonde ou Nitrox (particulier) : <strong>+8 €</strong>.</li>
+        <li>Moniteur en enseignement : <strong>−10 €</strong> vs tarif groupe (33 € → 23 €) — sauf juil./août et week-ends du 1er mai, 8 mai, Ascension et Pentecôte.</li>
+        <li>Sans enseignement : même tarif que les autres plongeurs (33 €).</li>
+        <li>Source : <em>TARIFS 2026 V3.xlsx</em> — mise à jour manuelle, vérifier avant communication client.</li>
+      </ul>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+function applyTarifsLayout() {
+  document.body.classList.toggle('mobile-export', window.matchMedia('(max-width: 768px)').matches);
+}
+applyTarifsLayout();
+window.addEventListener('resize', applyTarifsLayout);
+</script>
+</body>
+</html>
