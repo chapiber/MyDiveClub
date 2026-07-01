@@ -28,25 +28,16 @@
 <body>
   <div class="portal">
     <header class="portal__top">
-      <div class="portal__brand">
-        <div class="portal__club-strip" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-        <ul class="portal__club-logos" aria-label="Clubs du portail">
-          <li><img class="portal__club-logo" src="assets/brand/logos/aquablue.jpg" alt="Aquablue" width="72" height="36" loading="eager"></li>
-          <li><img class="portal__club-logo" src="assets/brand/logos/rederis.jpg" alt="Rederis" width="72" height="36" loading="eager"></li>
-          <li><img class="portal__club-logo" src="assets/brand/logos/cerbere.jpeg" alt="Cap Cerbère" width="72" height="36" loading="eager"></li>
-        </ul>
-        <p class="portal__eyebrow">Banyuls · Cerbère</p>
-        <h1 class="portal__title">Portail Club</h1>
+      <div class="portal__club-strip" aria-hidden="true">
+        <span></span><span></span><span></span>
       </div>
-      <a href="install.html" class="portal__install-btn" aria-label="Installer l'application et partager par QR code" title="Installer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-      </a>
+      <ul class="portal__club-logos" aria-label="Clubs du portail">
+        <li><img class="portal__club-logo" src="assets/brand/logos/aquablue.jpg" alt="Aquablue" width="120" height="48" loading="eager"></li>
+        <li><img class="portal__club-logo" src="assets/brand/logos/rederis.jpg" alt="Rederis" width="120" height="48" loading="eager"></li>
+        <li><img class="portal__club-logo" src="assets/brand/logos/cerbere.jpeg" alt="Cap Cerbère" width="120" height="48" loading="eager"></li>
+      </ul>
+      <p class="portal__eyebrow">Banyuls · Cerbère</p>
+      <h1 class="portal__title">Portail Club</h1>
     </header>
 
     <nav class="apps" aria-label="Applications">
@@ -117,6 +108,17 @@
           </svg>
         </span>
         <span class="app-tile__label">Mabadive</span>
+      </a>
+      <a href="https://carnet.ffessm.fr/" class="app-tile app-tile--external app-tile--ffessm-carnet" target="_blank" rel="noopener noreferrer">
+        <svg class="app-tile__external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        <span class="app-tile__icon app-tile__icon--cover" aria-hidden="true">
+          <img src="assets/brand/carnet-ffessm.jpeg" alt="" width="72" height="72" loading="lazy" decoding="async">
+        </span>
+        <span class="app-tile__label">FFESSM - Carnet plongée</span>
       </a>
     </nav>
 

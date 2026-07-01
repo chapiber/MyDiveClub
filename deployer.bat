@@ -31,6 +31,7 @@ if not exist "%SOURCE%\assets\brand\logos" mkdir "%SOURCE%\assets\brand\logos"
 copy /Y "%~dp0logoAquablue.jpg" "%SOURCE%\assets\brand\logos\aquablue.jpg" >nul
 copy /Y "%~dp0logoRederis.jpg" "%SOURCE%\assets\brand\logos\rederis.jpg" >nul
 copy /Y "%~dp0logoCerbere.jpeg" "%SOURCE%\assets\brand\logos\cerbere.jpeg" >nul
+copy /Y "%~dp0imageCarnetFFESSM.jpeg" "%SOURCE%\assets\brand\carnet-ffessm.jpeg" >nul
 
   robocopy "%SOURCE%" "%DEST%" /MIR /R:2 /W:3 /XD ".git" "deploy_logs" "apps\cdm2026" "api\cdm2026" /XF "config.local.php" "lib\cdm2026.inc.php" /NFL /NDL /NJH /NJS /NC /NS /NP >>"%LOGFILE%" 2>&1
 set "RC=%ERRORLEVEL%"

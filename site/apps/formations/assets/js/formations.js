@@ -71,7 +71,37 @@
       searched: false,
       loading: false,
     },
+    resourcesExpanded: false,
   };
+
+  const RESOURCE_CATEGORY_LABELS = {
+    plongee: 'Plongée',
+    apnee: 'Apnée',
+    secourisme: 'Secourisme',
+    autres: 'Autres',
+  };
+  const RESOURCE_LINKS = [
+    {
+      category: 'plongee',
+      label: 'FFESSM MFT',
+      url: 'https://mft.ffessm.fr/pages/documents',
+    },
+    {
+      category: 'apnee',
+      label: 'Formation moniteur — partie 1',
+      url: 'https://prezi.com/view/8wgOZHlLdUWaZnBHjpiq/',
+    },
+    {
+      category: 'apnee',
+      label: 'Formation moniteur — partie 2',
+      url: 'https://prezi.com/view/Vb6YJhBWKKfTgVBuxZmf/',
+    },
+    {
+      category: 'secourisme',
+      label: 'Formation RIFAP',
+      url: 'https://prezi.com/view/Szh2Kf7VYr1yEbeY5X5w/',
+    },
+  ];
 
   function showToast(msg) {
     if (!toastEl) return;
@@ -1598,6 +1628,38 @@
     });
   }
 
+  function renderResourcesPanel() {
+    const items = RESOURCE_LINKS.map((item) => {
+      const catLabel = RESOURCE_CATEGORY_LABELS[item.category] || item.category;
+      return `<a href="${esc(item.url)}" class="sf-resource-link sf-resource-link--${esc(item.category)}" target="_blank" rel="noopener noreferrer">
+        <span class="sf-resource-link__cat">${esc(catLabel)}</span>
+        <span class="sf-resource-link__label">${esc(item.label)}</span>
+        <svg class="sf-resource-link__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </a>`;
+    }).join('');
+
+    return `
+      <details class="sf-archive-panel sf-resources-panel" id="sf-resources-panel"${state.resourcesExpanded ? ' open' : ''}>
+        <summary class="sf-archive-panel__summary">Ressources</summary>
+        <div class="sf-archive-panel__body">
+          <p class="sf-resources-lead">Liens utiles — ouverture dans le navigateur.</p>
+          <div class="sf-resources-list">${items}</div>
+        </div>
+      </details>`;
+  }
+
+  function bindResourcesPanel() {
+    const panel = document.getElementById('sf-resources-panel');
+    if (!panel) return;
+    panel.addEventListener('toggle', () => {
+      state.resourcesExpanded = panel.open;
+    });
+  }
+
   function renderHome() {
     const cards = state.formations.length
       ? state.formations.map((f) => renderFormationCard(f, `#/formation/${f.id}`)).join('')
@@ -1611,9 +1673,11 @@
       </div>
       <h2 class="sf-section-title">En cours</h2>
       ${cards}
-      ${renderArchivePanel()}`;
+      ${renderArchivePanel()}
+      ${renderResourcesPanel()}`;
     bindNav();
     bindArchivePanel();
+    bindResourcesPanel();
   }
 
   function renderNew() {
