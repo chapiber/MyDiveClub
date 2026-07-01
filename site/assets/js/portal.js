@@ -79,4 +79,51 @@
   if (document.body.dataset.page === 'install') {
     initInstallPage();
   }
+
+  /* --- Raccourci Mabadive : PWA installée ou page login --- */
+  const MABADIVE_APP_URL = 'https://pro.mabadive.com/';
+  const MABADIVE_WEB_LOGIN = 'https://mabadive.com/login';
+
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 1 && window.innerWidth < 900);
+  }
+
+  function openMabadive() {
+    if (!isMobileDevice()) {
+      window.open(MABADIVE_WEB_LOGIN, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    var appOpened = false;
+    function markOpened() {
+      appOpened = true;
+    }
+
+    document.addEventListener('visibilitychange', markOpened);
+    window.addEventListener('pagehide', markOpened);
+    window.addEventListener('blur', markOpened);
+
+    window.location.assign(MABADIVE_APP_URL);
+
+    window.setTimeout(function () {
+      document.removeEventListener('visibilitychange', markOpened);
+      window.removeEventListener('pagehide', markOpened);
+      window.removeEventListener('blur', markOpened);
+      if (!appOpened && !document.hidden) {
+        window.location.assign(MABADIVE_WEB_LOGIN);
+      }
+    }, 1600);
+  }
+
+  function initMabadiveLauncher() {
+    var tile = document.getElementById('mabadive-tile');
+    if (!tile) return;
+    tile.addEventListener('click', function (e) {
+      e.preventDefault();
+      openMabadive();
+    });
+  }
+
+  initMabadiveLauncher();
 })();

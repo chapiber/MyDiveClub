@@ -190,6 +190,16 @@ body {
   pointer-events: none;
 }
 
+.app-tile__icon--mabadive {
+  background: #e8f3f7;
+  color: #197297;
+}
+
+.app-tile--mabadive:active {
+  border-color: #197297;
+  background: #e8f3f7;
+}
+
 /* --- Pied de page --- */
 
 .portal__footer {
